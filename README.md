@@ -1,3 +1,6 @@
+# neurodiverse-care-web
+This project focuses on building a highly secure, multi-tenant SaaS application that serves as a longitudinal tracking and clinical management system for children with neurodiverse conditions like ADHD and Autism. Because the platform processes highly sensitive child healthcare data (Protected Health Information) under India’s DPDP Act 2023, the system architecture is driven by strict legal compliance rather than just UI design. It features role-specific portals for parents, clinics, schools, and therapists to coordinate care while ensuring data never leaks to unauthorized third parties or tracking algorithms.
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
