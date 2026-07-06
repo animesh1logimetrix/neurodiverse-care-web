@@ -89,7 +89,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px] transition-opacity" onClick={onClose}></div>
+      <div className="fixed inset-0 h-full w-full bg-gray-900/40 dark:bg-gray-900/80 transition-opacity" onClick={onClose}></div>
       
       {/* Modal Content */}
       <div
@@ -180,14 +180,14 @@ export const CustomModal: React.FC<CustomModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-lg bg-[#E2E8F0] text-gray-700 font-semibold hover:bg-gray-300 transition-colors text-sm disabled:opacity-50"
+              className="px-6 py-2.5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-colors text-sm disabled:opacity-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               {cancelText}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-lg bg-[#7DB9FB] text-white font-semibold hover:bg-[#6AA8E7] transition-colors text-sm disabled:opacity-50 flex items-center justify-center min-w-[100px]"
+              className="px-6 py-2.5 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors text-sm disabled:opacity-50 flex items-center justify-center min-w-[100px]"
             >
               {isSubmitting ? 'Submitting...' : submitText}
             </button>
