@@ -7,6 +7,7 @@ import { EventInput, DateSelectArg, EventClickArg } from "@fullcalendar/core";
 import { Modal } from "../components/ui/modal";
 import { useModal } from "../hooks/useModal";
 import PageMeta from "../components/common/PageMeta";
+import { CustomModal } from "../components/ui/modal/CustomModal";
 
 interface CalendarEvent extends EventInput {
   extendedProps: {
@@ -263,6 +264,23 @@ const Calendar: React.FC = () => {
             </div>
           </div>
         </Modal>
+        {/* <CustomModal
+          isOpen={isOpen}
+          onClose={closeModal}
+          title="Create Organization"
+          submitText="Create Organization"
+          fields={[
+            { name: 'orgName', label: 'Organization Name', type: 'text', required: true, colSpan: 2 },
+            { name: 'type', label: 'Type', type: 'select', required: true, options: [{ label: 'Clinic', value: 'Clinic' }, { label: 'School', value: 'School' }, { label: 'Professional', value: 'Professional' }] },
+            { name: 'plan', label: 'Plan', type: 'select', required: true, options: [{ label: 'Basic', value: 'Basic' }, { label: 'Pro', value: 'Pro' }, { label: 'Enterprise', value: 'Enterprise' }] },
+            { name: 'location', label: 'Location', type: 'text', required: true },
+            { name: 'admin', label: 'Admin', type: 'select', required: true, options: [{ label: 'Leslie Alexa', value: 'Leslie Alexa' }, { label: 'John Doe', value: 'John Doe' }] },
+            { name: 'freeServices', label: 'Provide Free Services', type: 'toggle', colSpan: 2 },
+          ]}
+          onSubmit={(data) => {
+            console.log('Form submitted:', data);
+          }}
+        /> */}
       </div>
     </>
   );
