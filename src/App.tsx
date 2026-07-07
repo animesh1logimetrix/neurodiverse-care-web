@@ -21,6 +21,7 @@ import Home from "./pages/Dashboard/Home";
 import StaffParents from "./pages/Administration/StaffParents";
 import RoleManagement from "./pages/Administration/RoleManagement";
 import ManageModules from "./pages/Administration/ManageModules";
+import Permission from "./pages/Administration/Permission";
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/administration/role-management" element={<RoleManagement />} />
 
             <Route path="/administration/modules" element={<ManageModules />} />
+            <Route path="/administration/permission" element={<Permission />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
