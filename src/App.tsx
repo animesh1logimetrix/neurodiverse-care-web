@@ -19,6 +19,7 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import StaffParents from "./pages/Administration/StaffParents";
+import Permission from "./pages/Administration/Permission";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
             <Route path="/administration/staff-parents" element={<StaffParents />} />
+            <Route path="/administration/permission" element={<Permission />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
