@@ -51,6 +51,13 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    icon: <GroupIcon />,
+    name: "Care",
+    subItems: [
+      { name: "Children", path: "/care/children", pro: false }  
+    ],
+  },
+  {
     icon: <CalenderIcon />,
     name: "Calendar",
     path: "/calendar",
