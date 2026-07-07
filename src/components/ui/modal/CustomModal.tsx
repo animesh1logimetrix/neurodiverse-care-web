@@ -72,10 +72,12 @@ export interface CustomModalProps {
   onClose: () => void;
   /** Modal heading */
   title: string;
-  /** Ordered list of field definitions */
-  fields: FieldConfig[];
-  /** Called with the collected form values on submit */
-  onSubmit: (formData: Record<string, any>) => Promise<void> | void;
+  /** Ordered list of field definitions (optional) */
+  fields?: FieldConfig[];
+  /** Called with the collected form values on submit (optional) */
+  onSubmit?: (formData: Record<string, any>) => Promise<void> | void;
+  /** Dynamic body children (optional) */
+  children?: ReactNode;
 
   // ── Text overrides ──────────────────────────────────────────────────
   /** Label for the primary (submit) button. Default: "Submit" */
@@ -94,49 +96,38 @@ export interface CustomModalProps {
   footerAlign?: FooterAlign;
 
   // ── Style toggles ───────────────────────────────────────────────────
-  /**
-   * Color of the required-field asterisk (*).
-   * Default: "black"
-   */
+  /** Color of the required-field asterisk (*). Default: "black" */
   asteriskColor?: AsteriskColor;
-  /**
-   * Apply backdrop blur to the overlay.
-   * Default: false
-   */
+  /** Apply backdrop blur to the overlay. Default: false */
   overlayBlur?: boolean;
   /** Hide the X close button. Default: false */
   hideCloseButton?: boolean;
-  /**
-   * Show a dismissable backdrop that closes the modal on click.
-   * Default: true
-   */
+  /** Show a dismissable backdrop that closes the modal on click. Default: true */
   closeOnBackdropClick?: boolean;
+  /** Show overlay. Default: true */
+  showOverlay?: boolean;
+  /** Show close icon. Default: true */
+  showCloseIcon?: boolean;
 
   // ── Extra content ───────────────────────────────────────────────────
-  /**
-   * Blue informational alert rendered below the fields.
-   * Pass a string for simple text, or a ReactNode for custom markup.
-   */
+  /** Blue informational alert rendered below the fields. */
   infoAlert?: ReactNode;
-  /**
-   * Additional content rendered at the bottom of the modal body,
-   * below the info alert. Useful for custom children.
-   */
+  /** Additional content rendered at the bottom of the modal body. */
   bodyFooter?: ReactNode;
+  /** Custom footer node to completely override the default footer buttons. */
+  customFooter?: ReactNode;
+  /** Configurable padding. Default: "px-8 py-6" */
+  padding?: string;
 
   // ── Data ────────────────────────────────────────────────────────────
-  /**
-   * Pre-populate fields with existing values.
-   * Key = field.name, Value = field value.
-   * When provided the form resets to these values each time the modal opens.
-   */
+  /** Pre-populate fields with existing values. */
   initialValues?: Record<string, any>;
 
   // ── Class overrides ─────────────────────────────────────────────────
-  /** Extra classes on the outer modal wrapper */
   modalClassName?: string;
-  /** Extra classes on the form body container */
   bodyClassName?: string;
+  footerClassName?: string;
+  headerClassName?: string;
 
   // ── Button style overrides ──────────────────────────────────────────
   submitButtonClassName?: string;
@@ -148,10 +139,11 @@ export interface CustomModalProps {
 // ---------------------------------------------------------------------------
 
 function buildInitialData(
-  fields: FieldConfig[],
+  fields?: FieldConfig[],
   initialValues?: Record<string, any>
 ): Record<string, any> {
   const data: Record<string, any> = {};
+  if (!fields) return data;
   fields.forEach((f) => {
     if (initialValues && initialValues[f.name] !== undefined) {
       data[f.name] = initialValues[f.name];
@@ -172,6 +164,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   title,
   fields,
   onSubmit,
+  children,
   submitText = "Submit",
   cancelText = "Cancel",
   submittingText = "Submitting...",
@@ -182,11 +175,17 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   overlayBlur = false,
   hideCloseButton = false,
   closeOnBackdropClick = true,
+  showOverlay = true,
+  showCloseIcon = true,
   infoAlert,
   bodyFooter,
+  customFooter,
+  padding = "px-8 py-6",
   initialValues,
   modalClassName = "",
   bodyClassName = "",
+  footerClassName = "",
+  headerClassName = "",
   submitButtonClassName,
   cancelButtonClassName,
 }) => {
@@ -202,7 +201,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
       setFormData(buildInitialData(fields, initialValues));
       setIsSubmitting(false);
     }
-  }, [isOpen]); // intentionally omit fields/initialValues to avoid re-runs mid-session
+  }, [isOpen, fields]);
 
   // ── Escape key + body scroll lock ──────────────────────────────────
   useEffect(() => {
@@ -227,6 +226,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   // ── Submit ──────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!onSubmit) return;
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
@@ -250,18 +250,185 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   const defaultCancelClass =
     "px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm disabled:opacity-50 cursor-pointer";
 
-  return (
-    <div
-      className={`fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/50 ${backdropClass}`}
-    >
-      {/* ── Backdrop ── */}
-      <div
-        className="fixed inset-0 h-full w-full"
-        onClick={closeOnBackdropClick ? onClose : undefined}
-        aria-hidden="true"
-      />
+  const renderHeader = () => (
+    <div className={`flex items-center justify-between px-8 py-5 border-b border-gray-100 ${headerClassName}`}>
+      <h2 id="custom-modal-title" className="text-[1.125rem] font-bold text-gray-900">
+        {title}
+      </h2>
+      {!hideCloseButton && showCloseIcon && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+          aria-label="Close modal"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
 
-      {/* ── Modal panel ── */}
+  const renderBody = () => (
+    <div className={`overflow-y-auto max-h-[70vh] ${padding} ${bodyClassName}`}>
+      {/* Auto-render fields if config is provided */}
+      {fields && fields.length > 0 && (
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 mb-5">
+          {fields.map((field) => {
+            if (field.condition && !field.condition(formData)) return null;
+
+            const spanClass =
+              field.colSpan === 2
+                ? "col-span-2"
+                : "col-span-2 sm:col-span-1";
+
+            return (
+              <div key={field.name} className={`${spanClass} flex flex-col gap-1.5`}>
+                {field.type !== "toggle" && (
+                  <label className="block text-xs font-bold text-black">
+                    {field.label} {field.required && <span className={asteriskClass}>*</span>}
+                  </label>
+                )}
+
+                {(field.type === "text" ||
+                  field.type === "email" ||
+                  field.type === "number" ||
+                  field.type === "password") && (
+                  <input
+                    type={field.type}
+                    required={field.required}
+                    disabled={field.disabled}
+                    placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}`}
+                    value={formData[field.name] ?? ""}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                )}
+
+                {field.type === "textarea" && (
+                  <textarea
+                    required={field.required}
+                    disabled={field.disabled}
+                    placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}`}
+                    value={formData[field.name] ?? ""}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    rows={4}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                )}
+
+                {field.type === "select" && (
+                  <div className="relative">
+                    <select
+                      required={field.required}
+                      disabled={field.disabled}
+                      value={formData[field.name] ?? ""}
+                      onChange={(e) => handleChange(field.name, e.target.value)}
+                      className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="" disabled>
+                        {field.placeholder ?? `Select ${field.label.toLowerCase()}`}
+                      </option>
+                      {(field.options ?? []).map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </span>
+                  </div>
+                )}
+
+                {field.type === "date" && (
+                  <DatePicker
+                    id={`date-${field.name}`}
+                    placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}`}
+                    onChange={([date]) => handleChange(field.name, date)}
+                  />
+                )}
+
+                {field.type === "toggle" && (
+                  <Switch
+                    label={field.label}
+                    defaultChecked={!!formData[field.name]}
+                    onChange={(checked) => handleChange(field.name, checked)}
+                  />
+                )}
+
+                {field.hint && <p className="text-xs text-gray-500 mt-0.5">{field.hint}</p>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Render children dynamically */}
+      {children}
+
+      {/* Blue info alert */}
+      {infoAlert && (
+        <div className="w-full bg-[#eff6ff] rounded-lg px-4 py-3 border border-[#bfdbfe] mt-1">
+          {typeof infoAlert === "string" ? (
+            <p className="text-center text-xs font-semibold text-black">{infoAlert}</p>
+          ) : (
+            infoAlert
+          )}
+        </div>
+      )}
+
+      {bodyFooter}
+    </div>
+  );
+
+  const renderFooter = () => {
+    if (customFooter) return customFooter;
+    return (
+      <div className={`flex ${FOOTER_JUSTIFY[footerAlign]} items-center gap-3 px-8 py-5 border-t border-gray-100 ${footerClassName}`}>
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isSubmitting}
+          className={cancelButtonClassName ?? defaultCancelClass}
+        >
+          {cancelText}
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className={submitButtonClassName ?? defaultSubmitClass}
+        >
+          {isSubmitting ? submittingText : submitText}
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+      {/* Backdrop overlay */}
+      {showOverlay && (
+        <div
+          className={`fixed inset-0 bg-gray-900/50 transition-opacity duration-300 ${backdropClass}`}
+          onClick={closeOnBackdropClick ? onClose : undefined}
+        />
+      )}
+
+      {/* Modal Container */}
       <div
         ref={modalRef}
         className={`relative z-10 w-full ${widthClass} rounded-2xl bg-white shadow-2xl m-4 flex flex-col ${modalClassName}`}
@@ -270,216 +437,19 @@ export const CustomModal: React.FC<CustomModalProps> = ({
         aria-modal="true"
         aria-labelledby="custom-modal-title"
       >
-        <form onSubmit={handleSubmit} className="flex flex-col">
-          {/* ── Header ── */}
-          <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100">
-            <h2
-              id="custom-modal-title"
-              className="text-[1.125rem] font-bold text-gray-900"
-            >
-              {title}
-            </h2>
-            {!hideCloseButton && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                aria-label="Close modal"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            )}
+        {onSubmit ? (
+          <form onSubmit={handleSubmit} className="flex flex-col">
+            {renderHeader()}
+            {renderBody()}
+            {renderFooter()}
+          </form>
+        ) : (
+          <div className="flex flex-col">
+            {renderHeader()}
+            {renderBody()}
+            {renderFooter()}
           </div>
-
-          {/* ── Body ── */}
-          <div className={`px-8 py-6 flex flex-col gap-5 overflow-y-auto max-h-[70vh] ${bodyClassName}`}>
-            {/* Fields grid */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-5">
-              {fields.map((field) => {
-                // Conditional render
-                if (field.condition && !field.condition(formData)) return null;
-
-                const spanClass =
-                  field.colSpan === 2
-                    ? "col-span-2"
-                    : "col-span-2 sm:col-span-1";
-
-                return (
-                  <div key={field.name} className={`${spanClass} flex flex-col gap-1.5`}>
-                    {/* Label */}
-                    {field.type !== "toggle" && (
-                      <label className="block text-xs font-bold text-black">
-                        {field.label}{" "}
-                        {field.required && (
-                          <span className={asteriskClass}>*</span>
-                        )}
-                      </label>
-                    )}
-
-                    {/* ── Text / Email / Number / Password ── */}
-                    {(
-                      field.type === "text" ||
-                      field.type === "email" ||
-                      field.type === "number" ||
-                      field.type === "password"
-                    ) && (
-                      <input
-                        type={field.type}
-                        required={field.required}
-                        disabled={field.disabled}
-                        placeholder={
-                          field.placeholder ??
-                          `Enter ${field.label.toLowerCase()}`
-                        }
-                        value={formData[field.name] ?? ""}
-                        onChange={(e) =>
-                          handleChange(field.name, e.target.value)
-                        }
-                        className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                    )}
-
-                    {/* ── Textarea ── */}
-                    {field.type === "textarea" && (
-                      <textarea
-                        required={field.required}
-                        disabled={field.disabled}
-                        placeholder={
-                          field.placeholder ??
-                          `Enter ${field.label.toLowerCase()}`
-                        }
-                        value={formData[field.name] ?? ""}
-                        onChange={(e) =>
-                          handleChange(field.name, e.target.value)
-                        }
-                        rows={4}
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                    )}
-
-                    {/* ── Select ── */}
-                    {field.type === "select" && (
-                      <div className="relative">
-                        <select
-                          required={field.required}
-                          disabled={field.disabled}
-                          value={formData[field.name] ?? ""}
-                          onChange={(e) =>
-                            handleChange(field.name, e.target.value)
-                          }
-                          className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <option value="" disabled>
-                            {field.placeholder ??
-                              `Select ${field.label.toLowerCase()}`}
-                          </option>
-                          {(field.options ?? []).map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                        {/* Chevron icon */}
-                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        </span>
-                      </div>
-                    )}
-
-                    {/* ── Date ── */}
-                    {field.type === "date" && (
-                      <DatePicker
-                        id={`date-${field.name}`}
-                        placeholder={
-                          field.placeholder ??
-                          `Select ${field.label.toLowerCase()}`
-                        }
-                        onChange={([date]) => handleChange(field.name, date)}
-                      />
-                    )}
-
-                    {/* ── Toggle ── */}
-                    {field.type === "toggle" && (
-                      <Switch
-                        label={field.label}
-                        defaultChecked={!!formData[field.name]}
-                        onChange={(checked) => handleChange(field.name, checked)}
-                      />
-                    )}
-
-                    {/* Hint */}
-                    {field.hint && (
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {field.hint}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* ── Blue info alert ── */}
-            {infoAlert && (
-              <div className="w-full bg-[#eff6ff] rounded-lg px-4 py-3 border border-[#bfdbfe] mt-1">
-                {typeof infoAlert === "string" ? (
-                  <p className="text-center text-xs font-semibold text-black">
-                    {infoAlert}
-                  </p>
-                ) : (
-                  infoAlert
-                )}
-              </div>
-            )}
-
-            {/* ── Extra body content ── */}
-            {bodyFooter}
-          </div>
-
-          {/* ── Footer ── */}
-          <div
-            className={`flex ${FOOTER_JUSTIFY[footerAlign]} items-center gap-3 px-8 py-5 border-t border-gray-100`}
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className={cancelButtonClassName ?? defaultCancelClass}
-            >
-              {cancelText}
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={submitButtonClassName ?? defaultSubmitClass}
-            >
-              {isSubmitting ? submittingText : submitText}
-            </button>
-          </div>
-        </form>
+        )}
       </div>
     </div>
   );
