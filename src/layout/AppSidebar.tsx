@@ -296,7 +296,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-gray-50 dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
         ${
           isExpanded || isMobileOpen
             ? "w-[290px]"
@@ -316,28 +316,20 @@ const AppSidebar: React.FC = () => {
       >
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <>
+            <div className="flex flex-col items-start gap-1">
               <img
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
+                src="/images/logo/theraverse-logo.jpeg"
                 alt="Logo"
-                width={150}
-                height={40}
+                className="w-16 h-auto mb-1 rounded-md"
               />
-              <img
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Theraverse</h1>
+              <p className="text-sm text-gray-500 font-medium">Super Admin</p>
+            </div>
           ) : (
             <img
-              src="/images/logo/logo-icon.svg"
+              src="/images/logo/theraverse-logo.jpeg"
               alt="Logo"
-              width={32}
-              height={32}
+              className="w-8 h-8 rounded-md object-cover"
             />
           )}
         </Link>
