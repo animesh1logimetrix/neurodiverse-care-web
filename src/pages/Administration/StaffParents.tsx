@@ -256,7 +256,7 @@ export default function StaffParents() {
       type: "email",
       required: true,
       placeholder: "Enter email address",
-      colSpan: 2,
+      colSpan: 1,
     },
     {
       name: "role",
@@ -286,18 +286,10 @@ export default function StaffParents() {
         { label: "Inactive", value: "Inactive" },
       ],
       colSpan: 1,
+      // Only show Status field when editing an existing user
+      condition: () => !!editingUser,
     },
   ];
-
-  // Populate initial values when editing
-  const getModalFieldsConfig = () => {
-    if (!editingUser) return fieldsConfig;
-    return fieldsConfig.map((field) => {
-      if (field.name === "name") return { ...field, placeholder: editingUser.name };
-      if (field.name === "email") return { ...field, placeholder: editingUser.email };
-      return field;
-    });
-  };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -575,14 +567,28 @@ export default function StaffParents() {
         </div>
       </div>
 
-      {/* Invite User Dynamic Modal */}
+      {/* Invite User Modal */}
       <CustomModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingUser ? "Edit User Details" : "Invite New User"}
+        title={editingUser ? "Edit User Details" : "Invite User"}
         submitText={editingUser ? "Save Changes" : "Send Invitation"}
-        fields={getModalFieldsConfig()}
+        fields={fieldsConfig}
         onSubmit={handleInviteOrEditSubmit}
+        initialValues={editingUser ? {
+          name: editingUser.name,
+          email: editingUser.email,
+          role: editingUser.role,
+          status: editingUser.status,
+        } : undefined}
+        infoAlert={!editingUser
+          ? "An invitation email will be sent to the user to setup their account password."
+          : undefined
+        }
+        size="lg"
+        footerAlign="center"
+        asteriskColor="black"
+        overlayBlur={false}
       />
     </>
   );
