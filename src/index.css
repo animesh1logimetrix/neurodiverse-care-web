@@ -195,6 +195,10 @@ layer(base);
   box-shadow: 0px 4px 6px -1px rgba(15, 23, 42, 0.1), 0px 8px 24px rgba(15, 23, 42, 0.12);
 }
 
+@utility grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 @utility menu-item {
   @apply relative flex items-center w-full gap-3 px-3 py-2 font-medium rounded-lg text-theme-sm;
 }
