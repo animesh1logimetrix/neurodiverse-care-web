@@ -15,6 +15,7 @@ import {
   TableIcon,
   UserCircleIcon,
   GroupIcon,
+  DocsIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -40,6 +41,13 @@ const navItems: NavItem[] = [
       { name: "Role Management", path: "/administration/role-management", pro: false },
       { name: "Permissions", path: "/administration/permission", pro: false },
       { name: "Module", path: "/administration/modules", pro: false },
+    ],
+  },
+  {
+    icon: <DocsIcon />,
+    name: "Masters",
+    subItems: [
+      { name: "Category Master", path: "/masters/category-master", pro: false },
     ],
   },
   {
