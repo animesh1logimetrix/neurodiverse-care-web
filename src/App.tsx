@@ -23,6 +23,7 @@ import RoleManagement from "./pages/Administration/RoleManagement";
 import ManageModules from "./pages/Administration/ManageModules";
 import Permission from "./pages/Administration/Permission";
 import CategoryMaster from "./pages/Masters/CategoryMaster";
+import ContentCMS from "./pages/Masters/ContentCMS";
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
 
             {/* Masters */}
             <Route path="/masters/category-master" element={<CategoryMaster />} />
+            <Route path="/masters/content-cms" element={<ContentCMS />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

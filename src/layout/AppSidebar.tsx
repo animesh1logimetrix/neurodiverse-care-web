@@ -48,6 +48,7 @@ const navItems: NavItem[] = [
     name: "Masters",
     subItems: [
       { name: "Category Master", path: "/masters/category-master", pro: false },
+      { name: "Content & CMS", path: "/masters/content-cms", pro: false },
     ],
   },
   {
