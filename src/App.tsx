@@ -20,6 +20,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import StaffParents from "./pages/Administration/StaffParents";
 import Permission from "./pages/Administration/Permission";
+import ManageModules from "./pages/Administration/ManageModules";
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
             <Route index path="/" element={<Home />} />
             <Route path="/administration/staff-parents" element={<StaffParents />} />
             <Route path="/administration/permission" element={<Permission />} />
+            <Route path="/administration/modules" element={<ManageModules />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
