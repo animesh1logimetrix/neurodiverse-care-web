@@ -582,7 +582,7 @@ export default function StaffParents() {
           status: editingUser.status,
         } : undefined}
         infoAlert={!editingUser
-          ? "An invitation email will be sent to the user to setup their account password."
+          ? "An invitation email will be sent with a secure setup link.Access is granted only after email verification."
           : undefined
         }
         size="lg"

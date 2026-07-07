@@ -446,7 +446,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
             {infoAlert && (
               <div className="w-full bg-[#eff6ff] rounded-lg px-4 py-3 border border-[#bfdbfe] mt-1">
                 {typeof infoAlert === "string" ? (
-                  <p className="text-center text-xs font-semibold text-[#1e40af]">
+                  <p className="text-center text-xs font-semibold text-black">
                     {infoAlert}
                   </p>
                 ) : (
