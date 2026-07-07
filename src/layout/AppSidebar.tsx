@@ -37,7 +37,7 @@ const navItems: NavItem[] = [
     name: "Administration",
     subItems: [
       { name: "Staff & Parents", path: "/administration/staff-parents", pro: false },
-      { name: "Role Management", path: "#", pro: false },
+      { name: "Role Management", path: "/administration/role-management", pro: false },
       { name: "Permissions", path: "#", pro: false },
       { name: "Module", path: "#", pro: false },
     ],
