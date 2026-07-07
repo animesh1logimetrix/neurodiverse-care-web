@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import CustomModal from "../../components/ui/modal/CustomModal";
+import { PlusIcon } from '../../icons';
 
 // Icons 
 const SearchIcon = () => (
@@ -96,37 +97,49 @@ export default function PermissionMatrix() {
   };
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto font-sans text-gray-800 bg-[#f9fafb] min-h-screen">
-      {/* Header section */}
-      <div className="mb-6">
-        <div className="text-[14px] text-gray-500 mb-4 font-medium flex items-center">
-          NeuroDiverse <span className="mx-2">&lt;</span> Administration
+    <>
+      {/* Custom Figma Header Breadcrumb */}
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
+        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
+      </div>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
+            Permission Matrix
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure granular module-level permissions per role</p>
         </div>
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-[22px] font-bold text-gray-800">Permission Matrix</h1>
-            <p className="text-gray-500 mt-1 text-[14px]">Configure granular module-level permissions per role</p>
-          </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-[#a6d1ff] hover:bg-[#86beff] text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center gap-2"
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-xs hover:bg-brand-600 focus:outline-hidden transition-all duration-200"
+        >
+          <PlusIcon className="size-4 text-white fill-current" />
+          Add Permission
+        </button>
+      </div>
+
+      {/* Search Input Wrapper */}
+      <div className="relative mb-6">
+        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <svg
+            className="size-5 text-gray-400 dark:text-gray-500"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
           >
-            <span className="text-lg leading-none mb-0.5">+</span> Add Permission
-          </button>
-        </div>
-        
-        <div className="mt-6 relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <SearchIcon />
-          </div>
-          <input 
-            type="text" 
-            placeholder="Search anything here....." 
-            className="block w-full pl-11 pr-4 py-3 text-sm border-none rounded-xl focus:ring-2 focus:ring-blue-100 bg-white shadow-sm placeholder-gray-400"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 shadow-premium-soft focus:border-brand-500 focus:outline-hidden focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500"
+          placeholder="Search anything here....."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
 
       {/* Main Table */}
@@ -302,6 +315,6 @@ export default function PermissionMatrix() {
           </div>
         }
       />
-    </div>
+    </>
   );
 }

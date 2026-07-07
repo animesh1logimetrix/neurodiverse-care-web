@@ -375,7 +375,7 @@ export default function StaffParents() {
           onClick={handleOpenInviteModal}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-xs hover:bg-brand-600 focus:outline-hidden transition-all duration-200"
         >
-          <PlusIcon className="size-4" />
+          <PlusIcon className="size-4 text-white fill-current" />
           Invite User
         </button>
       </div>
