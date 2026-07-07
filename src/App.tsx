@@ -22,6 +22,7 @@ import StaffParents from "./pages/Administration/StaffParents";
 import RoleManagement from "./pages/Administration/RoleManagement";
 import ManageModules from "./pages/Administration/ManageModules";
 import Permission from "./pages/Administration/Permission";
+import CategoryMaster from "./pages/Masters/CategoryMaster";
 
 export default function App() {
   return (
@@ -37,6 +38,9 @@ export default function App() {
 
             <Route path="/administration/modules" element={<ManageModules />} />
             <Route path="/administration/permission" element={<Permission />} />
+
+            {/* Masters */}
+            <Route path="/masters/category-master" element={<CategoryMaster />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

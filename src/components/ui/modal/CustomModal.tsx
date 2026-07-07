@@ -6,7 +6,15 @@ import DatePicker from "../../form/date-picker";
 // Types
 // ---------------------------------------------------------------------------
 
-export type FieldType = "text" | "number" | "email" | "password" | "select" | "toggle" | "date" | "textarea";
+export type FieldType =
+  | "text"
+  | "number"
+  | "email"
+  | "password"
+  | "select"
+  | "toggle"
+  | "date"
+  | "textarea";
 
 export type SelectOption = { label: string; value: string };
 
@@ -66,20 +74,31 @@ const FOOTER_JUSTIFY: Record<FooterAlign, string> = {
 // ---------------------------------------------------------------------------
 
 export interface CustomModalProps {
+  // ── Visibility ──────────────────────────────────────────────────────
   /** Controls modal visibility */
   isOpen: boolean;
   /** Called when the modal should close */
   onClose: () => void;
+
+  // ── Content ─────────────────────────────────────────────────────────
   /** Modal heading */
   title: string;
-  /** Ordered list of field definitions (optional) */
+  /** Optional subtitle rendered below the title in the header */
+  subtitle?: string;
+  /** Ordered list of field definitions (optional – uses auto form renderer) */
   fields?: FieldConfig[];
   /** Called with the collected form values on submit (optional) */
   onSubmit?: (formData: Record<string, any>) => Promise<void> | void;
-  /** Dynamic body children (optional) */
+  /** Fully dynamic body content — renders any ReactNode */
   children?: ReactNode;
+  /** Blue informational alert rendered below the fields / children */
+  infoAlert?: ReactNode;
+  /** Extra content at the bottom of the body, below the info alert */
+  bodyFooter?: ReactNode;
+  /** Completely replaces the default Cancel / Submit footer */
+  customFooter?: ReactNode;
 
-  // ── Text overrides ──────────────────────────────────────────────────
+  // ── Text overrides ───────────────────────────────────────────────────
   /** Label for the primary (submit) button. Default: "Submit" */
   submitText?: string;
   /** Label for the cancel button. Default: "Cancel" */
@@ -92,8 +111,12 @@ export interface CustomModalProps {
   size?: ModalSize;
   /** Custom max-width Tailwind class, e.g. "max-w-[760px]" */
   maxWidth?: string;
+  /** Custom max-height for the body scroll area. Default: "70vh" */
+  maxBodyHeight?: string;
   /** Alignment of footer buttons. Default: "center" */
   footerAlign?: FooterAlign;
+  /** Body padding. Default: "px-8 py-6" */
+  padding?: string;
 
   // ── Style toggles ───────────────────────────────────────────────────
   /** Color of the required-field asterisk (*). Default: "black" */
@@ -102,34 +125,32 @@ export interface CustomModalProps {
   overlayBlur?: boolean;
   /** Hide the X close button. Default: false */
   hideCloseButton?: boolean;
-  /** Show a dismissable backdrop that closes the modal on click. Default: true */
+  /** Show close icon. Default: true */
+  showCloseIcon?: boolean;
+  /** Backdrop closes modal on click. Default: true */
   closeOnBackdropClick?: boolean;
   /** Show overlay. Default: true */
   showOverlay?: boolean;
-  /** Show close icon. Default: true */
-  showCloseIcon?: boolean;
+  /** Show a loading spinner / disable footer buttons. Default: false */
+  isLoading?: boolean;
 
-  // ── Extra content ───────────────────────────────────────────────────
-  /** Blue informational alert rendered below the fields. */
-  infoAlert?: ReactNode;
-  /** Additional content rendered at the bottom of the modal body. */
-  bodyFooter?: ReactNode;
-  /** Custom footer node to completely override the default footer buttons. */
-  customFooter?: ReactNode;
-  /** Configurable padding. Default: "px-8 py-6" */
-  padding?: string;
-
-  // ── Data ────────────────────────────────────────────────────────────
-  /** Pre-populate fields with existing values. */
+  // ── Pre-populate ──────────────────────────────────────────────────────
+  /** Pre-populate fields with existing values. Key = field.name */
   initialValues?: Record<string, any>;
 
   // ── Class overrides ─────────────────────────────────────────────────
+  /** Extra classes on the outer modal wrapper */
   modalClassName?: string;
-  bodyClassName?: string;
-  footerClassName?: string;
+  /** Extra classes applied to the overlay/backdrop */
+  overlayClassName?: string;
+  /** Extra classes for the header container */
   headerClassName?: string;
+  /** Extra classes for the body container */
+  bodyClassName?: string;
+  /** Extra classes for the footer container */
+  footerClassName?: string;
 
-  // ── Button style overrides ──────────────────────────────────────────
+  // ── Button class overrides ───────────────────────────────────────────
   submitButtonClassName?: string;
   cancelButtonClassName?: string;
 }
@@ -162,6 +183,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   isOpen,
   onClose,
   title,
+  subtitle,
   fields,
   onSubmit,
   children,
@@ -170,22 +192,25 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   submittingText = "Submitting...",
   size = "lg",
   maxWidth,
+  maxBodyHeight = "70vh",
   footerAlign = "center",
   asteriskColor = "black",
   overlayBlur = false,
   hideCloseButton = false,
+  showCloseIcon = true,
   closeOnBackdropClick = true,
   showOverlay = true,
-  showCloseIcon = true,
+  isLoading = false,
   infoAlert,
   bodyFooter,
   customFooter,
   padding = "px-8 py-6",
   initialValues,
   modalClassName = "",
+  overlayClassName = "",
+  headerClassName = "",
   bodyClassName = "",
   footerClassName = "",
-  headerClassName = "",
   submitButtonClassName,
   cancelButtonClassName,
 }) => {
@@ -195,7 +220,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // ── Re-initialise whenever the modal opens ──────────────────────────
+  // Re-initialise whenever the modal opens
   useEffect(() => {
     if (isOpen) {
       setFormData(buildInitialData(fields, initialValues));
@@ -203,7 +228,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
     }
   }, [isOpen, fields]);
 
-  // ── Escape key + body scroll lock ──────────────────────────────────
+  // Escape key + body scroll lock
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -218,12 +243,10 @@ export const CustomModal: React.FC<CustomModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  // ── Field change handler ────────────────────────────────────────────
   const handleChange = (name: string, value: any) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ── Submit ──────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!onSubmit) return;
@@ -240,26 +263,39 @@ export const CustomModal: React.FC<CustomModalProps> = ({
 
   if (!isOpen) return null;
 
-  // ── Derived classes ─────────────────────────────────────────────────
+  // Derived classes
   const widthClass = maxWidth ?? SIZE_CLASS[size];
   const backdropClass = overlayBlur ? "backdrop-blur-sm" : "";
   const asteriskClass = asteriskColor === "red" ? "text-red-500" : "text-black";
+  const busy = isSubmitting || isLoading;
 
   const defaultSubmitClass =
     "px-6 py-2.5 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors text-sm disabled:opacity-50 min-w-[120px] flex items-center justify-center cursor-pointer";
   const defaultCancelClass =
     "px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm disabled:opacity-50 cursor-pointer";
 
+  // ── Sub-renderers ─────────────────────────────────────────────────────────
+
   const renderHeader = () => (
-    <div className={`flex items-center justify-between px-8 py-5 border-b border-gray-100 ${headerClassName}`}>
-      <h2 id="custom-modal-title" className="text-[1.125rem] font-bold text-gray-900">
-        {title}
-      </h2>
+    <div
+      className={`flex items-start justify-between px-8 py-5 border-b border-gray-100 ${headerClassName}`}
+    >
+      <div className="flex flex-col gap-0.5">
+        <h2
+          id="custom-modal-title"
+          className="text-[1.125rem] font-bold text-gray-900 leading-snug"
+        >
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="text-xs text-gray-500 font-normal">{subtitle}</p>
+        )}
+      </div>
       {!hideCloseButton && showCloseIcon && (
         <button
           type="button"
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+          className="ml-4 mt-0.5 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer shrink-0"
           aria-label="Close modal"
         >
           <svg
@@ -280,117 +316,143 @@ export const CustomModal: React.FC<CustomModalProps> = ({
     </div>
   );
 
-  const renderBody = () => (
-    <div className={`overflow-y-auto max-h-[70vh] ${padding} ${bodyClassName}`}>
-      {/* Auto-render fields if config is provided */}
-      {fields && fields.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-6 gap-y-5 mb-5">
-          {fields.map((field) => {
-            if (field.condition && !field.condition(formData)) return null;
+  const renderAutoFields = () => {
+    if (!fields || fields.length === 0) return null;
+    return (
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 mb-5">
+        {fields.map((field) => {
+          if (field.condition && !field.condition(formData)) return null;
 
-            const spanClass =
-              field.colSpan === 2
-                ? "col-span-2"
-                : "col-span-2 sm:col-span-1";
+          const spanClass =
+            field.colSpan === 2 ? "col-span-2" : "col-span-2 sm:col-span-1";
 
-            return (
-              <div key={field.name} className={`${spanClass} flex flex-col gap-1.5`}>
-                {field.type !== "toggle" && (
-                  <label className="block text-xs font-bold text-black">
-                    {field.label} {field.required && <span className={asteriskClass}>*</span>}
-                  </label>
-                )}
+          return (
+            <div
+              key={field.name}
+              className={`${spanClass} flex flex-col gap-1.5`}
+            >
+              {field.type !== "toggle" && (
+                <label className="block text-xs font-bold text-black">
+                  {field.label}{" "}
+                  {field.required && (
+                    <span className={asteriskClass}>*</span>
+                  )}
+                </label>
+              )}
 
-                {(field.type === "text" ||
-                  field.type === "email" ||
-                  field.type === "number" ||
-                  field.type === "password") && (
-                  <input
-                    type={field.type}
+              {(field.type === "text" ||
+                field.type === "email" ||
+                field.type === "number" ||
+                field.type === "password") && (
+                <input
+                  type={field.type}
+                  required={field.required}
+                  disabled={field.disabled}
+                  placeholder={
+                    field.placeholder ?? `Enter ${field.label.toLowerCase()}`
+                  }
+                  value={formData[field.name] ?? ""}
+                  onChange={(e) => handleChange(field.name, e.target.value)}
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              )}
+
+              {field.type === "textarea" && (
+                <textarea
+                  required={field.required}
+                  disabled={field.disabled}
+                  placeholder={
+                    field.placeholder ?? `Enter ${field.label.toLowerCase()}`
+                  }
+                  value={formData[field.name] ?? ""}
+                  onChange={(e) => handleChange(field.name, e.target.value)}
+                  rows={4}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              )}
+
+              {field.type === "select" && (
+                <div className="relative">
+                  <select
                     required={field.required}
                     disabled={field.disabled}
-                    placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}`}
                     value={formData[field.name] ?? ""}
                     onChange={(e) => handleChange(field.name, e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                )}
-
-                {field.type === "textarea" && (
-                  <textarea
-                    required={field.required}
-                    disabled={field.disabled}
-                    placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}`}
-                    value={formData[field.name] ?? ""}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
-                    rows={4}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                )}
-
-                {field.type === "select" && (
-                  <div className="relative">
-                    <select
-                      required={field.required}
-                      disabled={field.disabled}
-                      value={formData[field.name] ?? ""}
-                      onChange={(e) => handleChange(field.name, e.target.value)}
-                      className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="" disabled>
-                        {field.placeholder ?? `Select ${field.label.toLowerCase()}`}
+                    className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="" disabled>
+                      {field.placeholder ?? `Select ${field.label.toLowerCase()}`}
+                    </option>
+                    {(field.options ?? []).map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
                       </option>
-                      {(field.options ?? []).map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </span>
-                  </div>
-                )}
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              )}
 
-                {field.type === "date" && (
-                  <DatePicker
-                    id={`date-${field.name}`}
-                    placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}`}
-                    onChange={([date]) => handleChange(field.name, date)}
-                  />
-                )}
+              {field.type === "date" && (
+                <DatePicker
+                  id={`date-${field.name}`}
+                  placeholder={
+                    field.placeholder ?? `Select ${field.label.toLowerCase()}`
+                  }
+                  onChange={([date]) => handleChange(field.name, date)}
+                />
+              )}
 
-                {field.type === "toggle" && (
-                  <Switch
-                    label={field.label}
-                    defaultChecked={!!formData[field.name]}
-                    onChange={(checked) => handleChange(field.name, checked)}
-                  />
-                )}
+              {field.type === "toggle" && (
+                <Switch
+                  label={field.label}
+                  defaultChecked={!!formData[field.name]}
+                  onChange={(checked) => handleChange(field.name, checked)}
+                />
+              )}
 
-                {field.hint && <p className="text-xs text-gray-500 mt-0.5">{field.hint}</p>}
-              </div>
-            );
-          })}
-        </div>
-      )}
+              {field.hint && (
+                <p className="text-xs text-gray-500 mt-0.5">{field.hint}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
-      {/* Render children dynamically */}
+  const renderBody = () => (
+    <div
+      className={`overflow-y-auto ${padding} ${bodyClassName}`}
+      style={{ maxHeight: maxBodyHeight }}
+    >
+      {renderAutoFields()}
       {children}
-
-      {/* Blue info alert */}
       {infoAlert && (
         <div className="w-full bg-[#eff6ff] rounded-lg px-4 py-3 border border-[#bfdbfe] mt-1">
           {typeof infoAlert === "string" ? (
-            <p className="text-center text-xs font-semibold text-black">{infoAlert}</p>
+            <p className="text-center text-xs font-semibold text-black">
+              {infoAlert}
+            </p>
           ) : (
             infoAlert
           )}
         </div>
       )}
-
       {bodyFooter}
     </div>
   );
@@ -398,37 +460,39 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   const renderFooter = () => {
     if (customFooter) return customFooter;
     return (
-      <div className={`flex ${FOOTER_JUSTIFY[footerAlign]} items-center gap-3 px-8 py-5 border-t border-gray-100 ${footerClassName}`}>
+      <div
+        className={`flex ${FOOTER_JUSTIFY[footerAlign]} items-center gap-3 px-8 py-5 border-t border-gray-100 ${footerClassName}`}
+      >
         <button
           type="button"
           onClick={onClose}
-          disabled={isSubmitting}
+          disabled={busy}
           className={cancelButtonClassName ?? defaultCancelClass}
         >
           {cancelText}
         </button>
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={busy}
           className={submitButtonClassName ?? defaultSubmitClass}
         >
-          {isSubmitting ? submittingText : submitText}
+          {busy ? submittingText : submitText}
         </button>
       </div>
     );
   };
 
+  // ── Root render ───────────────────────────────────────────────────────────
+
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-      {/* Backdrop overlay */}
       {showOverlay && (
         <div
-          className={`fixed inset-0 bg-gray-900/50 transition-opacity duration-300 ${backdropClass}`}
+          className={`fixed inset-0 bg-gray-900/50 transition-opacity duration-300 ${backdropClass} ${overlayClassName}`}
           onClick={closeOnBackdropClick ? onClose : undefined}
         />
       )}
 
-      {/* Modal Container */}
       <div
         ref={modalRef}
         className={`relative z-10 w-full ${widthClass} rounded-2xl bg-white shadow-2xl m-4 flex flex-col ${modalClassName}`}
@@ -438,13 +502,13 @@ export const CustomModal: React.FC<CustomModalProps> = ({
         aria-labelledby="custom-modal-title"
       >
         {onSubmit ? (
-          <form onSubmit={handleSubmit} className="flex flex-col">
+          <form onSubmit={handleSubmit} className="flex flex-col min-h-0">
             {renderHeader()}
             {renderBody()}
             {renderFooter()}
           </form>
         ) : (
-          <div className="flex flex-col">
+          <div className="flex flex-col min-h-0">
             {renderHeader()}
             {renderBody()}
             {renderFooter()}
