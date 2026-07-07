@@ -7,6 +7,7 @@ import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
 // import { CustomModal, FieldConfig } from "../../components/ui/modal/CustomModal";
 import NotificationDropdown from "../../components/header/NotificationDropdown";
 import UserDropdown from "../../components/header/UserDropdown";
+import { PlusIcon } from "../../icons";
 // import { PlusIcon, HorizontaLDots, CheckLineIcon, CloseLineIcon } from "../../icons";
 
 
@@ -248,62 +249,53 @@ export default function RoleManagement() {
         description="Configure client roles, modules and permission controls"
       />
 
-      <div className="space-y-6">
-        {/* Header Breadcrumb and Notification/User Area */}
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            <span className="text-[#98A2B3] dark:text-gray-500">NeuroDiverse</span> &nbsp;&lt;&nbsp;{" "}
-            <span className="text-gray-750 dark:text-gray-300 font-medium">Administration</span>
-          </div>
+      {/* Custom Figma Header Breadcrumb */}
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
+        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
+      </div>
 
-          {/* Desktop Only Bell and Profile Dropdowns */}
-          <div className="hidden lg:flex items-center gap-4">
-            <NotificationDropdown />
-            <UserDropdown
-              name="Leslie Alexa"
-              fullName="Leslie Alexa"
-              email="leslie.alexa@neurodiverse.care"
-              avatar="/images/user/user-18.jpg"
-            />
-          </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="max-w-[70%]">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
+            Role Management
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {roles.length} roles configured · Use "Permissions" to edit module access per role
+          </p>
         </div>
+        <button
+          onClick={handleOpenAddModal}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-xs hover:bg-brand-600 focus:outline-hidden transition-all duration-200 shrink-0 cursor-pointer"
+        >
+          <PlusIcon className="size-4 text-white fill-current" />
+          Add Role
+        </button>
+      </div>
 
-        {/* Page Title & Subtitle + Add Role Button */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-[28px] font-bold text-[#101828] dark:text-white">
-              Role Management
-            </h1>
-            <p className="text-sm text-[#475467] dark:text-gray-400 mt-1">
-              {roles.length} roles configured · Use "Permissions" to edit module access per role
-            </p>
-          </div>
-          <button
-            onClick={handleOpenAddModal}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7DB9FB] px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#6AA8E7] focus:outline-none transition-all duration-200"
+      {/* Search Input Wrapper */}
+      <div className="relative mb-6">
+        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <svg
+            className="size-5 text-gray-400 dark:text-gray-500"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-0.5">
-              <path d="M7 1V13M1 7H13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Add Role
-          </button>
-        </div>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 shadow-premium-soft focus:border-brand-500 focus:outline-hidden focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500"
+          placeholder="Search anything here....."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
 
-        {/* Full-width Search Input Bar */}
-        <div className="relative w-full">
-          <span className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[#98A2B3]">
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19 19L13 13M15 8.5C15 12.0899 12.0899 15 8.5 15C4.91015 15 2 12.0899 2 8.5C2 4.91015 4.91015 2 8.5 2C12.0899 2 15 4.91015 15 8.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-          <input
-            type="text"
-            className="w-full rounded-2xl border border-[#E4E7EC] bg-white py-3.5 pl-12 pr-4 text-sm text-gray-900 placeholder-[#98A2B3] focus:border-[#7DB9FB] focus:outline-none focus:ring-4 focus:ring-[#7DB9FB]/10 dark:border-gray-800 dark:bg-gray-950 dark:text-white dark:placeholder-gray-500 shadow-sm"
-            placeholder="Search anything here....."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+      <div className="space-y-6">
 
         {/* Roles Table Card */}
         <div className="overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:border-gray-850 dark:bg-white/[0.02]">
