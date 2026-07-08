@@ -62,6 +62,13 @@ const getNavItems = (role: string): NavItem[] => {
         { name: "Content & CMS", path: "/masters/content-cms", pro: false },
       ],
     },
+    {
+      icon: <GroupIcon />,
+      name: "Care",
+      subItems: [
+        { name: "Children", path: "/care/children", pro: false }
+      ],
+    },
     // {
     //   icon: <CalenderIcon />,
     //   name: "Calendar",

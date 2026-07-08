@@ -28,6 +28,7 @@ import ContentCMS from "./pages/Masters/ContentCMS";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import ParentDashboard from "./pages/Dashboard/ParentDashboard";
 import ClinicAdminDashboard from "./pages/Dashboard/ClinicAdminDashboard";
+import Children from "./pages/Care/Children";
 
 export default function App() {
   return (
@@ -53,6 +54,8 @@ export default function App() {
               <Route path="/profile" element={<UserProfiles />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
+              {/* Care */}
+              <Route path="/care/children" element={<Children />} />
 
               {/* Forms */}
               <Route path="/form-elements" element={<FormElements />} />
