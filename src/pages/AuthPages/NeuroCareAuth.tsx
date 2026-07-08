@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
+import toast, { Toaster } from "react-hot-toast";
+import axiosClient from "../../api/axiosClient";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
@@ -13,10 +15,37 @@ export default function NeuroCareAuth() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [selectedRole, setSelectedRole] = useState("Parent / Guardian");
+  const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [signupError, setSignupError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [dynamicRoles, setDynamicRoles] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (activeTab === "signup" && dynamicRoles.length === 0) {
+      axiosClient.get("/role?page=1&limit=10")
+        .then((res) => {
+          if (res.data && res.data.roles) {
+             setDynamicRoles(res.data.roles);
+             const parentRole = res.data.roles.find((r: any) => r.name === "Parent/Guardian");
+             if (parentRole) {
+               setSelectedRoleId(parentRole.id);
+             }
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching roles:", err);
+        });
+    }
+  }, [activeTab]);
 
   const handleLogin = () => {
     if (email === "admin@clinic.com" && password === "password123") {
@@ -27,6 +56,62 @@ export default function NeuroCareAuth() {
       navigate("/parent-dashboard");
     } else {
       setLoginError("Invalid credentials. Use admin@clinic.com or parent@mail.com with password123");
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!signupName.trim()) {
+       setSignupError("Please enter your full name.");
+       return;
+    }
+    if (!signupEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupEmail)) {
+       setSignupError("Please enter a valid email address.");
+       return;
+    }
+    if (!signupPassword) {
+       setSignupError("Please enter a password.");
+       return;
+    }
+    if (signupPassword.length < 8) {
+       setSignupError("Password must be at least 8 characters.");
+       return;
+    }
+    if (signupPassword !== signupConfirmPassword) {
+       setSignupError("Passwords do not match.");
+       return;
+    }
+    if (!selectedRoleId && dynamicRoles.length > 0) {
+       setSignupError("Please select a role.");
+       return;
+    }
+    if (!isChecked) {
+       setSignupError("Please agree to the Terms of Service and Privacy Policy.");
+       return;
+    }
+
+    setIsLoading(true);
+    setSignupError("");
+
+    try {
+      const payload = {
+        name: signupName,
+        email: signupEmail,
+        password: signupPassword,
+        roleId: selectedRoleId
+      };
+
+      const response = await axiosClient.post("/user/register", payload);
+      if (response.data?.status === "Ok" || response.status === 201 || response.status === 200) {
+        toast.success(response.data?.message || "User registered successfully");
+        setActiveTab("signin");
+      }
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
+      setSignupError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -41,6 +126,7 @@ export default function NeuroCareAuth() {
 
   return (
     <div className="flex min-h-screen bg-white">
+      <Toaster position="top-center" />
       {/* Left Panel */}
       <div className={`hidden lg:flex w-[45%] flex-col justify-between bg-[#0a7a66] px-12 ${activeTab === 'signin' ? 'py-12' : 'py-16'} text-white overflow-y-auto`}>
         <div>
@@ -201,18 +287,53 @@ export default function NeuroCareAuth() {
               <p className="text-gray-500 text-sm mb-6">Join a child's care team on NeuroCare</p>
 
               <form className="space-y-5">
+                {signupError && <div className="text-red-500 text-sm bg-red-50 p-2 rounded">{signupError}</div>}
                 <div>
                   <Label>I am a...</Label>
                   <div className="grid grid-cols-2 gap-3 mt-1">
-                    {roles.map((role) => {
+                    {/* 1. Show Dynamic Roles First (Parent/Guardian sorted to top) */}
+                    {dynamicRoles.length > 0 && [...dynamicRoles].sort((a, b) => a.name === "Parent/Guardian" ? -1 : (b.name === "Parent/Guardian" ? 1 : 0)).map((role: any) => {
+                      const isParent = role.name === "Parent/Guardian";
+                      const icon = isParent ? "👨‍👩‍👦" : (role.name === "Therapist" ? "🤝" : "🧑‍⚕️");
+                      return (
+                      <button
+                        key={`dyn-${role.id}`}
+                        type="button"
+                        onClick={() => isParent && setSelectedRoleId(role.id)}
+                        disabled={!isParent}
+                        className={`flex items-center gap-2 px-3 py-2.5 text-sm rounded-full border transition-all ${
+                          selectedRoleId === role.id
+                            ? "border-[#0a7a66] bg-[#0a7a66]/5 text-[#0a7a66] font-medium"
+                            : "border-gray-200 text-gray-400 opacity-60"
+                        } ${!isParent ? "cursor-not-allowed opacity-50" : ""}`}
+                      >
+                        <span>{icon}</span>
+                        <span className="truncate">{role.name}</span>
+                      </button>
+                    )})}
+                    
+                    {/* 2. Show Static Roles After (Just for show, filtering out duplicates if dynamic loaded) */}
+                    {roles
+                      .filter(role => {
+                         if (dynamicRoles.length > 0) {
+                           if (role.label === "Parent / Guardian" || role.label.includes("Therapist")) return false;
+                         }
+                         return true;
+                      })
+                      .map((role) => {
                       const isParent = role.label === "Parent / Guardian";
                       return (
                       <button
-                        key={role.label}
+                        key={`static-${role.label}`}
                         type="button"
-                        onClick={() => isParent && setSelectedRole(role.label)}
+                        onClick={() => {
+                          if (dynamicRoles.length === 0 && isParent) {
+                            setSelectedRole(role.label);
+                          }
+                        }}
+                        disabled={dynamicRoles.length > 0 ? true : !isParent}
                         className={`flex items-center gap-2 px-3 py-2.5 text-sm rounded-full border transition-all ${
-                          selectedRole === role.label
+                          (selectedRole === role.label && dynamicRoles.length === 0)
                             ? "border-[#0a7a66] bg-[#0a7a66]/5 text-[#0a7a66] font-medium"
                             : "border-gray-200 text-gray-400 opacity-60 cursor-not-allowed"
                         }`}
@@ -226,12 +347,12 @@ export default function NeuroCareAuth() {
 
                 <div>
                   <Label>Full name</Label>
-                  <Input className="!rounded-full" placeholder="Dr. Reena Kapoor" />
+                  <Input className="!rounded-full" placeholder="Dr. Reena Kapoor" value={signupName} onChange={(e: any) => setSignupName(e.target.value)} />
                 </div>
 
                 <div>
-                  <Label>Work email</Label>
-                  <Input className="!rounded-full" placeholder="you@clinic.com" />
+                  <Label>Email</Label>
+                  <Input className="!rounded-full" placeholder="you@email.com" value={signupEmail} onChange={(e: any) => setSignupEmail(e.target.value)} />
                 </div>
 
                 {/* <div>
@@ -248,6 +369,8 @@ export default function NeuroCareAuth() {
                       className="!rounded-full"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      value={signupPassword}
+                      onChange={(e: any) => setSignupPassword(e.target.value)}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -269,6 +392,8 @@ export default function NeuroCareAuth() {
                       className="!rounded-full"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      value={signupConfirmPassword}
+                      onChange={(e: any) => setSignupConfirmPassword(e.target.value)}
                     />
                     <span
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -292,8 +417,13 @@ export default function NeuroCareAuth() {
                   </p>
                 </div>
 
-                <button type="button" className="w-full py-3 px-4 bg-[#0a7a66] hover:bg-[#086353] text-white rounded-full font-medium transition-colors mt-2">
-                  Create NeuroCare Account
+                <button 
+                  type="button" 
+                  onClick={handleRegister}
+                  disabled={isLoading}
+                  className="w-full py-3 px-4 bg-[#0a7a66] hover:bg-[#086353] disabled:opacity-70 text-white rounded-full font-medium transition-colors mt-2"
+                >
+                  {isLoading ? "Creating Account..." : "Create NeuroCare Account"}
                 </button>
 
                 <p className="text-center text-sm text-gray-500 mt-4">
