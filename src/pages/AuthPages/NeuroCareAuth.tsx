@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
@@ -7,11 +7,28 @@ import Checkbox from "../../components/form/input/Checkbox";
 import Button from "../../components/ui/button/Button";
 
 export default function NeuroCareAuth() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signup");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [selectedRole, setSelectedRole] = useState("Parent / Guardian");
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+
+  const handleLogin = () => {
+    if (email === "admin@clinic.com" && password === "password123") {
+      localStorage.setItem("neurocare_role", "Clinic Admin");
+      navigate("/");
+    } else if (email === "parent@mail.com" && password === "password123") {
+      localStorage.setItem("neurocare_role", "Parent / Guardian");
+      navigate("/parent-dashboard");
+    } else {
+      setLoginError("Invalid credentials. Use admin@clinic.com or parent@mail.com with password123");
+    }
+  };
 
   const roles = [
     { label: "Parent / Guardian", icon: "👨‍👩‍👦" },
@@ -120,22 +137,16 @@ export default function NeuroCareAuth() {
               <p className="text-gray-500 text-sm mb-8">Sign in to your NeuroCare account</p>
 
               <form className="space-y-5">
-                <div>
-                  <div className="relative">
-                    <select className="w-full appearance-none rounded-full border border-gray-300 bg-transparent px-4 py-3 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
-                      <option>🔑 Demo credentials</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
+                {loginError && <div className="text-red-500 text-sm bg-red-50 p-2 rounded">{loginError}</div>}
+                
                 <div>
                   <Label>Email</Label>
-                  <Input className="!rounded-full" placeholder="you@neurocare.in" />
+                  <Input 
+                    className="!rounded-full" 
+                    placeholder="you@neurocare.in" 
+                    value={email} 
+                    onChange={(e: any) => setEmail(e.target.value)} 
+                  />
                 </div>
 
                 <div>
@@ -145,6 +156,8 @@ export default function NeuroCareAuth() {
                       className="!rounded-full"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      value={password}
+                      onChange={(e: any) => setPassword(e.target.value)}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -164,7 +177,7 @@ export default function NeuroCareAuth() {
                   </div>
                 </div>
 
-                <button type="button" className="w-full py-3 px-4 bg-[#0a7a66] hover:bg-[#086353] text-white rounded-full font-medium transition-colors flex items-center justify-center gap-2">
+                <button type="button" onClick={handleLogin} className="w-full py-3 px-4 bg-[#0a7a66] hover:bg-[#086353] text-white rounded-full font-medium transition-colors flex items-center justify-center gap-2">
                   Sign In
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3.3335 8H12.6668" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

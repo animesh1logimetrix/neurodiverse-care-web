@@ -781,7 +781,7 @@ export default function ContentCMS() {
               type="button"
               onClick={() => setIsFeatured(!isFeatured)}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                isFeatured ? "bg-emerald-500" : "bg-gray-250"
+                isFeatured ? "bg-emerald-500" : "bg-gray-200"
               }`}
             >
               <span

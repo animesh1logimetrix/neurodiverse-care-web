@@ -25,6 +25,9 @@ import ManageModules from "./pages/Administration/ManageModules";
 import Permission from "./pages/Administration/Permission";
 import CategoryMaster from "./pages/Masters/CategoryMaster";
 import ContentCMS from "./pages/Masters/ContentCMS";
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import ParentDashboard from "./pages/Dashboard/ParentDashboard";
+import ClinicAdminDashboard from "./pages/Dashboard/ClinicAdminDashboard";
 
 export default function App() {
   return (
@@ -34,39 +37,45 @@ export default function App() {
         <Routes>
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
-            <Route path="/administration/staff-parents" element={<StaffParents />} />
-            <Route path="/administration/role-management" element={<RoleManagement />} />
+            <Route element={<ProtectedRoute allowedRoles={["Clinic Admin"]} />}>
+              <Route index path="/" element={<ClinicAdminDashboard />} />
+              <Route path="/administration/staff-parents" element={<StaffParents />} />
+              <Route path="/administration/role-management" element={<RoleManagement />} />
 
-            <Route path="/administration/modules" element={<ManageModules />} />
-            <Route path="/administration/permission" element={<Permission />} />
+              <Route path="/administration/modules" element={<ManageModules />} />
+              <Route path="/administration/permission" element={<Permission />} />
 
-            {/* Masters */}
-            <Route path="/masters/category-master" element={<CategoryMaster />} />
-            <Route path="/masters/content-cms" element={<ContentCMS />} />
+              {/* Masters */}
+              <Route path="/masters/category-master" element={<CategoryMaster />} />
+              <Route path="/masters/content-cms" element={<ContentCMS />} />
 
-            {/* Others Page */}
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/blank" element={<Blank />} />
+              {/* Others Page */}
+              <Route path="/profile" element={<UserProfiles />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/blank" element={<Blank />} />
 
-            {/* Forms */}
-            <Route path="/form-elements" element={<FormElements />} />
+              {/* Forms */}
+              <Route path="/form-elements" element={<FormElements />} />
 
-            {/* Tables */}
-            <Route path="/basic-tables" element={<BasicTables />} />
+              {/* Tables */}
+              <Route path="/basic-tables" element={<BasicTables />} />
 
-            {/* Ui Elements */}
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/avatars" element={<Avatars />} />
-            <Route path="/badge" element={<Badges />} />
-            <Route path="/buttons" element={<Buttons />} />
-            <Route path="/images" element={<Images />} />
-            <Route path="/videos" element={<Videos />} />
+              {/* Ui Elements */}
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/avatars" element={<Avatars />} />
+              <Route path="/badge" element={<Badges />} />
+              <Route path="/buttons" element={<Buttons />} />
+              <Route path="/images" element={<Images />} />
+              <Route path="/videos" element={<Videos />} />
 
-            {/* Charts */}
-            <Route path="/line-chart" element={<LineChart />} />
-            <Route path="/bar-chart" element={<BarChart />} />
+              {/* Charts */}
+              <Route path="/line-chart" element={<LineChart />} />
+              <Route path="/bar-chart" element={<BarChart />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["Parent / Guardian"]} />}>
+              <Route path="/parent-dashboard" element={<ParentDashboard />} />
+            </Route>
           </Route>
 
           {/* Auth Layout */}

@@ -27,59 +27,71 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-const navItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
-  },
-  {
-    icon: <GroupIcon />,
-    name: "Administration",
-    subItems: [
-      { name: "Staff & Parents", path: "/administration/staff-parents", pro: false },
-      { name: "Role Management", path: "/administration/role-management", pro: false },
-      { name: "Permissions", path: "/administration/permission", pro: false },
-      { name: "Module", path: "/administration/modules", pro: false },
-    ],
-  },
-  {
-    icon: <DocsIcon />,
-    name: "Masters",
-    subItems: [
-      { name: "Category Master", path: "/masters/category-master", pro: false },
-      { name: "Content & CMS", path: "/masters/content-cms", pro: false },
-    ],
-  },
-  {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
-  },
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
-  },
-];
+const getNavItems = (role: string): NavItem[] => {
+  if (role === "Parent / Guardian") {
+    return [
+      {
+        icon: <GridIcon />,
+        name: "Dashboard",
+        path: "/parent-dashboard",
+      }
+    ];
+  }
+
+  return [
+    {
+      icon: <GridIcon />,
+      name: "Dashboard",
+      path: "/",
+    },
+    {
+      icon: <GroupIcon />,
+      name: "Administration",
+      subItems: [
+        { name: "Staff & Parents", path: "/administration/staff-parents", pro: false },
+        { name: "Role Management", path: "/administration/role-management", pro: false },
+        { name: "Permissions", path: "/administration/permission", pro: false },
+        { name: "Module", path: "/administration/modules", pro: false },
+      ],
+    },
+    {
+      icon: <DocsIcon />,
+      name: "Masters",
+      subItems: [
+        { name: "Category Master", path: "/masters/category-master", pro: false },
+        { name: "Content & CMS", path: "/masters/content-cms", pro: false },
+      ],
+    },
+    // {
+    //   icon: <CalenderIcon />,
+    //   name: "Calendar",
+    //   path: "/calendar",
+    // },
+    {
+      icon: <UserCircleIcon />,
+      name: "User Profile",
+      path: "/profile",
+    },
+    // {
+    //   name: "Forms",
+    //   icon: <ListIcon />,
+    //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+    // },
+    // {
+    //   name: "Tables",
+    //   icon: <TableIcon />,
+    //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+    // },
+    // {
+    //   name: "Pages",
+    //   icon: <PageIcon />,
+    //   subItems: [
+    //     { name: "Blank Page", path: "/blank", pro: false },
+    //     { name: "404 Error", path: "/error-404", pro: false },
+    //   ],
+    // },
+  ];
+};
 
 const othersItems: NavItem[] = [
   {
@@ -131,10 +143,13 @@ const AppSidebar: React.FC = () => {
     [location.pathname]
   );
 
+  const role = localStorage.getItem("neurocare_role") || "Clinic Admin";
+  const currentNavItems = getNavItems(role);
+
   useEffect(() => {
     let submenuMatched = false;
     ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
+      const items = menuType === "main" ? currentNavItems : othersItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
@@ -331,8 +346,8 @@ const AppSidebar: React.FC = () => {
                 alt="Logo"
                 className="w-16 h-auto mb-1 rounded-md"
               />
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Theraverse</h1>
-              <p className="text-sm text-gray-500 font-medium">Super Admin</p>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">NeuroCare</h1>
+              <p className="text-sm text-gray-500 font-medium">{role}</p>
             </div>
           ) : (
             <img
@@ -360,7 +375,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots className="size-6" />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(currentNavItems, "main")}
             </div>
             <div className="">
               <h2
@@ -376,11 +391,11 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots />
                 )}
               </h2>
-              {renderMenuItems(othersItems, "others")}
+              {/* {renderMenuItems(othersItems, "others")} */}
             </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
+        {/*isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null*/}
       </div>
     </aside>
   );
