@@ -268,6 +268,10 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   const backdropClass = overlayBlur ? "backdrop-blur-sm" : "";
   const asteriskClass = asteriskColor === "red" ? "text-red-500" : "text-black";
   const busy = isSubmitting || isLoading;
+  const resolvedBodyMaxHeight =
+    maxBodyHeight && maxBodyHeight !== "none"
+      ? maxBodyHeight
+      : "min(70vh, calc(100vh - 2rem))";
 
   const defaultSubmitClass =
     "px-6 py-2.5 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors text-sm disabled:opacity-50 min-w-[120px] flex items-center justify-center cursor-pointer";
@@ -438,7 +442,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   const renderBody = () => (
     <div
       className={`overflow-y-auto ${padding} ${bodyClassName}`}
-      style={{ maxHeight: maxBodyHeight }}
+      style={{ maxHeight: resolvedBodyMaxHeight }}
     >
       {renderAutoFields()}
       {children}
@@ -485,7 +489,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   // ── Root render ───────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[99999] overflow-y-auto">
       {showOverlay && (
         <div
           className={`fixed inset-0 bg-gray-900/50 transition-opacity duration-300 ${backdropClass} ${overlayClassName}`}
@@ -493,14 +497,15 @@ export const CustomModal: React.FC<CustomModalProps> = ({
         />
       )}
 
-      <div
-        ref={modalRef}
-        className={`relative z-10 w-full ${widthClass} rounded-2xl bg-white shadow-2xl m-4 flex flex-col ${modalClassName}`}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="custom-modal-title"
-      >
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div
+          ref={modalRef}
+          className={`relative z-10 w-full ${widthClass} max-h-[calc(100vh-2rem)] rounded-2xl bg-white shadow-2xl m-4 flex flex-col overflow-hidden ${modalClassName}`}
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="custom-modal-title"
+        >
         {onSubmit ? (
           <form onSubmit={handleSubmit} className="flex flex-col min-h-0">
             {renderHeader()}
@@ -514,6 +519,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
             {renderFooter()}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
