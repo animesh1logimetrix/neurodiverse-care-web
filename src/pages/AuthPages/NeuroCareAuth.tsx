@@ -47,15 +47,38 @@ export default function NeuroCareAuth() {
     }
   }, [activeTab]);
 
-  const handleLogin = () => {
-    if (email === "admin@clinic.com" && password === "password123") {
-      localStorage.setItem("neurocare_role", "Clinic Admin");
-      navigate("/");
-    } else if (email === "parent@mail.com" && password === "password123") {
-      localStorage.setItem("neurocare_role", "Parent / Guardian");
-      navigate("/parent-dashboard");
-    } else {
-      setLoginError("Invalid credentials. Use admin@clinic.com or parent@mail.com with password123");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setLoginError("Please enter both email and password.");
+      return;
+    }
+
+    try {
+      setLoginError("");
+      setIsLoading(true);
+      
+      const response = await axiosClient.post("/user/login", { email, password });
+      
+      const userData = response.data.user;
+      const tokens = response.data.backendTokens;
+
+      if (tokens?.accessToken) {
+         localStorage.setItem("accessToken", tokens.accessToken);
+         localStorage.setItem("refreshToken", tokens.refreshToken);
+      }
+      
+      if (userData) {
+         localStorage.setItem("user", JSON.stringify(userData));
+         toast.success("Logged in successfully!");
+         navigate("/dashboard");
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+      const errorMsg = error.response?.data?.message || "Invalid credentials or server error.";
+      setLoginError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -263,12 +286,19 @@ export default function NeuroCareAuth() {
                   </div>
                 </div>
 
-                <button type="button" onClick={handleLogin} className="w-full py-3 px-4 bg-[#0a7a66] hover:bg-[#086353] text-white rounded-full font-medium transition-colors flex items-center justify-center gap-2">
-                  Sign In
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3.3335 8H12.6668" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M8 3.33331L12.6667 7.99998L8 12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                <button 
+                  type="button" 
+                  onClick={handleLogin} 
+                  disabled={isLoading}
+                  className="w-full py-3 px-4 bg-[#0a7a66] hover:bg-[#086353] disabled:opacity-70 text-white rounded-full font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  {isLoading ? "Signing In..." : "Sign In"}
+                  {!isLoading && (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3.3335 8H12.6668" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M8 3.33331L12.6667 7.99998L8 12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
                 </button>
 
                 <p className="text-center text-sm text-gray-500 mt-6">

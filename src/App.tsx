@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
 import NeuroCareAuth from "./pages/AuthPages/NeuroCareAuth";
@@ -29,6 +29,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import ParentDashboard from "./pages/Dashboard/ParentDashboard";
 import ClinicAdminDashboard from "./pages/Dashboard/ClinicAdminDashboard";
 import Children from "./pages/Care/Children";
+import Dashboard from "./pages/Dashboard";
 
 export default function App() {
   return (
@@ -36,33 +37,51 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
+          {/* Base Redirect */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
-            <Route element={<ProtectedRoute allowedRoles={["Clinic Admin"]} />}>
-              <Route index path="/" element={<ClinicAdminDashboard />} />
-              <Route path="/administration/staff-parents" element={<StaffParents />} />
-              <Route path="/administration/role-management" element={<RoleManagement />} />
+            <Route element={<ProtectedRoute />}>
+              {/* Dashboard Modules */}
+              <Route element={<ProtectedRoute moduleRequired="Dashboard" />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+              </Route>
 
-              <Route path="/administration/modules" element={<ManageModules />} />
-              <Route path="/administration/permission" element={<Permission />} />
+              {/* Administration Modules */}
+              <Route element={<ProtectedRoute moduleRequired="Staff & Parents" />}>
+                <Route path="/administration/staff-parents" element={<StaffParents />} />
+              </Route>
+              <Route element={<ProtectedRoute moduleRequired="Role Management" />}>
+                <Route path="/administration/role-management" element={<RoleManagement />} />
+              </Route>
+              <Route element={<ProtectedRoute moduleRequired="Module" />}>
+                <Route path="/administration/modules" element={<ManageModules />} />
+              </Route>
+              <Route element={<ProtectedRoute moduleRequired="Permissions" />}>
+                <Route path="/administration/permission" element={<Permission />} />
+              </Route>
 
               {/* Masters */}
-              <Route path="/masters/category-master" element={<CategoryMaster />} />
-              <Route path="/masters/content-cms" element={<ContentCMS />} />
+              <Route element={<ProtectedRoute moduleRequired="Category Master" />}>
+                <Route path="/masters/category-master" element={<CategoryMaster />} />
+              </Route>
+              <Route element={<ProtectedRoute moduleRequired="Content & CMS" />}>
+                <Route path="/masters/content-cms" element={<ContentCMS />} />
+              </Route>
 
-              {/* Others Page */}
+              {/* Care */}
+              <Route element={<ProtectedRoute moduleRequired="Children" />}>
+                <Route path="/care/children" element={<Children />} />
+              </Route>
+
+              {/* Others Pages (No specific backend module needed, just login) */}
               <Route path="/profile" element={<UserProfiles />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
-              {/* Care */}
-              <Route path="/care/children" element={<Children />} />
-
-              {/* Forms */}
               <Route path="/form-elements" element={<FormElements />} />
-
-              {/* Tables */}
               <Route path="/basic-tables" element={<BasicTables />} />
-
+              
               {/* Ui Elements */}
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/avatars" element={<Avatars />} />
@@ -75,17 +94,10 @@ export default function App() {
               <Route path="/line-chart" element={<LineChart />} />
               <Route path="/bar-chart" element={<BarChart />} />
             </Route>
-
-            <Route element={<ProtectedRoute allowedRoles={["Parent / Guardian"]} />}>
-              <Route path="/parent-dashboard" element={<ParentDashboard />} />
-            </Route>
           </Route>
 
           {/* Auth Layout */}
-          {/* <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} /> */}
           <Route path="/signin" element={<NeuroCareAuth />} />
-          <Route path="/signup" element={<NeuroCareAuth />} />
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />

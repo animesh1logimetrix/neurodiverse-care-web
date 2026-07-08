@@ -27,77 +27,60 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-const getNavItems = (role: string): NavItem[] => {
-  if (role === "Parent / Guardian") {
-    return [
-      {
-        icon: <GridIcon />,
-        name: "Dashboard",
-        path: "/parent-dashboard",
-      }
-    ];
+import { MODULE_CONFIG } from "../config/modulesConfig";
+
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  "Administration": <GroupIcon />,
+  "Masters": <DocsIcon />,
+  "Care": <GroupIcon />,
+  "Main": <GridIcon />
+};
+
+const getNavItems = (): NavItem[] => {
+  const userStr = localStorage.getItem("user");
+  let permissions: any[] = [];
+  try {
+    const user = JSON.parse(userStr || "{}");
+    permissions = user?.role?.permissions || [];
+  } catch (e) {
+    console.error("Failed to parse user permissions for sidebar:", e);
   }
 
-  return [
-    {
-      icon: <GridIcon />,
-      name: "Dashboard",
-      path: "/",
-    },
-    {
-      icon: <GroupIcon />,
-      name: "Administration",
-      subItems: [
-        { name: "Staff & Parents", path: "/administration/staff-parents", pro: false },
-        { name: "Role Management", path: "/administration/role-management", pro: false },
-        { name: "Permissions", path: "/administration/permission", pro: false },
-        { name: "Module", path: "/administration/modules", pro: false },
-      ],
-    },
-    {
-      icon: <DocsIcon />,
-      name: "Masters",
-      subItems: [
-        { name: "Category Master", path: "/masters/category-master", pro: false },
-        { name: "Content & CMS", path: "/masters/content-cms", pro: false },
-      ],
-    },
-    {
-      icon: <GroupIcon />,
-      name: "Care",
-      subItems: [
-        { name: "Children", path: "/care/children", pro: false }
-      ],
-    },
-    // {
-    //   icon: <CalenderIcon />,
-    //   name: "Calendar",
-    //   path: "/calendar",
-    // },
-    {
-      icon: <UserCircleIcon />,
-      name: "User Profile",
-      path: "/profile",
-    },
-    // {
-    //   name: "Forms",
-    //   icon: <ListIcon />,
-    //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-    // },
-    // {
-    //   name: "Tables",
-    //   icon: <TableIcon />,
-    //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-    // },
-    // {
-    //   name: "Pages",
-    //   icon: <PageIcon />,
-    //   subItems: [
-    //     { name: "Blank Page", path: "/blank", pro: false },
-    //     { name: "404 Error", path: "/error-404", pro: false },
-    //   ],
-    // },
-  ];
+  const categoryMap: Record<string, NavItem> = {};
+
+  // For testing purposes, if permissions are empty, you could fallback to static menu, 
+  // but let's stick to dynamic parsing to ensure it strictly follows backend
+  permissions.forEach((perm: any) => {
+    const moduleName = perm.module;
+    const config = MODULE_CONFIG[moduleName];
+    if (!config) return;
+
+    if (config.category === "Main") {
+      categoryMap[moduleName] = {
+        name: config.label,
+        icon: config.icon,
+        path: config.path
+      };
+    } else {
+      if (!categoryMap[config.category]) {
+        categoryMap[config.category] = {
+          name: config.category,
+          icon: CATEGORY_ICONS[config.category] || <BoxCubeIcon />,
+          subItems: []
+        };
+      }
+      // Ensure no duplicates
+      if (!categoryMap[config.category].subItems?.some(s => s.name === config.label)) {
+        categoryMap[config.category].subItems!.push({
+          name: config.label,
+          path: config.path,
+          pro: false
+        });
+      }
+    }
+  });
+
+  return Object.values(categoryMap);
 };
 
 const othersItems: NavItem[] = [
@@ -132,6 +115,9 @@ const othersItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
+  const userStr = localStorage.getItem("user");
+  let user = JSON.parse(userStr || "{}");
+  let role = user?.role?.name || "";
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
 
@@ -139,19 +125,15 @@ const AppSidebar: React.FC = () => {
     type: "main" | "others";
     index: number;
   } | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {}
-  );
+  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname]
   );
 
-  const role = localStorage.getItem("neurocare_role") || "Clinic Admin";
-  const currentNavItems = getNavItems(role);
+  const currentNavItems = getNavItems();
 
   useEffect(() => {
     let submenuMatched = false;
