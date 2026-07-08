@@ -7,9 +7,11 @@ import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Checkbox from "../../components/form/input/Checkbox";
 import Button from "../../components/ui/button/Button";
+import { useAuth } from "../../context/AuthContext";
 
 export default function NeuroCareAuth() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signup");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -62,13 +64,8 @@ export default function NeuroCareAuth() {
       const userData = response.data.user;
       const tokens = response.data.backendTokens;
 
-      if (tokens?.accessToken) {
-         localStorage.setItem("accessToken", tokens.accessToken);
-         localStorage.setItem("refreshToken", tokens.refreshToken);
-      }
-      
-      if (userData) {
-         localStorage.setItem("user", JSON.stringify(userData));
+      if (userData && tokens?.accessToken) {
+         login(userData, tokens);
          toast.success("Logged in successfully!");
          navigate("/dashboard");
       }

@@ -29,6 +29,8 @@ type NavItem = {
 
 import { MODULE_CONFIG } from "../config/modulesConfig";
 
+import { useAuth } from "../context/AuthContext";
+
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "Administration": <GroupIcon />,
   "Masters": <DocsIcon />,
@@ -36,11 +38,9 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "Main": <GridIcon />
 };
 
-const getNavItems = (): NavItem[] => {
-  const userStr = localStorage.getItem("user");
+const getNavItems = (user: any): NavItem[] => {
   let permissions: any[] = [];
   try {
-    const user = JSON.parse(userStr || "{}");
     permissions = user?.role?.permissions || [];
   } catch (e) {
     console.error("Failed to parse user permissions for sidebar:", e);
@@ -51,7 +51,7 @@ const getNavItems = (): NavItem[] => {
   // For testing purposes, if permissions are empty, you could fallback to static menu, 
   // but let's stick to dynamic parsing to ensure it strictly follows backend
   permissions.forEach((perm: any) => {
-    const moduleName = perm.module;
+    const moduleName = perm.Name || perm.module; // Handle both cases for safety
     const config = MODULE_CONFIG[moduleName];
     if (!config) return;
 
@@ -115,8 +115,7 @@ const othersItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
-  const userStr = localStorage.getItem("user");
-  let user = JSON.parse(userStr || "{}");
+  const { user } = useAuth();
   let role = user?.role?.name || "";
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
@@ -133,7 +132,7 @@ const AppSidebar: React.FC = () => {
     [location.pathname]
   );
 
-  const currentNavItems = getNavItems();
+  const currentNavItems = getNavItems(user);
 
   useEffect(() => {
     let submenuMatched = false;

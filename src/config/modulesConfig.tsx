@@ -22,22 +22,68 @@ export type ModuleConfig = {
 // Maps backend module string to frontend path, icon, and sidebar category
 export const MODULE_CONFIG: Record<string, ModuleConfig> = {
   "Dashboard": {
-    // Both Parent and Clinic Admin get Dashboard, logic in Sidebar will use current URL if needed
-    // but typically we can point Dashboard to "/" and let ProtectedRoute handle it.
-    path: "/", 
+    path: "/dashboard", 
     icon: <GridIcon />,
     category: "Main",
     label: "Dashboard",
   },
-  "Plans": {
-    path: "/administration/plans", // Guessing paths based on App.tsx, adjust as needed
+  "Organization": {
+    path: "/administration/organization",
+    icon: <GroupIcon />,
+    category: "Administration",
+    label: "Organization"
+  },
+  "User": {
+    path: "/administration/users",
+    icon: <UserCircleIcon />,
+    category: "Administration",
+    label: "User"
+  },
+  "Role": {
+    path: "/administration/role-management",
+    icon: <GroupIcon />,
+    category: "Administration",
+    label: "Role"
+  },
+  "Permission": {
+    path: "/administration/permission",
+    icon: <PlugInIcon />,
+    category: "Administration",
+    label: "Permission"
+  },
+  "Category": {
+    path: "/masters/category",
     icon: <DocsIcon />,
+    category: "Masters",
+    label: "Category"
+  },
+  "Organization Type": {
+    path: "/administration/organization-type",
+    icon: <GroupIcon />,
+    category: "Administration",
+    label: "Organization Type"
+  },
+  "Content & CMS": {
+    path: "/masters/content-cms",
+    icon: <PageIcon />,
+    category: "Masters",
+    label: "Content & CMS"
+  },
+  "Subscription": {
+    path: "/administration/subscription",
+    icon: <PieChartIcon />,
+    category: "Administration",
+    label: "Subscription"
+  },
+  "Plans": {
+    path: "/administration/plans",
+    icon: <ListIcon />,
     category: "Administration",
     label: "Plans",
   },
   "Audit Logs": {
     path: "/administration/audit-logs",
-    icon: <ListIcon />,
+    icon: <TableIcon />,
     category: "Administration",
     label: "Audit Logs",
   },
@@ -49,7 +95,7 @@ export const MODULE_CONFIG: Record<string, ModuleConfig> = {
   },
   "Complaints": {
     path: "/administration/complaints",
-    icon: <PieChartIcon />,
+    icon: <ListIcon />,
     category: "Administration",
     label: "Complaints",
   },
@@ -119,13 +165,7 @@ export const MODULE_CONFIG: Record<string, ModuleConfig> = {
     category: "Care",
     label: "Observation",
   },
-  // Adding the missing ones from the old static sidebar so Clinic Admins don't lose them if they get them dynamically
-  "Staff & Parents": {
-    path: "/administration/staff-parents",
-    icon: <GroupIcon />,
-    category: "Administration",
-    label: "Staff & Parents"
-  },
+  // Legacy backups just in case
   "Role Management": {
     path: "/administration/role-management",
     icon: <GroupIcon />,
@@ -134,13 +174,13 @@ export const MODULE_CONFIG: Record<string, ModuleConfig> = {
   },
   "Permissions": {
     path: "/administration/permission",
-    icon: <GroupIcon />,
+    icon: <PlugInIcon />,
     category: "Administration",
     label: "Permissions"
   },
   "Module": {
     path: "/administration/modules",
-    icon: <GroupIcon />,
+    icon: <BoxCubeIcon />,
     category: "Administration",
     label: "Module"
   },
@@ -149,11 +189,5 @@ export const MODULE_CONFIG: Record<string, ModuleConfig> = {
     icon: <DocsIcon />,
     category: "Masters",
     label: "Category Master"
-  },
-  "Content & CMS": {
-    path: "/masters/content-cms",
-    icon: <DocsIcon />,
-    category: "Masters",
-    label: "Content & CMS"
   }
 };

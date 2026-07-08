@@ -12,11 +12,10 @@ const axiosClient = axios.create({
 // Request Interceptor: attach auth tokens here
 axiosClient.interceptors.request.use(
   (config) => {
-    // Example:
-    // const token = localStorage.getItem('token');
-    // if (token && config.headers) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    const token = localStorage.getItem('accessToken');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -31,11 +30,14 @@ axiosClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Example: Global handling for 401 Unauthorized
-    // if (error.response?.status === 401) {
-    //   console.error('Session expired. Redirecting to login...');
-    //   // handle redirect or logout
-    // }
+    // Global handling for 401 Unauthorized
+    if (error.response?.status === 401) {
+      console.error('Session expired. Redirecting to login...');
+      localStorage.removeItem("user");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      window.location.href = '/signin';
+    }
     return Promise.reject(error);
   }
 );

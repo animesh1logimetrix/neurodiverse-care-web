@@ -1,35 +1,35 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router';
+import { useAuth } from "../../context/AuthContext";
 
 interface ProtectedRouteProps {
-  moduleRequired?: string; // Optional if you just want to check if they are logged in
+  moduleRequired?: string; // If provided, validates module access
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ moduleRequired }) => {
-  const userStr = localStorage.getItem('user');
+const ProtectedRoute = ({ moduleRequired }: ProtectedRouteProps) => {
+  const { isAuthenticated, user } = useAuth();
 
-  if (!userStr) {
+  // 1. Check general authentication
+  if (!isAuthenticated) {
     return <Navigate to="/signin" replace />;
   }
 
-  try {
-    const user = JSON.parse(userStr);
-    const permissions = user?.role?.permissions || [];
+  // 2. Check specific module permission if required
+  if (moduleRequired && user) {
+    const userPermissions = user.role?.permissions || [];
+    const hasAccess = userPermissions.some(
+      (perm: any) => perm.Name === moduleRequired
+    );
 
-    // If a specific module is required, check if they have it
-    if (moduleRequired) {
-      const hasAccess = permissions.some((p: any) => p.module === moduleRequired);
-      if (!hasAccess) {
-         // Fallback redirect if they don't have access to this module
-         return <Navigate to="/" replace />;
-      }
+    if (!hasAccess) {
+      // If no access, they are logged in but don't have permission for this route
+      // A common pattern is to redirect to their dashboard or show a "Not Authorized" page
+      return <Navigate to="/dashboard" replace />;
     }
-
-    return <Outlet />;
-  } catch (error) {
-    console.error("Failed to parse user data:", error);
-    return <Navigate to="/signin" replace />;
   }
+
+  // If all checks pass, render the child route
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

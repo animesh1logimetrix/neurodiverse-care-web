@@ -31,9 +31,11 @@ import ClinicAdminDashboard from "./pages/Dashboard/ClinicAdminDashboard";
 import Children from "./pages/Care/Children";
 import Dashboard from "./pages/Dashboard";
 
+import { AuthProvider } from "./context/AuthContext";
+
 export default function App() {
   return (
-    <>
+    <AuthProvider>
       <Router>
         <ScrollToTop />
         <Routes>
@@ -103,6 +105,6 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
-    </>
+    </AuthProvider>
   );
 }
