@@ -38,49 +38,105 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "Main": <GridIcon />
 };
 
-const getNavItems = (user: any): NavItem[] => {
-  let permissions: any[] = [];
-  try {
-    permissions = user?.role?.permissions || [];
-  } catch (e) {
-    console.error("Failed to parse user permissions for sidebar:", e);
+// dynamic backend based commented for now as modules are not finalized
+// const getNavItems = (user: any): NavItem[] => {
+//   let permissions: any[] = [];
+//   try {
+//     permissions = user?.role?.permissions || [];
+//   } catch (e) {
+//     console.error("Failed to parse user permissions for sidebar:", e);
+//   }
+
+//   const categoryMap: Record<string, NavItem> = {};
+
+//   // For testing purposes, if permissions are empty, you could fallback to static menu, 
+//   // but let's stick to dynamic parsing to ensure it strictly follows backend
+//   permissions.forEach((perm: any) => {
+//     const moduleName = perm.Name || perm.module; // Handle both cases for safety
+//     const config = MODULE_CONFIG[moduleName];
+//     if (!config) return;
+
+//     if (config.category === "Main") {
+//       categoryMap[moduleName] = {
+//         name: config.label,
+//         icon: config.icon,
+//         path: config.path
+//       };
+//     } else {
+//       if (!categoryMap[config.category]) {
+//         categoryMap[config.category] = {
+//           name: config.category,
+//           icon: CATEGORY_ICONS[config.category] || <BoxCubeIcon />,
+//           subItems: []
+//         };
+//       }
+//       // Ensure no duplicates
+//       if (!categoryMap[config.category].subItems?.some(s => s.name === config.label)) {
+//         categoryMap[config.category].subItems!.push({
+//           name: config.label,
+//           path: config.path,
+//           pro: false
+//         });
+//       }
+//     }
+//   });
+
+//   return Object.values(categoryMap);
+// };
+
+const getNavItems = (role: string): NavItem[] => {
+  const isParent = role === "Parent/Guardian" || role === "Parent / Guardian";
+
+  if (isParent) {
+    return [
+      {
+        name: "Dashboard",
+        icon: <GridIcon />,
+        path: "/dashboard"
+      },
+      {
+        name: "Care",
+        icon: <GroupIcon />,
+        subItems: [
+          { name: "Children", path: "/care/children", pro: false },
+        ]
+      }
+    ];
   }
 
-  const categoryMap: Record<string, NavItem> = {};
-
-  // For testing purposes, if permissions are empty, you could fallback to static menu, 
-  // but let's stick to dynamic parsing to ensure it strictly follows backend
-  permissions.forEach((perm: any) => {
-    const moduleName = perm.Name || perm.module; // Handle both cases for safety
-    const config = MODULE_CONFIG[moduleName];
-    if (!config) return;
-
-    if (config.category === "Main") {
-      categoryMap[moduleName] = {
-        name: config.label,
-        icon: config.icon,
-        path: config.path
-      };
-    } else {
-      if (!categoryMap[config.category]) {
-        categoryMap[config.category] = {
-          name: config.category,
-          icon: CATEGORY_ICONS[config.category] || <BoxCubeIcon />,
-          subItems: []
-        };
-      }
-      // Ensure no duplicates
-      if (!categoryMap[config.category].subItems?.some(s => s.name === config.label)) {
-        categoryMap[config.category].subItems!.push({
-          name: config.label,
-          path: config.path,
-          pro: false
-        });
-      }
+  // Otherwise Clinic Admin / Default
+  return [
+    {
+      name: "Dashboard",
+      icon: <GridIcon />,
+      path: "/dashboard"
+    },
+    {
+      name: "Administration",
+      icon: <GroupIcon />,
+      subItems: [
+        { name: "Staff & Parents", path: "/administration/staff-parents", pro: false },
+        { name: "Role Management", path: "/administration/role-management", pro: false },
+        { name: "Modules", path: "/administration/modules", pro: false },
+        { name: "Permissions", path: "/administration/permission", pro: false },
+      ]
+    },
+    {
+      name: "Masters",
+      icon: <DocsIcon />,
+      subItems: [
+        { name: "Category Master", path: "/masters/category-master", pro: false },
+        { name: "Content & CMS", path: "/masters/content-cms", pro: false },
+      ]
+    },
+    {
+      name: "Care",
+      icon: <GroupIcon />,
+      subItems: [
+        { name: "Children", path: "/care/children", pro: false },
+      ]
     }
-  });
-
-  return Object.values(categoryMap);
+  ];
 };
 
 const othersItems: NavItem[] = [
@@ -116,7 +172,8 @@ const othersItems: NavItem[] = [
 
 const AppSidebar: React.FC = () => {
   const { user } = useAuth();
-  let role = user?.role?.name || "";
+  // let role = user?.role?.name || "";
+  let role = user?.role?.name || "Clinic Admin";
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
 
@@ -132,7 +189,8 @@ const AppSidebar: React.FC = () => {
     [location.pathname]
   );
 
-  const currentNavItems = getNavItems(user);
+  // const currentNavItems = getNavItems(user);
+  const currentNavItems = getNavItems(role);
 
   useEffect(() => {
     let submenuMatched = false;
