@@ -1,11 +1,116 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import CustomModal from "../ui/modal/CustomModal";
+import Input from "../form/input/InputField";
+import Select from "../form/Select";
+import DatePicker from "../form/date-picker";
+import Label from "../form/Label";
 
 export default function DiagnosesTab() {
   const [openStates, setOpenStates] = useState<Record<number, boolean>>({
     0: true, // First item open by default based on image
   });
-  const [selectedDiagnosisIndex, setSelectedDiagnosisIndex] = useState<number | null>(null);
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | 'add' | null>(null);
+  const [activeDiagnosisIndex, setActiveDiagnosisIndex] = useState<number | null>(null);
+
+  const allIepGoals = [
+    "Improve social communication skills",
+    "Increase independent play",
+    "Reduce repetitive behaviors",
+    "Enhance daily living skills"
+  ];
+  const [selectedIepGoals, setSelectedIepGoals] = useState<string[]>([
+    "Improve social communication skills",
+    "Increase independent play",
+    "Reduce repetitive behaviors",
+    "Enhance daily living skills"
+  ]);
+
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleGoalSelect = (val: string) => {
+    if (val && !selectedIepGoals.includes(val)) {
+      setSelectedIepGoals(prev => [...prev, val]);
+    }
+  };
+
+  const removeGoal = (goal: string) => {
+    setSelectedIepGoals(prev => prev.filter(g => g !== goal));
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setUploadedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const [formData, setFormData] = useState({
+    title: "",
+    icd10: "",
+    severity: "",
+    status: "",
+    diagnosedDate: "",
+    reviewDate: "",
+    by: "",
+    notes: ""
+  });
+
+  const updateForm = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const openViewModal = (index: number) => {
+    setActiveDiagnosisIndex(index);
+    setModalMode('view');
+  };
+
+  const openEditModal = (index: number) => {
+    setActiveDiagnosisIndex(index);
+    const item = diagnoses[index];
+    setFormData({
+      title: item.title,
+      icd10: "F84.0",
+      severity: item.severity,
+      status: item.status,
+      diagnosedDate: item.diagnosedDate,
+      reviewDate: "Sep 15, 2023",
+      by: item.by,
+      notes: item.notes
+    });
+    setSelectedIepGoals([
+      "Improve social communication skills",
+      "Increase independent play",
+      "Reduce repetitive behaviors",
+      "Enhance daily living skills"
+    ]);
+    setModalMode('edit');
+  };
+
+  const openAddModal = () => {
+    setActiveDiagnosisIndex(null);
+    setFormData({
+      title: "",
+      icd10: "",
+      severity: "",
+      status: "",
+      diagnosedDate: "",
+      reviewDate: "",
+      by: "",
+      notes: ""
+    });
+    setSelectedIepGoals([
+      "Improve social communication skills",
+      "Increase independent play",
+      "Reduce repetitive behaviors",
+      "Enhance daily living skills"
+    ]);
+    setModalMode('add');
+  };
+
+  const closeModal = () => {
+    setModalMode(null);
+    setActiveDiagnosisIndex(null);
+  };
 
   const toggleAccordion = (index: number) => {
     setOpenStates((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -54,7 +159,10 @@ export default function DiagnosesTab() {
     <div className="space-y-4">
       {/* Action Bar */}
       <div className="flex justify-end">
-        <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
+        <button 
+          onClick={openAddModal}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+        >
           + Add Diagnoses
         </button>
       </div>
@@ -105,7 +213,7 @@ export default function DiagnosesTab() {
                       className="hover:text-gray-600"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedDiagnosisIndex(index);
+                        openViewModal(index);
                       }}
                     >
                       <svg
@@ -151,14 +259,20 @@ export default function DiagnosesTab() {
                     <p className="text-sm text-gray-600 mb-4">{item.notes}</p>
 
                     <div className="flex items-center gap-3">
-                      <button className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                      <button 
+                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(index);
+                        }}
+                      >
                         Edit diagnosis
                       </button>
                       <button 
                         className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedDiagnosisIndex(index);
+                          openViewModal(index);
                         }}
                       >
                         View linked IEP goals
@@ -180,16 +294,16 @@ export default function DiagnosesTab() {
 
       {/* Diagnosis Details Modal */}
       <CustomModal 
-        isOpen={selectedDiagnosisIndex !== null} 
-        onClose={() => setSelectedDiagnosisIndex(null)}
+        isOpen={modalMode === 'view' && activeDiagnosisIndex !== null} 
+        onClose={closeModal}
         title="Diagnosis Details"
         maxWidth="max-w-3xl"
         maxBodyHeight="80vh"
         padding="p-0"
         customFooter={<></>}
       >
-        {selectedDiagnosisIndex !== null && (() => {
-          const item = diagnoses[selectedDiagnosisIndex];
+        {modalMode === 'view' && activeDiagnosisIndex !== null && (() => {
+          const item = diagnoses[activeDiagnosisIndex];
           return (
             <div className="flex flex-col">
               <div className="p-6 pt-8">
@@ -306,6 +420,184 @@ export default function DiagnosesTab() {
             </div>
           );
         })()}
+      </CustomModal>
+
+      {/* Add / Edit Diagnosis Modal */}
+      <CustomModal
+        isOpen={modalMode === 'add' || modalMode === 'edit'}
+        onClose={closeModal}
+        title={modalMode === 'add' ? "Add Diagnosis" : "Edit Diagnosis"}
+        maxWidth="max-w-3xl"
+        customFooter={<></>}
+      >
+        <div>
+          <h3 className="text-gray-800 font-semibold mb-6">Diagnosis Information</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-6">
+            <div>
+              <Label>Diagnosis Name *</Label>
+              <Select 
+                key={`title-${formData.title}`}
+                defaultValue={formData.title}
+                options={[{ value: 'Autism Spectrum Disorder', label: 'Autism Spectrum Disorder' }]}
+                onChange={(val) => updateForm('title', val)}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div>
+              <Label>ICD-10 Code *</Label>
+              <Input value={formData.icd10} onChange={(e) => updateForm('icd10', e.target.value)} placeholder="Enter code" />
+            </div>
+
+            <div>
+              <Label>Severity Level *</Label>
+              <Select 
+                key={`severity-${formData.severity}`}
+                defaultValue={formData.severity}
+                options={[
+                  { value: 'Mild', label: 'Mild' },
+                  { value: 'Moderate', label: 'Moderate' },
+                  { value: 'Severe', label: 'Severe' }
+                ]}
+                onChange={(val) => updateForm('severity', val)}
+                placeholder="Select"
+              />
+            </div>
+
+            <div>
+              <Label>Status*</Label>
+              <Select 
+                key={`status-${formData.status}`}
+                defaultValue={formData.status}
+                options={[
+                  { value: 'Confirmed', label: 'Confirmed' },
+                  { value: 'Suspected', label: 'Suspected' }
+                ]}
+                onChange={(val) => updateForm('status', val)}
+                placeholder="Select"
+              />
+            </div>
+
+            <div>
+              <Label>Diagnosis Date*</Label>
+              <DatePicker 
+                key={`diag-date-${formData.diagnosedDate}`}
+                id="diagnosedDate"
+                defaultDate={formData.diagnosedDate}
+                onChange={(dates) => updateForm('diagnosedDate', dates[0]?.toString() || '')} 
+                placeholder="Select" 
+              />
+            </div>
+
+            <div>
+              <Label>Review Date</Label>
+              <DatePicker 
+                key={`rev-date-${formData.reviewDate}`}
+                id="reviewDate"
+                defaultDate={formData.reviewDate}
+                onChange={(dates) => updateForm('reviewDate', dates[0]?.toString() || '')} 
+                placeholder="Select" 
+              />
+            </div>
+
+            <div>
+              <Label>Diagnosed By*</Label>
+              <Select 
+                key={`by-${formData.by}`}
+                defaultValue={formData.by}
+                options={[{ value: 'Dr. Reena Kapoor', label: 'Dr. Reena Kapoor' }]}
+                onChange={(val) => updateForm('by', val)}
+                placeholder="Select"
+              />
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <Label>Clinical Notes*</Label>
+            <Input type="text" value={formData.notes} onChange={(e) => updateForm('notes', e.target.value)} placeholder="Enter Note" />
+          </div>
+
+          <div className="mb-8">
+            <Label>Select IEP Goals to link with this diagnosis</Label>
+            <div className="mb-4">
+              <Select 
+                key={selectedIepGoals.length}
+                options={allIepGoals
+                  .filter(goal => !selectedIepGoals.includes(goal))
+                  .map(goal => ({ value: goal, label: goal }))}
+                onChange={handleGoalSelect}
+                placeholder="Select an IEP Goal"
+              />
+            </div>
+            {selectedIepGoals.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {selectedIepGoals.map((goal, idx) => (
+                  <div key={idx} className="bg-[#e5fcf0] text-[#16a34a] text-xs font-semibold px-4 py-2 rounded-md flex justify-between items-center">
+                    {goal}
+                    <button type="button" onClick={() => removeGoal(goal)} className="text-[#16a34a] hover:text-green-700 font-bold ml-2">X</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-sm font-bold text-gray-800 mb-3">Reports & Documents</h3>
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors"
+            >
+              <svg className="w-6 h-6 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              <p className="text-sm text-gray-500">
+                Drag & drop or <span className="text-[#60a5fa] font-medium">browse files</span> Jpeg, Png
+              </p>
+            </div>
+            <input 
+              type="file" 
+              multiple 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={handleFileSelect} 
+              accept="image/jpeg, image/png"
+            />
+            {uploadedFiles.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {uploadedFiles.map((file, idx) => (
+                  <div key={idx} className="text-xs bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md flex items-center gap-2">
+                    {file.name}
+                    <button 
+                      type="button" 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setUploadedFiles(prev => prev.filter((_, i) => i !== idx)); 
+                      }} 
+                      className="text-gray-400 hover:text-red-500 font-bold"
+                    >
+                      X
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center gap-4 mt-10">
+            <button
+              onClick={closeModal}
+              className="px-8 py-2 text-sm font-bold text-gray-600 bg-[#e2e8f0] rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={closeModal}
+              className="px-8 py-2 text-sm font-bold text-white bg-[#7dd3fc] rounded-lg hover:bg-[#38bdf8] transition-colors"
+            >
+              Save Diagnosis
+            </button>
+          </div>
+
+        </div>
       </CustomModal>
     </div>
   );
