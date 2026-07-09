@@ -218,7 +218,7 @@ export default function DiagnosesTab() {
                       <li className="flex gap-2"><span>•</span> Reduce repetitive behaviors</li>
                       <li className="flex gap-2"><span>•</span> Enhance daily living skills</li>
                     </ul>
-                    <button className="text-sm font-medium text-gray-600 border border-gray-200 rounded-md px-4 py-2 hover:bg-gray-50 transition-colors">
+                    <button className="text-sm font-medium text-gray-600 border border-[#ea580c] rounded-md px-4 py-2 hover:bg-orange-50 transition-colors">
                       View All IEP Goals
                     </button>
                   </div>
@@ -266,37 +266,37 @@ export default function DiagnosesTab() {
                 {/* Row 3: History */}
                 <div className="pt-6 border-t border-gray-100">
                   <h3 className="text-sm font-semibold text-gray-700 mb-4">History</h3>
-                  <div className="space-y-4">
-                    <div className="flex gap-4">
-                      <div className="flex flex-col items-center w-4 pt-1.5">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                        <div className="w-px h-full bg-gray-200 my-1" />
-                      </div>
-                      <div className="w-32 text-sm text-gray-500 pt-0.5 shrink-0">Sep 15, 2022</div>
-                      <div className="pt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <p className="text-sm text-gray-800">Diagnosis confirmed</p>
-                        <p className="text-xs text-gray-400">By Dr. Reena Kapoor</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <div className="flex flex-col items-center w-4 pt-1.5">
-                        <div className="w-2 h-2 rounded-full bg-red-500" />
-                        <div className="w-px h-full bg-gray-200 my-1" />
-                      </div>
-                      <div className="w-32 text-sm text-gray-500 pt-0.5 shrink-0">Aug 28, 2022</div>
-                      <div className="pt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <p className="text-sm text-gray-800">Reports added</p>
-                        <p className="text-xs text-gray-400">MRI Brain Scan, EEG Report</p>
+                  <div className="relative pt-2 pl-1">
+                    <div className="absolute left-[8px] top-4 bottom-4 w-px bg-gray-200" />
+                    <div className="absolute left-[176px] top-4 bottom-4 w-px bg-gray-200" />
+                    
+                    <div className="flex items-center gap-8 mb-6 relative z-10">
+                      <div className="w-2 h-2 rounded-full bg-[#10b981] ring-4 ring-white shrink-0" />
+                      <div className="w-24 text-sm text-[#64748b] shrink-0">Sep 15, 2022</div>
+                      <div className="w-2 h-2 rounded-full bg-[#10b981] ring-4 ring-white shrink-0" />
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <p className="text-sm text-[#334155]">Diagnosis confirmed</p>
+                        <p className="text-xs text-[#64748b]">By Dr. Reena Kapoor</p>
                       </div>
                     </div>
-                    <div className="flex gap-4">
-                      <div className="flex flex-col items-center w-4 pt-1.5">
-                        <div className="w-2 h-2 rounded-full bg-blue-600" />
+                    
+                    <div className="flex items-center gap-8 mb-6 relative z-10">
+                      <div className="w-2 h-2 rounded-full bg-[#ef4444] ring-4 ring-white shrink-0" />
+                      <div className="w-24 text-sm text-[#64748b] shrink-0">Aug 28, 2022</div>
+                      <div className="w-2 h-2 rounded-full bg-[#ef4444] ring-4 ring-white shrink-0" />
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <p className="text-sm text-[#334155]">Reports added</p>
+                        <p className="text-xs text-[#64748b]">MRI Brain Scan, EEG Report</p>
                       </div>
-                      <div className="w-32 text-sm text-gray-500 pt-0.5 shrink-0">Jul 10, 2022</div>
-                      <div className="pt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <p className="text-sm text-gray-800">Initial assessment completed</p>
-                        <p className="text-xs text-gray-400">Developmental Assessment uploaded</p>
+                    </div>
+                    
+                    <div className="flex items-center gap-8 relative z-10">
+                      <div className="w-2 h-2 rounded-full bg-[#2563eb] ring-4 ring-white shrink-0" />
+                      <div className="w-24 text-sm text-[#64748b] shrink-0">Jul 10, 2022</div>
+                      <div className="w-2 h-2 rounded-full bg-[#2563eb] ring-4 ring-white shrink-0" />
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <p className="text-sm text-[#334155]">Initial assessment completed</p>
+                        <p className="text-xs text-[#64748b]">Developmental Assessment uploaded</p>
                       </div>
                     </div>
                   </div>
