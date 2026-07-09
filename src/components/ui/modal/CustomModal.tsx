@@ -90,7 +90,7 @@ export interface CustomModalProps {
   /** Ordered list of field definitions (optional – uses auto form renderer) */
   fields?: FieldConfig[];
   /** Called with the collected form values on submit (optional) */
-  onSubmit?: (formData: Record<string, any>) => Promise<void> | void;
+  onSubmit?: (formData: Record<string, any>) => Promise<void | boolean> | void | boolean;
   /** Fully dynamic body content — renders any ReactNode */
   children?: ReactNode;
   /** Blue informational alert rendered below the fields / children */
@@ -257,8 +257,10 @@ export const CustomModal: React.FC<CustomModalProps> = ({
     if (!onSubmit) return;
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
-      onClose();
+      const result = await onSubmit(formData);
+      if (result !== false) {
+        onClose();
+      }
     } catch (err) {
       console.error("[CustomModal] submit error:", err);
     } finally {

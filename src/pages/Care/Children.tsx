@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { Link } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import { PlusIcon, UserIcon, CheckLineIcon, AlertIcon, TimeIcon } from "../../icons";
 import { CustomModal } from "../../components/ui/modal/CustomModal";
+import DatePicker from "../../components/form/date-picker";
 
 // Mock Data for the Cards
 const baseChild = {
@@ -24,11 +25,29 @@ const childrenData = Array.from({ length: 6 }, (_, i) => ({ ...baseChild, id: i 
 export default function Children() {
   const [activeTab, setActiveTab] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [children, setChildren] = useState(childrenData);
+  const [childForm, setChildForm] = useState({
+    fullName: "",
+    age: "",
+    gender: "",
+    address: "",
+    diagnoses: "",
+    bloodGroup: "",
+    motherName: "",
+    fatherName: "",
+    allergies: "",
+    school: "",
+    notes: "",
+  });
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+  const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
 
   const tabs = ["All", "ASD", "ADHD", "Speech", "Alerts"];
 
   // Filter children based on selected tab
-  const filteredChildren = childrenData.filter((child) => {
+  const filteredChildren = children.filter((child) => {
     if (activeTab === "All") return true;
     if (activeTab === "Alerts") return child.pendingAction.length > 0;
     // Match tab keyword against any tag label (case-insensitive)
@@ -39,6 +58,77 @@ export default function Children() {
 
   const totalGoals = filteredChildren.reduce((sum, c) => sum + c.metrics.activeGoals, 0);
   const needAttention = filteredChildren.filter((c) => c.pendingAction.length > 0).length;
+
+  const validateChildForm = () => {
+    const errors: Record<string, string> = {};
+    if (!childForm.fullName.trim()) errors.fullName = "Full name is required.";
+    if (!childForm.age.trim()) errors.age = "Date of birth is required.";
+    if (!childForm.gender) errors.gender = "Gender is required.";
+    if (!childForm.address.trim()) errors.address = "Address is required.";
+    if (!childForm.diagnoses) errors.diagnoses = "Diagnoses is required.";
+    if (!childForm.bloodGroup) errors.bloodGroup = "Blood group is required.";
+    if (!childForm.motherName.trim()) errors.motherName = "Mother's name is required.";
+    if (!childForm.fatherName.trim()) errors.fatherName = "Father's name is required.";
+    if (!childForm.school.trim()) errors.school = "School is required.";
+    return errors;
+  };
+
+  const handleChildFormChange = (field: string, value: string) => {
+    setChildForm((prev) => ({ ...prev, [field]: value }));
+    setFormErrors((prev) => ({ ...prev, [field]: "" }));
+    setSubmitMessage(null);
+    setSubmitStatus(null);
+  };
+
+  const handlePhotoChange = (file: File | null) => {
+    setSelectedPhoto(file);
+    setSubmitMessage(null);
+    setSubmitStatus(null);
+  };
+
+  const handleAddChildSubmit = (_formData?: Record<string, any>) => {
+    const errors = validateChildForm();
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setSubmitMessage(null);
+      setSubmitStatus("error");
+      return false;
+    }
+
+    const newChild = {
+      id: children.length + 1,
+      name: childForm.fullName,
+      ageLoc: childForm.age,
+      mrn: `NC-2025-00${children.length + 1}`,
+      status: "Active",
+      pendingAction: "New child added",
+      tags: [
+        { label: childForm.diagnoses || "No diagnosis", color: "bg-blue-100 text-blue-500" },
+      ],
+      metrics: { activeGoals: 0, achieved: 0, providers: 0 },
+      nextAppointment: "Not scheduled",
+    };
+
+    setChildren((prev) => [newChild, ...prev]);
+    setSelectedPhoto(null);
+    setSubmitMessage("Child added successfully.");
+    setSubmitStatus("success");
+    setChildForm({
+      fullName: "",
+      age: "",
+      gender: "",
+      address: "",
+      diagnoses: "",
+      bloodGroup: "",
+      motherName: "",
+      fatherName: "",
+      allergies: "",
+      school: "",
+      notes: "",
+    });
+    setIsModalOpen(false);
+    return undefined;
+  };
 
   return (
     <>
@@ -236,6 +326,7 @@ export default function Children() {
         submitText="Add Child"
         maxBodyHeight="70vh"
         modalClassName="max-h-[90vh]"
+        onSubmit={handleAddChildSubmit}
         customFooter={
           <div className="flex items-center justify-center gap-3 px-8 py-5 border-t border-gray-100">
             <button
@@ -246,8 +337,7 @@ export default function Children() {
               Cancel
             </button>
             <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
+              type="submit"
               className="px-6 py-2.5 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors text-sm cursor-pointer min-w-[120px]"
             >
               Add Child
@@ -255,7 +345,6 @@ export default function Children() {
           </div>
         }
       >
-        <form onSubmit={(e) => { e.preventDefault(); setIsModalOpen(false); }}>
           <div className="grid grid-cols-2 gap-x-6 gap-y-5 mb-5">
             {/* Full Name */}
             <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
@@ -264,10 +353,13 @@ export default function Children() {
               </label>
               <input
                 type="text"
-                required
+                value={childForm.fullName}
+                onChange={(e) => handleChildFormChange("fullName", e.target.value)}
+                // required
                 placeholder="Enter full name"
                 className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
               />
+              {formErrors.fullName && <p className="mt-1 text-xs text-red-600">{formErrors.fullName}</p>}
             </div>
 
             {/* Age */}
@@ -275,18 +367,17 @@ export default function Children() {
               <label className="block text-xs font-bold text-black">
                 Age <span className="text-black">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  placeholder="DD/MM/YYYY"
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-                />
-                <svg className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-              </div>
+              <div>
+              <DatePicker
+                id="add-child-dob"
+                placeholder="Select date"
+                defaultDate={childForm.age || undefined}
+                onChange={([dates], currentDateString) =>
+                  handleChildFormChange("age", currentDateString || "")
+                }
+              />
+              {formErrors.age && <p className="mt-1 text-xs text-red-600">{formErrors.age}</p>}
+            </div>
             </div>
 
             {/* Gender */}
@@ -296,7 +387,9 @@ export default function Children() {
               </label>
               <div className="relative">
                 <select
-                  required
+                  value={childForm.gender}
+                  onChange={(e) => handleChildFormChange("gender", e.target.value)}
+                  // required
                   className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
                 >
                   <option value="">Select gender</option>
@@ -304,6 +397,7 @@ export default function Children() {
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
+                {formErrors.gender && <p className="mt-1 text-xs text-red-600">{formErrors.gender}</p>}
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -319,10 +413,13 @@ export default function Children() {
               </label>
               <input
                 type="text"
-                required
+                value={childForm.address}
+                onChange={(e) => handleChildFormChange("address", e.target.value)}
+                // required
                 placeholder="Enter address"
                 className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
               />
+              {formErrors.address && <p className="mt-1 text-xs text-red-600">{formErrors.address}</p>}
             </div>
 
             {/* Diagnoses */}
@@ -332,7 +429,9 @@ export default function Children() {
               </label>
               <div className="relative">
                 <select
-                  required
+                  value={childForm.diagnoses}
+                  onChange={(e) => handleChildFormChange("diagnoses", e.target.value)}
+                  // required
                   className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
                 >
                   <option value="">Select diagnoses</option>
@@ -341,6 +440,7 @@ export default function Children() {
                   <option value="Sensory Processing Disorder">Sensory Processing Disorder</option>
                   <option value="Speech Impairment">Speech Impairment</option>
                 </select>
+                {formErrors.diagnoses && <p className="mt-1 text-xs text-red-600">{formErrors.diagnoses}</p>}
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -356,7 +456,9 @@ export default function Children() {
               </label>
               <div className="relative">
                 <select
-                  required
+                  value={childForm.bloodGroup}
+                  onChange={(e) => handleChildFormChange("bloodGroup", e.target.value)}
+                  // required
                   className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
                 >
                   <option value="">Select blood group</option>
@@ -369,6 +471,7 @@ export default function Children() {
                   <option value="O+">O+</option>
                   <option value="O-">O-</option>
                 </select>
+                {formErrors.bloodGroup && <p className="mt-1 text-xs text-red-600">{formErrors.bloodGroup}</p>}
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -384,10 +487,13 @@ export default function Children() {
               </label>
               <input
                 type="text"
-                required
+                value={childForm.motherName}
+                onChange={(e) => handleChildFormChange("motherName", e.target.value)}
+                // required
                 placeholder="Enter mother's name"
                 className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
               />
+              {formErrors.motherName && <p className="mt-1 text-xs text-red-600">{formErrors.motherName}</p>}
             </div>
 
             {/* Father's Name */}
@@ -397,10 +503,13 @@ export default function Children() {
               </label>
               <input
                 type="text"
-                required
+                value={childForm.fatherName}
+                onChange={(e) => handleChildFormChange("fatherName", e.target.value)}
+                // required
                 placeholder="Enter father's name"
                 className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
               />
+              {formErrors.fatherName && <p className="mt-1 text-xs text-red-600">{formErrors.fatherName}</p>}
             </div>
 
             {/* Allergies */}
@@ -410,6 +519,8 @@ export default function Children() {
               </label>
               <input
                 type="text"
+                value={childForm.allergies}
+                onChange={(e) => handleChildFormChange("allergies", e.target.value)}
                 placeholder="Enter allergies"
                 className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
               />
@@ -422,10 +533,13 @@ export default function Children() {
               </label>
               <input
                 type="text"
-                required
+                value={childForm.school}
+                onChange={(e) => handleChildFormChange("school", e.target.value)}
+                // required
                 placeholder="Enter school"
                 className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
               />
+              {formErrors.school && <p className="mt-1 text-xs text-red-600">{formErrors.school}</p>}
             </div>
           </div>
 
@@ -436,18 +550,30 @@ export default function Children() {
             </label>
             <input
               type="text"
+              value={childForm.notes}
+              onChange={(e) => handleChildFormChange("notes", e.target.value)}
               placeholder="Enter notes"
               className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
             />
           </div>
+          {submitMessage && isModalOpen && (
+            <div className={`mb-4 rounded-lg px-4 py-3 text-sm ${submitStatus === "success" ? "bg-emerald-50 border border-emerald-100 text-emerald-800" : "bg-red-50 border border-red-100 text-red-800"}`}>
+              {submitMessage}
+            </div>
+          )}
 
           {/* Upload Photo (Full Width) */}
           <div className="flex flex-col gap-1.5">
             <label className="block text-xs font-bold text-black">
               Upload Photo
             </label>
-            <div className="border border-dashed border-gray-300 rounded-lg h-11 bg-white hover:bg-gray-50 transition-colors cursor-pointer relative flex items-center justify-center gap-2 px-4">
-              <input type="file" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" accept="image/jpeg,image/png" />
+            <div className="border border-dashed border-gray-300 rounded-lg min-h-[88px] bg-white hover:bg-gray-50 transition-colors cursor-pointer relative flex items-center justify-center gap-2 px-4 py-4">
+              <input
+                type="file"
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                accept="image/jpeg,image/png"
+                onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)}
+              />
               <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
@@ -455,8 +581,10 @@ export default function Children() {
                 Drag & drop or <span className="text-brand-500 font-semibold">browse files</span> Jpeg, Png
               </p>
             </div>
+            {selectedPhoto && (
+              <p className="text-sm text-gray-600">Selected file: {selectedPhoto.name}</p>
+            )}
           </div>
-        </form>
       </CustomModal>
     </>
   );

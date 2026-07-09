@@ -1,489 +1,706 @@
+import React from "react";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import PageMeta from "../../components/common/PageMeta";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
 
 // ─── SVG Icons ─────────────────────────────────────────────────────────────
 
-function BuildingIcon({ className }: { className?: string }) {
+function AlertTriangleIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="2" width="16" height="20" rx="2" />
-      <line x1="9" y1="22" x2="9" y2="16" /><line x1="15" y1="22" x2="15" y2="16" /><line x1="9" y1="16" x2="15" y2="16" />
-      <path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M16 10h.01M8 10h.01M8 14h.01M12 14h.01M16 14h.01" />
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
   );
 }
+
 function UsersIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   );
 }
+
 function TargetIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
-    </svg>
-  );
-}
-function RupeeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 3h12M6 8h12M6 13h8.5a3.5 3.5 0 1 0 0-7H10M14.5 13L6 21" />
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
     </svg>
   );
 }
 
 export default function ClinicAdminDashboard() {
 
-  // ── Chart 1: Users By Role (semi-donut) ────────────────────────────────────
-  const roleOptions: ApexOptions = {
-    chart: { type: "donut", fontFamily: "Outfit, sans-serif", sparkline: { enabled: true } },
-    plotOptions: {
-      pie: { startAngle: -90, endAngle: 90, offsetY: 40, donut: { size: "70%" } }
+  // ── Chart 1: Sessions This Week (Line) ────────────────────────────────────
+  const sessionsWeekOptions: ApexOptions = {
+    chart: {
+      type: "line",
+      toolbar: { show: false },
+      fontFamily: "Outfit, sans-serif",
+      sparkline: { enabled: false },
+      parentHeightOffset: 0
     },
-    colors: ["#60a5fa", "#f59e0b", "#10b981", "#f87171", "#facc15"],
-    labels: ["Parents", "Therapists", "Admins", "School", "Psychologists"],
-    dataLabels: { enabled: false },
-    legend: { show: false },
-    stroke: { width: 0 },
-    tooltip: {
-      enabled: true,
-      custom: ({ series, seriesIndex, w }) => {
-        const val = series[seriesIndex];
-        const label = w.globals.labels[seriesIndex];
-        return `<div style="padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.08);font-family:Outfit,sans-serif;font-size:12px;color:#1e293b;">
-          <div style="font-weight:700;text-align:center;">${val}</div>
-          <div style="color:#64748b;font-size:11px;">${label}</div>
-        </div>`;
-      }
-    }
-  };
-  const roleSeries = [500, 300, 150, 120, 142];
-
-  // ── Chart 2: Ticket Volume Monthly Trend (bar) ──────────────────────────────
-  const ticketOptions: ApexOptions = {
-    chart: { type: "bar", toolbar: { show: false }, fontFamily: "Outfit, sans-serif" },
-    colors: ["#38bdf8"],
-    plotOptions: {
-      bar: {
-        columnWidth: "18%",
-        borderRadius: 3,
-        colors: { backgroundBarColors: ["#e2e8f0"], backgroundBarOpacity: 1, backgroundBarRadius: 3 }
-      }
+    colors: ["#3b82f6"],
+    stroke: {
+      curve: "smooth",
+      width: 2.5,
+    },
+    markers: {
+      size: 0,
+      hover: { size: 5 }
     },
     dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9", strokeDashArray: 3, xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } },
+    grid: {
+      borderColor: "#f8fafc",
+      strokeDashArray: 3,
+      padding: { top: -15, bottom: -5, left: 10, right: 10 }
+    },
     xaxis: {
-      categories: ["Feb", "Mar", "Apr", "May", "Jun", "Jul"],
-      axisBorder: { show: false }, axisTicks: { show: false },
-      labels: { style: { colors: "#94a3b8", fontFamily: "Outfit", fontSize: "11px" } }
-    },
-    yaxis: {
-      min: 0, max: 36, tickAmount: 4,
-      labels: { style: { colors: "#94a3b8", fontFamily: "Outfit", fontSize: "11px" } }
-    },
-    tooltip: {
-      custom: ({ dataPointIndex, w }) => {
-        const month = w.globals.labels[dataPointIndex];
-        const data = [
-          { open: 8, in_progress: 5, resolved: 12, closed: 5 },
-          { open: 12, in_progress: 8, resolved: 15, closed: 7 },
-          { open: 15, in_progress: 11, resolved: 22, closed: 9 },
-          { open: 10, in_progress: 6, resolved: 18, closed: 8 },
-          { open: 14, in_progress: 9, resolved: 20, closed: 6 },
-          { open: 16, in_progress: 12, resolved: 24, closed: 10 }
-        ][dataPointIndex];
-        return `<div style="padding:10px 13px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,0.1);font-family:Outfit,sans-serif;font-size:11px;min-width:110px;">
-          <div style="font-weight:700;color:#1e293b;margin-bottom:5px;">${month}</div>
-          <div style="color:#db2777;margin-bottom:2px;">open: ${data.open}</div>
-          <div style="color:#059669;margin-bottom:2px;">in_progress: ${data.in_progress}</div>
-          <div style="color:#d97706;margin-bottom:2px;">resolved: ${data.resolved}</div>
-          <div style="color:#dc2626;">closed: ${data.closed}</div>
-        </div>`;
-      }
-    }
-  };
-  const ticketSeries = [{ name: "Tickets", data: [14, 26, 27, 19, 14, 25] }];
-
-  // ── Chart 3: Monthly Recurring Revenue (area) ───────────────────────────────
-  const mrrOptions: ApexOptions = {
-    chart: { type: "area", toolbar: { show: false }, fontFamily: "Outfit, sans-serif" },
-    colors: ["#38bdf8"],
-    stroke: { curve: "smooth", width: 2.5 },
-    fill: { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02, stops: [0, 100] } },
-    dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9", strokeDashArray: 3, xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } },
-    xaxis: {
-      categories: ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
-      axisBorder: { show: false }, axisTicks: { show: false },
-      labels: { style: { colors: "#94a3b8", fontFamily: "Outfit", fontSize: "11px" } }
-    },
-    yaxis: {
-      min: 0, max: 16, tickAmount: 4,
+      categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      axisBorder: { show: false },
+      axisTicks: { show: false },
       labels: {
-        style: { colors: "#94a3b8", fontFamily: "Outfit", fontSize: "11px" },
-        formatter: (v) => `₹${v}L`
-      }
+        style: { colors: "#94a3b8", fontSize: "10px" },
+        offsetY: -3
+      },
     },
+    yaxis: {
+      min: 0,
+      max: 36,
+      tickAmount: 4,
+      labels: {
+        style: { colors: "#94a3b8", fontSize: "10px" },
+        offsetX: -5
+      },
+    },
+    legend: { show: false },
     tooltip: {
-      custom: ({ series, seriesIndex, dataPointIndex, w }) => {
-        const month = w.globals.labels[dataPointIndex];
-        const val = series[seriesIndex][dataPointIndex];
-        return `<div style="padding:8px 13px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.1);font-family:Outfit,sans-serif;font-size:12px;text-align:center;">
-          <div style="color:#94a3b8;margin-bottom:2px;font-size:11px;">${month}</div>
-          <div style="color:#1e293b;font-weight:600;">MRP : <span style="font-weight:700;">₹ ${val}L</span></div>
-        </div>`;
+      theme: "light",
+      x: { show: false },
+      y: {
+        title: { formatter: () => "Sessions:" }
+      },
+      style: {
+        fontSize: "11px",
+        fontFamily: "Outfit"
       }
     }
   };
-  const mrrSeries = [{ name: "MRR", data: [8, 12, 14, 10, 8, 11, 9, 13, 11, 15, 13, 12] }];
 
-  // ── Chart 4: Complaints by Status (donut) ──────────────────────────────────
-  const complaintsDonutOptions: ApexOptions = {
-    chart: { type: "donut", fontFamily: "Outfit, sans-serif", sparkline: { enabled: true } },
-    plotOptions: { pie: { donut: { size: "60%" } } },
-    colors: ["#ec4899", "#fb923c", "#34d399", "#818cf8", "#fde047", "#22d3ee"],
-    labels: ["OPEN", "INVESTIGATING", "ACTION TAKEN", "RESOLVED", "DISMISSED", "CLOSED"],
+  const sessionsWeekSeries = [
+    {
+      name: "Sessions",
+      data: [20, 32, 18, 22, 16, 30, 24],
+    },
+  ];
+
+  // ── Chart 2: Diagnosis Distribution (Donut) ──────────────────────────────
+  const diagnosisDonutOptions: ApexOptions = {
+    chart: {
+      type: "donut",
+      fontFamily: "Outfit, sans-serif",
+      sparkline: { enabled: true }
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: "72%",
+        }
+      }
+    },
+    colors: ["#818cf8", "#e879f9", "#fb923c", "#4ade80", "#60a5fa"],
+    labels: ["ASD", "ADHD", "SPD", "SPEECH", "OTHER"],
     dataLabels: { enabled: false },
     legend: { show: false },
-    stroke: { width: 2.5, colors: ["#fff"] },
+    stroke: { width: 2, colors: ["#fff"] },
     tooltip: { theme: "light" }
   };
-  const complaintsDonutSeries = [3, 5, 18, 14, 4, 6];
 
-  const complaintsLegend = [
-    { count: 3,  label: "OPEN",          bg: "#ec4899" },
-    { count: 5,  label: "INVESTIGATING", bg: "#fb923c" },
-    { count: 18, label: "ACTION TAKEN",  bg: "#34d399" },
-    { count: 14, label: "RESOLVED",      bg: "#818cf8" },
-    { count: 4,  label: "DISMISSED",     bg: "#fde047", text: "#92400e" },
-    { count: 6,  label: "CLOSED",        bg: "#22d3ee" }
+  const diagnosisDonutSeries = [4, 3, 2, 2, 1];
+
+  const diagnosisLegend = [
+    { count: 4, label: "ASD", bg: "#818cf8" },
+    { count: 3, label: "ADHD", bg: "#e879f9" },
+    { count: 2, label: "SPD", bg: "#fb923c" },
+    { count: 2, label: "SPEECH", bg: "#4ade80" },
+    { count: 1, label: "OTHER", bg: "#60a5fa" }
   ];
 
-  // ── Chart 5: Complaints Raised vs Action Taken (bar) ───────────────────────
-  const complaintsCatOptions: ApexOptions = {
-    chart: { type: "bar", toolbar: { show: false }, fontFamily: "Outfit, sans-serif" },
-    colors: ["#67e8f9", "#38bdf8"],
-    plotOptions: { bar: { columnWidth: "32%", borderRadius: 2, grouped: true } },
+  // ── Chart 3: Goal Achievement (Area) ──────────────────────────────────────
+  const goalAchievementOptions: ApexOptions = {
+    chart: {
+      type: "area",
+      toolbar: { show: false },
+      fontFamily: "Outfit, sans-serif",
+      parentHeightOffset: 0
+    },
+    colors: ["#f472b6", "#818cf8"],
+    stroke: {
+      curve: "smooth",
+      width: 2.5,
+    },
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.25,
+        opacityTo: 0.01,
+        stops: [0, 100]
+      }
+    },
     dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9", strokeDashArray: 3, xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } },
+    grid: {
+      borderColor: "#f1f5f9",
+      strokeDashArray: 3,
+      padding: { top: -15, bottom: -5, left: 10, right: 10 },
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } }
+    },
     xaxis: {
-      categories: ["Privacy Breach", "Misconduct", "Negligence", "Service Failure", "Billing Dispute", "Harassment"],
-      axisBorder: { show: false }, axisTicks: { show: false },
-      labels: { style: { colors: "#94a3b8", fontFamily: "Outfit", fontSize: "10px" } }
+      categories: ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      labels: {
+        style: { colors: "#94a3b8", fontSize: "10px" }
+      }
     },
     yaxis: {
-      min: 0, max: 1000,
-      tickAmount: 5,
+      min: 0,
+      max: 100,
+      tickAmount: 4,
       labels: {
-        style: { colors: "#94a3b8", fontFamily: "Outfit", fontSize: "11px" },
-        formatter: (v) => v === 0 ? "0" : v >= 1000 ? "1000" : v.toString()
+        style: { colors: "#94a3b8", fontSize: "10px" }
       }
     },
     legend: { show: false },
     tooltip: {
-      shared: true, intersect: false,
-      custom: ({ series, dataPointIndex, w }) => {
-        const cat = w.globals.labels[dataPointIndex];
-        const raised = Math.round(series[0][dataPointIndex] / 100);
-        const action = Math.round(series[1][dataPointIndex] / 100);
-        return `<div style="padding:10px 13px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,0.1);font-family:Outfit,sans-serif;font-size:11px;min-width:130px;">
-          <div style="font-weight:700;color:#1e293b;margin-bottom:5px;">${cat}</div>
-          <div style="color:#059669;margin-bottom:2px;">Total Raised : ${raised}</div>
-          <div style="color:#0284c7;">Action Taken : ${action}</div>
-        </div>`;
+      theme: "light",
+      style: { fontSize: "11px", fontFamily: "Outfit" }
+    }
+  };
+
+  const goalAchievementSeries = [
+    {
+      name: "Achieved",
+      data: [35, 25, 45, 38, 32, 71, 55, 45, 48, 55, 62, 90],
+    },
+    {
+      name: "Active",
+      data: [45, 55, 48, 58, 62, 54, 48, 52, 58, 64, 70, 55],
+    }
+  ];
+
+  // ── Chart 4: Session By Therapy (Grouped Bar) ─────────────────────────────
+  const therapyBarOptions: ApexOptions = {
+    chart: {
+      type: "bar",
+      toolbar: { show: false },
+      fontFamily: "Outfit, sans-serif",
+      parentHeightOffset: 0
+    },
+    colors: ["#22d3ee", "#3b82f6", "#6366f1", "#ec4899"],
+    plotOptions: {
+      bar: {
+        columnWidth: "55%",
+        borderRadius: 2,
+        grouped: true
+      }
+    },
+    dataLabels: { enabled: false },
+    grid: {
+      borderColor: "#f1f5f9",
+      strokeDashArray: 3,
+      padding: { top: -15, bottom: -5, left: 10, right: 10 },
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } }
+    },
+    xaxis: {
+      categories: ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan"],
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      labels: {
+        style: { colors: "#94a3b8", fontSize: "10px" }
+      }
+    },
+    yaxis: {
+      min: 0,
+      max: 1000,
+      tickAmount: 4,
+      labels: {
+        style: { colors: "#94a3b8", fontSize: "10px" }
+      }
+    },
+    legend: { show: false },
+    tooltip: {
+      theme: "light",
+      style: { fontSize: "11px", fontFamily: "Outfit" }
+    }
+  };
+
+  const therapyBarSeries = [
+    { name: "OT", data: [350, 420, 230, 310, 280, 400] },
+    { name: "Speech", data: [220, 310, 240, 290, 260, 320] },
+    { name: "ABA", data: [450, 510, 330, 480, 430, 520] },
+    { name: "Psych", data: [110, 150, 110, 180, 140, 190] }
+  ];
+
+  // ── Chart 5: Goal Progress By Child (Horizontal Bar) ─────────────────────
+  const progressChildOptions: ApexOptions = {
+    chart: {
+      type: "bar",
+      toolbar: { show: false },
+      fontFamily: "Outfit, sans-serif",
+      parentHeightOffset: 0
+    },
+    colors: ["#6366f1", "#22d3ee"],
+    plotOptions: {
+      bar: {
+        horizontal: true,
+        barHeight: "50%",
+        borderRadius: 2,
+        grouped: true
+      }
+    },
+    dataLabels: { enabled: false },
+    grid: {
+      borderColor: "#f1f5f9",
+      strokeDashArray: 3,
+      padding: { top: -15, bottom: -5, left: 5, right: 10 },
+      xaxis: { lines: { show: true } },
+      yaxis: { lines: { show: false } }
+    },
+    xaxis: {
+      categories: [0, 3, 5, 7, 9, 11, 13],
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      labels: {
+        style: { colors: "#94a3b8", fontSize: "10px" }
+      }
+    },
+    yaxis: {
+      categories: ["Priya Sharma", "Amit Kumar", "Kavita Reddy", "Rajan Pillai", "Aashriya"],
+      labels: {
+        style: { colors: "#64748b", fontSize: "10px", fontWeight: 500 }
+      }
+    },
+    legend: { show: false },
+    tooltip: {
+      theme: "light",
+      style: { fontSize: "11px", fontFamily: "Outfit" }
+    }
+  };
+
+  const progressChildSeries = [
+    { name: "Achieved", data: [11, 9, 7, 11, 10] },
+    { name: "Active", data: [5, 4, 3, 4, 3] }
+  ];
+
+  // ── Chart 6: Outcomes Trend (Line) ────────────────────────────────────────
+  const outcomesTrendOptions: ApexOptions = {
+    chart: {
+      type: "line",
+      toolbar: { show: false },
+      fontFamily: "Outfit, sans-serif",
+      sparkline: { enabled: false },
+      parentHeightOffset: 0
+    },
+    colors: ["#eab308", "#3b82f6", "#ef4444"],
+    stroke: {
+      curve: "smooth",
+      width: 2,
+    },
+    dataLabels: { enabled: false },
+    grid: {
+      borderColor: "#f8fafc",
+      strokeDashArray: 3,
+      padding: { top: -15, bottom: -5, left: 10, right: 10 }
+    },
+    xaxis: {
+      categories: ["Aug", "Sep", "Oct", "Nov"],
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      labels: {
+        style: { colors: "#94a3b8", fontSize: "10px" },
+        offsetY: -3
+      }
+    },
+    yaxis: {
+      min: 0,
+      max: 36,
+      tickAmount: 4,
+      labels: {
+        style: { colors: "#94a3b8", fontSize: "10px" },
+        offsetX: -5
+      }
+    },
+    legend: { show: false },
+    tooltip: {
+      theme: "light",
+      x: { show: false },
+      style: {
+        fontSize: "11px",
+        fontFamily: "Outfit"
       }
     }
   };
-  const complaintsCatSeries = [
-    { name: "Total Raised", data: [900, 800, 700, 950, 800, 900] },
-    { name: "Action Taken", data: [400, 500, 400, 450, 400, 400] }
+
+  const outcomesTrendSeries = [
+    { name: "Goal Rate", data: [15, 20, 18, 25] },
+    { name: "Session Rate", data: [25, 22, 28, 20] },
+    { name: "Parent Satisfaction", data: [18, 24, 22, 28] }
   ];
 
-  // ── Stat cards ──────────────────────────────────────────────────────────────
+  // ── Stat cards data ────────────────────────────────────────────────────────
   const statCards = [
-    { label: "Organizations",   value: "47",      sub: "6 new this month",       icon: <BuildingIcon className="w-5 h-5 text-white" />,     iconBg: "#60a5fa", bg: "#f0f9ff" },
-    { label: "Total Users",     value: "1,284",   sub: "142 users this month",   icon: <UsersIcon className="w-5 h-5 text-blue-500" />,    iconBg: "#fff", bg: "#f8fafc" },
-    { label: "Children Tracked",value: "3,891",   sub: "89 added this month",    icon: <TargetIcon className="w-5 h-5 text-blue-500" />,   iconBg: "#fff", bg: "#f8fafc" },
-    { label: "MRR",             value: "₹12.4L",  sub: "vs ₹11.3L last month",   icon: <RupeeIcon className="w-5 h-5 text-blue-500" />,    iconBg: "#fff", bg: "#f8fafc" },
+    { label: "Active Staff", value: "12", sub: "3 therapists, 2 psychologists", icon: <UsersIcon className="w-[18px] h-[18px]" /> },
+    { label: "Children Enrolled", value: "89", sub: "+4 this week", icon: <UsersIcon className="w-[18px] h-[18px]" /> },
+    { label: "Sessions Today", value: "24", sub: "6 pending start", icon: <TargetIcon className="w-[18px] h-[18px]" /> },
+    { label: "Consent Compliance", value: "94%", sub: "5 renewals due", icon: <TargetIcon className="w-[18px] h-[18px]" /> },
+  ];
+
+  // ── Alerts data ────────────────────────────────────────────────────────────
+  const alerts = [
+    { id: 1, title: "Dhruv Kapoor", desc: "Consent expired", time: "2h ago" },
+    { id: 2, title: "Kabir Bose", desc: "Awaiting consent approval", time: "1d ago" },
+    { id: 3, title: "Low IOA Flag", desc: "On Arjun's last session", time: "2h ago" }
+  ];
+
+  // ── Staff Caseload data ────────────────────────────────────────────────────
+  const staffCaseload = [
+    { staff: "Priya Sharma", spec: "BCBA, ABA", children: 8, sessions: 8, load: "40%" },
+    { staff: "Amit Kumar", spec: "BCBA, ABA", children: 9, sessions: 9, load: "60%" },
+    { staff: "Kavita Reddy", spec: "BCBA, ABA", children: 10, sessions: 10, load: "70%" },
+    { staff: "Dr. Rajan Pillai", spec: "BCBA, ABA", children: 4, sessions: 4, load: "33%" }
+  ];
+
+  // ── Child Progress data ────────────────────────────────────────────────────
+  const childProgress = [
+    { name: "Priya Sharma", achieved: 5, active: 2 },
+    { name: "Amit Kumar", achieved: 9, active: 6 },
+    { name: "Kavita Reddy", achieved: 10, active: 10 },
+    { name: "Rajan Pillai", achieved: 4, active: 1 },
+    { name: "Aashriya", achieved: 5, active: 3 }
   ];
 
   return (
     <>
-      <PageMeta title="Platform Overview | NeuroDiverse" description="Platform-wide admin overview for NeuroDiverse" />
+      <PageMeta title="Clinic Dashboard | NeuroDiverse" description="Clinic administrator analytics dashboard for NeuroDiverse" />
 
-      <div className="min-h-screen bg-[#f8fafc] -mx-4 md:-mx-6 -my-4 md:-my-6 p-[32px]" style={{ fontFamily: "Outfit, sans-serif" }}>
+      <div className="min-h-screen bg-[#f8fafc] -mx-4 md:-mx-6 -my-4 md:-my-6 p-[20px]" style={{ fontFamily: "Outfit, sans-serif" }}>
 
         {/* ── Page Header ───────────────────────────────────────────────── */}
-        <div className="mb-[32px]">
-          <h1 className="text-[36px] font-bold text-gray-900 leading-tight">Platform Overview</h1>
-          <p className="text-[18px] text-gray-400 mt-1">NeuroDiverse — all organizations</p>
+        <div className="mb-4">
+          <h1 className="text-[18px] font-bold text-gray-900 leading-tight">Clinic Dashboard</h1>
+          <p className="text-[11px] text-gray-500 mt-0.5">Bright Minds Developmental Clinic</p>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════
-            ROW 1 — Stats + Neuro Progress
+            MAIN RESPONSIVE GRID (Page Shell with Left/Right columns + full-width bottom table)
         ══════════════════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-12 gap-[24px] mb-[24px] items-stretch">
+        <div className="grid grid-cols-12 gap-4 items-start">
 
-          {/* Left stats card container wrapping all 4 stats cards inside a single styled block */}
-          <div className="col-span-12 xl:col-span-4 min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] h-full flex flex-col justify-between">
-              <div className="grid grid-cols-2 gap-[20px] h-full">
-                {statCards.map((card, i) => (
+          {/* ────────────────────────────────────────────────────────────────
+              LEFT COLUMN (4 columns wide on desktop / lg screens)
+          ──────────────────────────────────────────────────────────────── */}
+          <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
+
+            {/* 1. Clinic Summary — parent white card wrapping 2×2 compact metrics */}
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-4 h-[155px]">
+              <div className="grid grid-cols-2 gap-2 h-full">
+                {statCards.map((card) => (
                   <div
                     key={card.label}
-                    className="rounded-2xl p-[20px] flex flex-col justify-between"
-                    style={{ backgroundColor: card.bg }}
+                    className="bg-slate-50/60 border border-slate-100 rounded-lg p-2.5 flex flex-col justify-between"
                   >
-                    <div className="flex items-start justify-between">
-                      <span className="text-[14px] font-medium text-gray-500 leading-tight">{card.label}</span>
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ml-2 ${
-                          i === 0 
-                            ? "text-white" 
-                            : "bg-white border border-gray-100 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
-                        }`}
-                        style={{ backgroundColor: i === 0 ? card.iconBg : undefined }}
-                      >
-                        {card.icon}
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <p className="text-[32px] font-bold text-gray-900 leading-none tracking-tight whitespace-nowrap">{card.value}</p>
-                      <p className="text-[11px] text-gray-400 mt-1.5 font-medium">{card.sub}</p>
+                    <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider leading-none">{card.label}</span>
+                    <div>
+                      <p className="text-[26px] font-bold text-gray-800 leading-none tracking-tight">{card.value}</p>
+                      <p className="text-[9px] text-gray-400 mt-1 font-medium leading-none">{card.sub}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* 2. Sessions This Week — height calibrated so Summary(155) + gap(16) + Sessions(204) = 375px = Neuro Progress */}
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3 h-[204px] flex flex-col">
+              <div className="mb-1">
+                <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Sessions This Week</h3>
+                <span className="text-[10px] text-gray-400">Weekly breakdown</span>
+              </div>
+              <div className="flex-1 w-full min-h-0">
+                <Chart options={sessionsWeekOptions} series={sessionsWeekSeries} type="line" height="100%" />
+              </div>
+            </div>
+
+            {/* 3. Diagnosis Distribution — h-[230px] matches Goal Achievement */}
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[230px] flex flex-col">
+              <div className="mb-1">
+                <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Diagnosis Distribution</h3>
+                <p className="text-[10px] text-gray-400">Across all children</p>
+              </div>
+              <div className="flex items-center justify-between gap-4 flex-1">
+                {/* Donut chart on left */}
+                <div className="w-[120px] h-[120px] flex-shrink-0 flex items-center justify-center">
+                  <Chart options={diagnosisDonutOptions} series={diagnosisDonutSeries} type="donut" width="100%" height="100%" />
+                </div>
+                {/* Legend list on right */}
+                <div className="flex-1 flex flex-col justify-center gap-2">
+                  {diagnosisLegend.map((item) => (
+                    <div key={item.label} className="flex items-center justify-between text-[10px] font-medium text-gray-500">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ backgroundColor: item.bg }} />
+                        <span>{item.label}</span>
+                      </div>
+                      <span className="text-gray-700 font-bold">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Alerts & Flags — h-[230px] matches Session By Therapy */}
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[230px] flex flex-col">
+              <div className="mb-2">
+                <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Alerts & Flags</h3>
+              </div>
+              <div className="flex flex-col flex-1 gap-2">
+                {alerts.map((item) => (
+                  <div key={item.id} className="flex-1 bg-white rounded-lg border border-slate-100 px-2.5 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-6 h-6 rounded bg-amber-50 flex items-center justify-center flex-shrink-0 text-amber-500 border border-amber-100/30">
+                        <AlertTriangleIcon className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold text-gray-800 leading-none">{item.title}</p>
+                        <p className="text-[9px] text-gray-400 mt-1 leading-none truncate">{item.desc}</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] text-gray-400 flex-shrink-0 ml-2 font-medium">{item.time}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. Outcomes Trend — h-[220px] matches Goal Progress By Child */}
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[220px] flex flex-col">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Outcomes Trend</h3>
+                  <span className="text-[10px] text-gray-400">Satisfaction metrics</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#eab308]" />
+                    <span>Goal</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]" />
+                    <span>Session</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
+                    <span>Parent</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 w-full min-h-0">
+                <Chart options={outcomesTrendOptions} series={outcomesTrendSeries} type="line" height="100%" />
+              </div>
+            </div>
+
           </div>
 
-          {/* Right large card — Neuro Progress Overview */}
-          <div className="col-span-12 xl:col-span-8 min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] overflow-hidden h-full flex flex-col">
+          {/* ────────────────────────────────────────────────────────────────
+              RIGHT COLUMN (8 columns wide on desktop / lg screens)
+          ──────────────────────────────────────────────────────────────── */}
+          <div className="col-span-12 lg:col-span-8 flex flex-col gap-4">
 
-              {/* ── Top image area ── */}
-              <div className="flex flex-1 min-h-0" style={{ minHeight: "280px" }}>
-                {/* Large brain image — fills the left ~75% of the top area */}
-                <div className="flex-1 min-w-0 flex items-center justify-center p-[24px] pb-0">
+            {/* 1. Large Neuro Progress Overview Card */}
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] flex flex-col justify-between h-[375px] overflow-hidden">
+              {/* Top Section: Images */}
+              <div className="flex justify-between items-stretch gap-3 p-3 pb-0 h-[180px]">
+                {/* Large Brain Image centered (68% width) */}
+                <div className="w-[68%] flex items-center justify-center">
                   <img
                     src="/images/brain_main.png"
                     alt="Brain Anatomy"
-                    className="w-full h-full object-contain"
-                    style={{ maxHeight: "300px" }}
+                    className="max-h-[160px] object-contain"
                   />
                 </div>
 
-                {/* 3 stacked brain thumbnails — right column */}
-                <div
-                  className="flex flex-col justify-center gap-[10px] flex-shrink-0 pr-[20px] pt-[20px] pb-[16px]"
-                  style={{ width: "110px" }}
-                >
-                  {[
-                    "/images/brain_cross3.png",
-                    "/images/brain_cross1.png",
-                    "/images/brain_cross2.png"
-                  ].map((src, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm flex-1"
-                      style={{ minHeight: "72px" }}
-                    >
-                      <img src={src} alt="Brain cross-section" className="w-full h-full object-cover" />
+                {/* Staked Anatomical Cross-sections (32% width, max-w 70px) */}
+                <div className="w-[32%] flex flex-col gap-1.5 justify-center max-w-[70px] flex-shrink-0">
+                  {["/images/brain_cross3.png", "/images/brain_cross1.png", "/images/brain_cross2.png"].map((src, idx) => (
+                    <div key={idx} className="rounded-lg overflow-hidden border border-slate-100 bg-gray-50 h-[46px] shadow-sm flex items-center justify-center">
+                      <img src={src} alt={`Anatomical cross section ${idx + 1}`} className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* ── Bottom text + metric cards area ── */}
-              <div className="px-[24px] pb-[24px] pt-[16px]">
-                {/* Title / Description */}
-                <h2 className="text-[22px] font-bold text-gray-900 leading-tight">Neuro Progress Overview</h2>
-                <p className="text-[13px] text-gray-400 mt-[3px] mb-[16px]">Overall Platform Health</p>
-
-                {/* 4 metric boxes — 2×2 grid */}
-                <div className="grid grid-cols-2 gap-[12px]">
+              {/* Bottom Section: Info and metric cards */}
+              <div className="p-3 pt-2 border-t border-slate-50 flex flex-col justify-end flex-1">
+                <div className="mb-2">
+                  <h2 className="text-[14px] font-bold text-gray-900 leading-tight">Neuro Progress Overview</h2>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Overall Platform Health</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                   {[
                     { label: "Total Children Under Monitoring", value: "2,486" },
-                    { label: "Average Development Progress",    value: "72.8%" },
-                    { label: "Goals Achieved This Month",       value: "1,842" },
-                    { label: "Active Therapy Plans",            value: "1,126" }
-                  ].map((m) => (
-                    <div
-                      key={m.label}
-                      className="border border-gray-200 rounded-xl bg-white"
-                      style={{ padding: "12px 16px" }}
-                    >
-                      <p className="text-[11px] text-gray-400 font-medium leading-tight">{m.label}</p>
-                      <p className="text-[22px] font-bold text-gray-800 mt-1 leading-none">{m.value}</p>
+                    { label: "Average Development Progress", value: "72.8%" },
+                    { label: "Goals Achieved This Month", value: "1,842" },
+                    { label: "Active Therapy Plans", value: "1,126" }
+                  ].map((item) => (
+                    <div key={item.label} className="border border-slate-100 rounded-lg p-2 bg-white flex flex-col justify-between shadow-sm">
+                      <p className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider leading-tight">{item.label}</p>
+                      <p className="text-[18px] font-bold text-gray-800 mt-1 leading-none">{item.value}</p>
                     </div>
                   ))}
                 </div>
               </div>
-
             </div>
-          </div>
 
-        </div>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            ROW 2 — Users By Role + MRR Chart
-        ══════════════════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-12 gap-[24px] mb-[24px] items-stretch">
-
-          {/* Left: Users By Role */}
-          <div className="col-span-12 xl:col-span-4 min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] relative flex flex-col justify-between h-[340px]">
-              <h3 className="text-[24px] font-semibold text-gray-800 mb-2">Users By Role</h3>
-              <div className="flex justify-center" style={{ marginTop: "-8px" }}>
-                <div style={{ width: "220px" }}>
-                  <Chart options={roleOptions} series={roleSeries} type="donut" width="100%" height={180} />
+            {/* 2. Goal Achievement (approx. 230px height, Area Chart) */}
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[230px] flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Goal Achievement</h3>
+                  <span className="text-[10px] text-gray-400 font-medium">Achieved vs active</span>
                 </div>
-              </div>
-              {/* Legend */}
-              <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-1">
-                {[
-                  { label: "Parents",       color: "#60a5fa" },
-                  { label: "Therapists",    color: "#f59e0b" },
-                  { label: "Admins",        color: "#10b981" },
-                  { label: "School",        color: "#f87171" },
-                  { label: "Psychologists", color: "#facc15" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                    <span className="text-[11px] text-gray-500">{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#f472b6]" />
+                    <span>Achieved</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Monthly Recurring Revenue */}
-          <div className="col-span-12 xl:col-span-8 min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] relative flex flex-col justify-between h-[340px]">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[24px] font-semibold text-gray-800">Monthly Recurring Revenue</h3>
-                <span className="text-[14px] text-gray-400">Last 12 months</span>
-              </div>
-              <div style={{ height: "240px" }}>
-                <Chart options={mrrOptions} series={mrrSeries} type="area" height="100%" />
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            ROW 3 — Ticket Volume + Complaints Section
-        ══════════════════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-12 gap-[24px] mb-[24px] items-stretch">
-
-          {/* Ticket Volume Monthly Trend */}
-          <div className="col-span-12 xl:col-span-4 min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] relative flex flex-col justify-between h-[320px]">
-              <div>
-                <h3 className="text-[24px] font-semibold text-gray-800">Ticket Volume — Monthly Trend</h3>
-                <p className="text-[14px] text-gray-400 mt-1 mb-2">Breakdown by status over last 6 months</p>
-              </div>
-              <div className="flex-1" style={{ height: "210px" }}>
-                <Chart options={ticketOptions} series={ticketSeries} type="bar" height="100%" />
-              </div>
-            </div>
-          </div>
-
-          {/* Complaints by Status */}
-          <div className="col-span-12 xl:col-span-4 min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] flex flex-col justify-between h-[320px]">
-              <h3 className="text-[24px] font-semibold text-gray-800 mb-3">Complaints by Status</h3>
-              <div className="flex items-center gap-[24px] flex-1">
-                {/* Donut chart */}
-                <div className="flex-shrink-0" style={{ width: "140px" }}>
-                  <Chart options={complaintsDonutOptions} series={complaintsDonutSeries} type="donut" height={150} />
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#818cf8]" />
+                    <span>Active</span>
+                  </div>
                 </div>
-                {/* Legend pills */}
-                <div className="flex-1 flex flex-col gap-2">
-                  {complaintsLegend.map((item) => (
-                    <div key={item.label} className="flex items-center gap-2">
-                      <span className="text-[12px] font-bold text-gray-400 w-4 text-right flex-shrink-0">{item.count}</span>
-                      <span
-                        className="flex-1 text-center text-[10px] font-bold py-1 rounded tracking-wide"
-                        style={{
-                          backgroundColor: item.bg,
-                          color: item.text || "#fff",
-                        }}
-                      >
-                        {item.label}
-                      </span>
+              </div>
+              <div className="h-[160px] w-full">
+                <Chart options={goalAchievementOptions} series={goalAchievementSeries} type="area" height="100%" />
+              </div>
+            </div>
+
+            {/* 3. Session By Therapy (approx. 230px height, Grouped Bar Chart) */}
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[230px] flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Session By Therapy</h3>
+                  <p className="text-[10px] text-gray-400">Monthly breakdown</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#22d3ee]" />
+                    <span>OT</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]" />
+                    <span>Speech</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1]" />
+                    <span>ABA</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#ec4899]" />
+                    <span>Psych</span>
+                  </div>
+                </div>
+              </div>
+              <div className="h-[160px] w-full">
+                <Chart options={therapyBarOptions} series={therapyBarSeries} type="bar" height="100%" />
+              </div>
+            </div>
+
+            {/* 4. Goal Progress By Child (approx. 220px height, Horizontal progress bars) */}
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[220px] flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Goal Progress By Child</h3>
+                  <p className="text-[10px] text-gray-400">Achieved vs active goals</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1]" />
+                    <span>Achieved</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#22d3ee]" />
+                    <span>Active</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col justify-between py-2">
+                {childProgress.map((row) => {
+                  const total = row.achieved + row.active;
+                  const pct = total > 0 ? (row.achieved / total) * 100 : 0;
+                  return (
+                    <div key={row.name} className="flex items-center gap-3 text-[10px] leading-none">
+                      <span className="w-[84px] font-semibold text-gray-600 truncate">{row.name}</span>
+                      <div className="flex-1 h-[6px] bg-slate-50 border border-slate-100 rounded-full overflow-hidden flex items-center">
+                        <div className="bg-[#6366f1] h-full" style={{ width: `${pct}%` }} />
+                        <div className="bg-[#22d3ee] h-full" style={{ width: `${100 - pct}%` }} />
+                      </div>
+                      <span className="w-[30px] text-right font-bold text-gray-700">{row.achieved}</span>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+
+          {/* ────────────────────────────────────────────────────────────────
+              STAFF CASELOAD TABLE (Full Width, spanning the bottom under both columns)
+          ──────────────────────────────────────────────────────────────── */}
+          <div className="col-span-12">
+            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 overflow-hidden">
+              <div className="mb-3">
+                <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Staff Caseload</h3>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-slate-100">
+                <Table className="w-full border-collapse" style={{ minWidth: "500px" }}>
+                  <TableHeader>
+                    <TableRow className="bg-[#e0f2fe]/40 border-b border-slate-105">
+                      {["Staff", "Specialization", "Children", "Sessions/Wk", "Load"].map((col, i) => (
+                        <TableCell
+                          key={col}
+                          isHeader
+                          className="py-2.5 px-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider"
+                          style={{ textAlign: i === 0 ? "left" : i === 4 ? "right" : "left" }}
+                        >
+                          {col}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {staffCaseload.map((row, idx) => (
+                      <TableRow key={idx} className="hover:bg-slate-50/55 border-b border-slate-50 last:border-b-0 transition-colors">
+                        <TableCell className="px-3.5 py-2.5 text-[11px] font-semibold text-slate-700">{row.staff}</TableCell>
+                        <TableCell className="px-3.5 py-2.5 text-[11px] text-slate-500">{row.spec}</TableCell>
+                        <TableCell className="px-3.5 py-2.5 text-[11px] text-slate-500">{row.children}</TableCell>
+                        <TableCell className="px-3.5 py-2.5 text-[11px] text-slate-500">{row.sessions}</TableCell>
+                        <TableCell className="px-3.5 py-2.5 text-[11px] text-right font-bold text-slate-700">{row.load}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           </div>
 
-          {/* Complaints — Raised vs Action Taken */}
-          <div className="col-span-12 xl:col-span-4 min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] relative flex flex-col justify-between h-[320px]">
-              <div>
-                <h3 className="text-[24px] font-semibold text-gray-800 leading-tight">Complaints — Raised vs. Action Taken</h3>
-                <p className="text-[14px] text-gray-400 mt-1 mb-1 leading-tight">Tracks how many complaints had concrete action taken against the reported party</p>
-              </div>
-              <div className="flex-1" style={{ height: "200px" }}>
-                <Chart options={complaintsCatOptions} series={complaintsCatSeries} type="bar" height="100%" />
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            Recent Organizations Table Card (Spans full width at bottom)
-        ══════════════════════════════════════════════════════════════════ */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] overflow-hidden p-[24px]">
-          <div className="mb-[16px]">
-            <h3 className="text-[24px] font-semibold text-gray-800">Recent Organizations</h3>
-          </div>
-          <div className="overflow-x-auto rounded-xl border border-gray-100">
-            <table className="w-full border-collapse" style={{ minWidth: "640px" }}>
-              <thead>
-                <tr style={{ backgroundColor: "#d6efff" }}>
-                  {["Organization", "Type", "Plan", "Users", "Status"].map((col, i) => (
-                    <th
-                      key={col}
-                      className="py-4 px-6 text-[14px] font-medium text-gray-600 uppercase tracking-wide"
-                      style={{ textAlign: i === 0 ? "left" : i === 3 ? "center" : i === 4 ? "right" : "left" }}
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {[
-                  { name: "Bright Minds Developmental Clinic", type: "Clinic", plan: "Premium",    users: 120,  status: "Active" },
-                  { name: "Hopewell Therapy Center",           type: "Clinic", plan: "Standard",   users: 45,   status: "Active" },
-                  { name: "Little Stars Assessment Center",    type: "Clinic", plan: "Basic",      users: 30,   status: "Active" },
-                  { name: "Greenwoods International School",   type: "School", plan: "Enterprise", users: 350,  status: "Active" },
-                  { name: "Sunbeam Academy",                   type: "School", plan: "Enterprise", users: 410,  status: "Active" },
-                ].map((row, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="px-6 py-4 text-[14px] font-normal text-gray-700">{row.name}</td>
-                    <td className="px-6 py-4 text-[14px] text-gray-500">{row.type}</td>
-                    <td className="px-6 py-4 text-[14px] text-gray-500">{row.plan}</td>
-                    <td className="px-6 py-4 text-[14px] text-gray-600 text-center">{row.users}</td>
-                    <td className="px-6 py-4 text-[14px] text-right">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-emerald-100 text-emerald-700">
-                        {row.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
 
       </div>
