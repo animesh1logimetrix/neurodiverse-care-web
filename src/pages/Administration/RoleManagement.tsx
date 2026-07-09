@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../compon
 // import Badge from "../../components/ui/badge/Badge";
 import { Dropdown } from "../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
-// import { CustomModal, FieldConfig } from "../../components/ui/modal/CustomModal";
+import CustomModal from "../../components/ui/modal/CustomModal";
 import NotificationDropdown from "../../components/header/NotificationDropdown";
 import UserDropdown from "../../components/header/UserDropdown";
 import { PlusIcon } from "../../icons";
@@ -83,6 +83,8 @@ export default function RoleManagement() {
   // Invite/Edit Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
   // Custom Form state for redesigned Modal
   const [formName, setFormName] = useState("");
@@ -122,9 +124,18 @@ export default function RoleManagement() {
     setIsPermissionsDropdownOpen(false);
   };
 
-  const handleDeleteRole = (roleId: number) => {
-    setRoles((prevRoles) => prevRoles.filter((r) => r.id !== roleId));
+  const handleOpenDeleteModal = (role: Role) => {
+    setSelectedRole(role);
+    setIsDeleteModalOpen(true);
     setOpenMenuRoleId(null);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedRole) {
+      setRoles((prevRoles) => prevRoles.filter((r) => r.id !== selectedRole.id));
+      setIsDeleteModalOpen(false);
+      setSelectedRole(null);
+    }
   };
 
   const handleAddOrEditSubmit = (formData: Record<string, any>) => {
@@ -482,7 +493,7 @@ export default function RoleManagement() {
                                 Edit Permissions
                               </DropdownItem>
                               <DropdownItem
-                                onClick={() => handleDeleteRole(role.id)}
+                                onClick={() => handleOpenDeleteModal(role)}
                                 className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20 font-medium"
                               >
                                 Delete
@@ -648,6 +659,45 @@ export default function RoleManagement() {
           </div>
         </div>
       )}
+
+      <CustomModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedRole(null);
+        }}
+        title="Delete Role"
+        showOverlay
+        backdropBlur={false}
+        width="max-w-[480px]"
+        padding="px-8 py-6"
+        showCloseIcon
+        customFooter={
+          <div className="flex justify-end items-center gap-3 px-8 py-5 border-t border-gray-100 w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setSelectedRole(null);
+              }}
+              className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteConfirm}
+              className="px-6 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors text-sm cursor-pointer"
+            >
+              Delete
+            </button>
+          </div>
+        }
+      >
+        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+          Are you sure you want to delete this role? This action cannot be undone.
+        </p>
+      </CustomModal>
     </>
   );
 }

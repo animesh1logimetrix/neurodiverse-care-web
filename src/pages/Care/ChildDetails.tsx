@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useRef, type ChangeEvent, type DragEvent } from "react";
 import { useParams, Link } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
-import { PencilIcon, DownloadIcon, UserIcon, ArrowUpIcon, PlusIcon } from "../../icons";
+import { PencilIcon, DownloadIcon, UserIcon, ArrowUpIcon, PlusIcon, HorizontaLDots } from "../../icons";
 import LineChartOne from "../../components/charts/line/LineChartOne";
 import BarChartOne from "../../components/charts/bar/BarChartOne";
 import DiagnosesTab from "../../components/Care/DiagnosesTab";
 import CustomModal, { FieldConfig } from "../../components/ui/modal/CustomModal";
+import { Dropdown } from "../../components/ui/dropdown/Dropdown";
+import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
 
 export default function ChildDetails() {
   const { id } = useParams();
@@ -13,6 +15,7 @@ export default function ChildDetails() {
 
   // ── Medication modal state ─────────────────────────────────────────────
   type Medication = {
+    id: number;
     name: string;
     category: string;
     dose: string;
@@ -21,30 +24,150 @@ export default function ChildDetails() {
     start: string;
     reviewDue: string;
     status: "Active" | "Inactive" | "Pending";
+    instructions?: string;
   };
+
+  const initialMedications: Medication[] = [
+    { id: 1, name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Active", instructions: "Give in the evening after food. Monitor for drowsiness, dizziness, or unusual movements." },
+    { id: 2, name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive", instructions: "Give in the evening after food. Monitor for drowsiness, dizziness, or unusual movements." },
+    { id: 3, name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive", instructions: "Give in the evening after food. Monitor for drowsiness, dizziness, or unusual movements." },
+    { id: 4, name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive", instructions: "Give in the evening after food. Monitor for drowsiness, dizziness, or unusual movements." },
+    { id: 5, name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive", instructions: "Give in the evening after food. Monitor for drowsiness, dizziness, or unusual movements." },
+  ];
+
+  const [medications, setMedications] = useState<Medication[]>(initialMedications);
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
   const [isMedicationModalOpen, setIsMedicationModalOpen] = useState(false);
   const [isAddMedicationOpen, setIsAddMedicationOpen] = useState(false);
-
-  
+  const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
+  const [openMenuMedicationId, setOpenMenuMedicationId] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeletingMedication, setIsDeletingMedication] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openMedicationModal = (med: Medication) => {
     setSelectedMedication(med);
     setIsMedicationModalOpen(true);
+    setOpenMenuMedicationId(null);
   };
+
   const closeMedicationModal = () => {
     setIsMedicationModalOpen(false);
     setSelectedMedication(null);
   };
 
-  // ── Medications data ───────────────────────────────────────────────────
-  const medications: Medication[] = [
-    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Active" },
-    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive" },
-    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive" },
-    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive" },
-    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive" },
-  ];
+  const acceptedFileExtensions = [".jpg", ".jpeg", ".png", ".pdf"];
+
+  const resetUploadState = () => {
+    setSelectedFiles([]);
+    setUploadError(null);
+  };
+
+  const handleOpenAddMedicationModal = () => {
+    resetUploadState();
+    setEditingMedication(null);
+    setIsAddMedicationOpen(true);
+  };
+
+  const handleOpenEditMedicationModal = (med: Medication) => {
+    resetUploadState();
+    setEditingMedication(med);
+    setIsAddMedicationOpen(true);
+    setOpenMenuMedicationId(null);
+  };
+
+  const handleCloseAddMedicationModal = () => {
+    resetUploadState();
+    setEditingMedication(null);
+    setIsAddMedicationOpen(false);
+  };
+
+  const handleOpenDeleteModal = (med: Medication) => {
+    setSelectedMedication(med);
+    setIsDeleteModalOpen(true);
+    setOpenMenuMedicationId(null);
+  };
+
+  const handleDeleteMedication = async () => {
+    if (!selectedMedication || isDeletingMedication) return;
+
+    setIsDeletingMedication(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 300));
+    setMedications((prev) => prev.filter((med) => med.id !== selectedMedication.id));
+    setIsDeletingMedication(false);
+    setIsDeleteModalOpen(false);
+    setSelectedMedication(null);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const getFileKey = (file: File) => `${file.name}-${file.size}-${file.lastModified}`;
+
+  const isValidFileType = (file: File) => {
+    const extension = `.${file.name.split(".").pop()?.toLowerCase() ?? ""}`;
+    return acceptedFileExtensions.includes(extension);
+  };
+
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files?.length) return;
+
+    const incomingFiles = Array.from(files);
+    const invalidFiles = incomingFiles.filter((file) => !isValidFileType(file));
+    const validFiles = incomingFiles.filter((file) => isValidFileType(file));
+
+    setSelectedFiles((prev) => {
+      const existingKeys = new Set(prev.map((file) => getFileKey(file)));
+      const freshFiles = validFiles.filter((file) => !existingKeys.has(getFileKey(file)));
+      return [...prev, ...freshFiles];
+    });
+
+    if (invalidFiles.length) {
+      setUploadError(`Unsupported file type skipped: ${invalidFiles.map((file) => file.name).join(", ")}`);
+    } else {
+      setUploadError(null);
+    }
+  };
+
+  const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(event.target.files);
+    event.target.value = "";
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    handleFileSelect(event.dataTransfer.files);
+  };
+
+  const handleRemoveFile = (fileToRemove: File) => {
+    setSelectedFiles((prev) => prev.filter((file) => getFileKey(file) !== getFileKey(fileToRemove)));
+  };
+
+  const formatDateValue = (value: unknown) => {
+    if (!value) return "";
+    if (value instanceof Date) {
+      return value.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+    if (Array.isArray(value)) {
+      return value[0] ? formatDateValue(value[0]) : "";
+    }
+    return String(value);
+  };
+
+  const getFrequencyLabel = (value: string) => {
+    if (value === "once-daily") return "Once daily - morning";
+    if (value === "once-daily-eve") return "Once daily - evening";
+    return value;
+  };
 
   // Add Medication form fields (defined after `medications` so options can reference it)
   const addMedicationFields: FieldConfig[] = [
@@ -65,13 +188,35 @@ export default function ChildDetails() {
       colSpan: 2,
       placeholder: "Enter instructions",
       inputClassName:
-        "h-8 w-full rounded-[10px] border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+        "h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
     },
   ];
 
   const handleAddMedicationSubmit = (formData: Record<string, any>) => {
-    console.log("Add medication submitted:", formData);
-    setIsAddMedicationOpen(false);
+    const normalizedDose = [formData.dose, formData.unit].filter(Boolean).join(" ").trim();
+    const medicationPayload: Medication = {
+      id: editingMedication?.id ?? Date.now(),
+      name: formData.medicationName,
+      category: formData.category,
+      dose: normalizedDose,
+      frequency: getFrequencyLabel(formData.frequency),
+      prescribedBy: formData.prescribedBy,
+      start: formatDateValue(formData.startDate),
+      reviewDue: formatDateValue(formData.reviewDue),
+      status: formData.status ?? "Pending",
+      instructions: formData.instructions ?? "",
+      attachments: selectedFiles,
+    };
+
+    if (editingMedication) {
+      setMedications((prev) =>
+        prev.map((med) => (med.id === editingMedication.id ? medicationPayload : med))
+      );
+    } else {
+      setMedications((prev) => [medicationPayload, ...prev]);
+    }
+
+    handleCloseAddMedicationModal();
   };
 
   const documents = [
@@ -394,7 +539,7 @@ export default function ChildDetails() {
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-bold text-gray-900">Medications</h2>
             <button
-              onClick={() => setIsAddMedicationOpen(true)}
+              onClick={handleOpenAddMedicationModal}
               className="inline-flex items-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
             >
               <PlusIcon className="w-4 h-4 text-white fill-current" />
@@ -403,161 +548,201 @@ export default function ChildDetails() {
           </div>
 
           {/* Table card */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <table className="w-full border-collapse">
-              {/* Header */}
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  {["Medication", "Category", "Dose", "Frequency", "Prescribed By", "Start", "Review Due", "Status", "Actions"].map((col) => (
-                    <th
-                      key={col}
-                      className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              {/* Body */}
-              <tbody>
-                {medications.map((med, idx) => (
-                  <tr
-                    key={idx}
-                    className="border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 transition-colors"
-                  >
-                    <td className="px-5 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap">{med.name}</td>
-                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.category}</td>
-                    <td className="px-5 py-4 text-sm text-gray-600">{med.dose}</td>
-                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.frequency}</td>
-                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.prescribedBy}</td>
-                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.start}</td>
-                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.reviewDue}</td>
-                    <td className="px-5 py-4">
-                      {med.status === "Active" ? (
-                        <span className="inline-block px-3 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-600 whitespace-nowrap">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-block w-16 h-5 rounded-md bg-emerald-100/50" />
-                      )}
-                    </td>
-                    <td className="px-5 py-4">
-                      {/* Three-dot action button — only this triggers the modal */}
-                      <button
-                        onClick={() => openMedicationModal(med)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-                        title="View details"
+          <div className="w-full overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+            <div className="w-full overflow-x-hidden">
+              <table className="w-full table-fixed border-collapse">
+                {/* Header */}
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    {[
+                      { label: "Medication", width: "w-[22%]" },
+                      { label: "Category", width: "w-[12%]" },
+                      { label: "Dose", width: "w-[8%]" },
+                      { label: "Frequency", width: "w-[14%]" },
+                      { label: "Prescribed By", width: "w-[15%]" },
+                      { label: "Start", width: "w-[10%]" },
+                      { label: "Review Due", width: "w-[10%]" },
+                      { label: "Status", width: "w-[7%]" },
+                      { label: "Actions", width: "w-[6%]" },
+                    ].map((col) => (
+                      <th
+                        key={col.label}
+                        className={`px-3 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 ${col.width}`}
                       >
-                        <span className="text-lg font-bold leading-none tracking-widest">···</span>
-                      </button>
-                    </td>
+                        {col.label}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                {/* Body */}
+                <tbody>
+                  {medications.map((med) => (
+                    <tr
+                      key={med.id}
+                      className="border-b border-gray-50 last:border-b-0 transition-colors hover:bg-gray-50/50"
+                    >
+                      <td className="px-3 py-4 text-sm font-semibold leading-snug text-gray-800 whitespace-normal break-words">{med.name}</td>
+                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">{med.category}</td>
+                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">{med.dose}</td>
+                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">{med.frequency}</td>
+                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">{med.prescribedBy}</td>
+                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">{med.start}</td>
+                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">{med.reviewDue}</td>
+                      <td className="px-3 py-4">
+                        {med.status === "Active" ? (
+                          <span className="inline-block rounded-md bg-emerald-50 px-3 py-1 text-xs font-bold whitespace-nowrap text-emerald-600">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-block h-5 w-16 rounded-md bg-emerald-100/50" />
+                        )}
+                      </td>
+                      <td className="px-3 py-4">
+                        <div className="relative inline-flex">
+                          <button
+                            onClick={() => setOpenMenuMedicationId(openMenuMedicationId === med.id ? null : med.id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                            title="Medication actions"
+                          >
+                            <HorizontaLDots className="h-4 w-4" />
+                          </button>
+                          <Dropdown
+                            isOpen={openMenuMedicationId === med.id}
+                            onClose={() => setOpenMenuMedicationId(null)}
+                            className="right-0 mt-1 w-32 shadow-theme-md"
+                          >
+                            <div className="py-1">
+                              <DropdownItem onClick={() => openMedicationModal(med)}>View</DropdownItem>
+                              <DropdownItem onClick={() => handleOpenEditMedicationModal(med)}>Edit</DropdownItem>
+                              <DropdownItem
+                                onClick={() => handleOpenDeleteModal(med)}
+                                className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20"
+                              >
+                                Delete
+                              </DropdownItem>
+                            </div>
+                          </Dropdown>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Medication Details Modal (inlined using CustomModal) */}
+      {/* Medication Details Modal (styled like Diagnosis Details) */}
       <CustomModal
         isOpen={isMedicationModalOpen}
         onClose={closeMedicationModal}
         title={selectedMedication?.name ?? "Medication Details"}
-        modalClassName="!w-[78vw] !max-w-[980px] !max-h-[78vh] !rounded-[10px] !bg-white !p-0 !shadow-[0_16px_40px_rgba(0,0,0,0.18)]"
+        maxWidth="max-w-3xl"
+        maxBodyHeight="80vh"
+        padding="p-0"
+        customFooter={<></>}
       >
-        <div className="px-8 pt-4 pb-4">
-          <div className="mt-2 space-y-1">
-            <p className="text-[12px] text-gray-500">Antipsychotic / Behcnonsi</p>
-            <p className="text-[12px] text-gray-500">0.25 mg Once daily evening</p>
-            <p className="text-[12px] text-gray-500">Prescribed by Dr. Suresh Mehta</p>
-          </div>
-        </div>
+        {selectedMedication && (
+          <div className="flex flex-col">
+            <div className="p-6 pt-6">
+              {/* Top summary under title (small gray lines) */}
+              <div className="mb-4 px-0">
+                <p className="text-sm text-gray-500">{selectedMedication.category} / {selectedMedication.status}</p>
+                <p className="text-sm text-gray-500">{selectedMedication.dose} · {selectedMedication.frequency}</p>
+                <p className="text-sm text-gray-500">Prescribed by {selectedMedication.prescribedBy}</p>
+              </div>
+              {/* Row 1: Details and Instructions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="grid grid-cols-[140px_1fr] gap-y-3">
+                  <span className="text-[12px] text-gray-500">Category</span>
+                  <span className="text-sm text-gray-800">{selectedMedication.category}</span>
 
-        <div className="border-t border-gray-200" />
+                  <span className="text-[12px] text-gray-500">Dose</span>
+                  <span className="text-sm text-gray-800">{selectedMedication.dose}</span>
 
-        <div className="grid grid-cols-[1fr_1fr] px-8 py-4">
-          <div className="pr-8">
-            <h3 className="text-[12px] font-bold text-gray-700 mb-4">Medication Details</h3>
+                  <span className="text-[12px] text-gray-500">Frequency</span>
+                  <span className="text-sm text-gray-800">{selectedMedication.frequency}</span>
 
-            <div className="space-y-2">
-              {[
-                ["Category", "Antipsychotic/Betuvional"],
-                ["Dose", "0.25 mg"],
-                ["Frequency", "Once daily evening"],
-                ["Start Date", "Jun 15, 2023"],
-                ["Review Due", "Jun 15, 2024"],
-                ["Stut", "On Holu"],
-                ["Prescribed By", "Dr. Suresh Mehta"],
-                ["Lust Updated", "May 20, 2024 by Dr. Reena Kapoor"],
-              ].map(([label, value]) => (
-                <div key={label} className="grid grid-cols-[180px_1fr] text-[12px] leading-tight">
-                  <span className="text-gray-500">{label}</span>
-                  <span className="text-gray-600">{value}</span>
+                  <span className="text-[12px] text-gray-500">Start Date</span>
+                  <span className="text-sm text-gray-800">{selectedMedication.start}</span>
+
+                  <span className="text-[12px] text-gray-500">Review Due</span>
+                  <span className="text-sm text-gray-800">{selectedMedication.reviewDue}</span>
+
+                  <span className="text-[12px] text-gray-500">Status</span>
+                  <div>
+                    <span className="bg-[#e5f5e8] text-[#16a34a] px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider">
+                      {selectedMedication.status}
+                    </span>
+                  </div>
+
+                  <span className="text-[12px] text-gray-500">Prescribed By</span>
+                  <span className="text-sm text-gray-800">{selectedMedication.prescribedBy}</span>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="border-l border-gray-200 pl-8">
-            <h3 className="text-[12px] font-normal text-gray-600 mt-8 mb-6">Instructions for Care Team/Parenta</h3>
-
-            <div className="space-y-2 text-[12px] text-gray-600 leading-snug">
-              <p>Give in the evening after food.</p>
-              <p>Monitor for drowsiness, dizziness, or unusual movements</p>
-              <p>Do not stand suddenly Consult the doctor before any change.</p>
-              <p>Report immediately if any swelling, fever, or stiff muscles occur</p>
-              <p>Keep a record of mood, sleep, and behavior changes.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-200 mx-8" />
-
-        <div className="px-8 py-5">
-          <h3 className="text-[12px] font-bold text-gray-700 mb-4">Reports &amp; Documents</h3>
-
-          <div className="grid grid-cols-5 gap-4">
-            {documents.map((doc, index) => (
-              <div key={index} className="h-[128px] rounded-[7px] border border-orange-300 px-4 pb-4 flex flex-col justify-end text-[12px]">
-                <p className="font-bold text-gray-700 leading-tight">{doc.name}</p>
-                <p className="text-gray-600 mt-1">{doc.date}</p>
-                {doc.size && <p className="text-gray-600">{doc.size}</p>}
+                <div className="border-l border-gray-100 pl-8">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Instructions for Care Team / Parents</p>
+                  <div className="text-sm text-gray-600 leading-snug">
+                    {selectedMedication.instructions ? (
+                      <p>{selectedMedication.instructions}</p>
+                    ) : (
+                      <p className="text-gray-400">No instructions provided.</p>
+                    )}
+                  </div>
+                </div>
               </div>
-            ))}
 
-            <div className="h-[128px] rounded-[7px] border border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 text-[12px] text-gray-500 cursor-pointer">
-              <DownloadIcon className="w-4 h-4" />
-              <span>Upload More</span>
+              {/* Row 2: Reports & Documents */}
+              <div className="mb-8 pt-6 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700 mb-4">Reports & Documents</h3>
+                <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
+                  {documents.map((doc, index) => (
+                    <div key={index} className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40">
+                      <p className="font-bold text-gray-800 text-sm mb-1">{doc.name}</p>
+                      <p className="text-xs text-gray-500 mb-0.5">{doc.date}</p>
+                      <p className="text-xs text-gray-500">{doc.size}</p>
+                    </div>
+                  ))}
+
+                  <div className="w-40 shrink-0 border border-dashed rounded-xl p-4 flex flex-col items-center justify-center h-40 text-[12px] text-gray-500">
+                    <DownloadIcon className="w-4 h-4 mb-2" />
+                    <span>Upload More</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 3: Medication History */}
+              <div className="pt-6 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700 mb-4">Medication History</h3>
+                <div className="relative pt-2 pl-1">
+                  <div className="absolute left-[8px] top-4 bottom-4 w-px bg-gray-200" />
+                  <div className="absolute left-[176px] top-4 bottom-4 w-px bg-gray-200" />
+
+                  {historyItems.map((item, index) => (
+                    <div key={index} className="flex items-center gap-8 mb-6 relative z-10">
+                      <div className={`w-2 h-2 rounded-full ${item.dot} ring-4 ring-white shrink-0`} />
+                      <div className="w-24 text-sm text-[#64748b] shrink-0">{item.date}</div>
+                      <div className={`w-2 h-2 rounded-full ${item.dot} ring-4 ring-white shrink-0`} />
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <p className="text-sm text-[#334155]">{item.event}</p>
+                        <p className="text-xs text-[#64748b]">{item.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="border-t border-gray-200" />
-
-        <div className="px-8 py-6">
-          <h3 className="text-[12px] font-bold text-gray-700 mb-6">Medication History</h3>
-
-          <div className="space-y-4">
-            {historyItems.map((item, index) => (
-              <div key={index} className="grid grid-cols-[18px_130px_18px_190px_1fr] items-center text-[12px] text-gray-600">
-                <span className={`w-2 h-2 rounded-full ${item.dot}`} />
-                <span>{item.date}</span>
-                <span className={`w-2 h-2 rounded-full ${item.dot}`} />
-                <span>{item.event}</span>
-                <span className="text-[11px]">{item.detail}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
       </CustomModal>
 
       {/* Add Medication Modal */}
       <CustomModal
         isOpen={isAddMedicationOpen}
-        onClose={() => setIsAddMedicationOpen(false)}
-        title="Add Medication"
+        onClose={handleCloseAddMedicationModal}
+        title={editingMedication ? "Edit Medication" : "Add Medication"}
         bodyHeader={
           <div className="mb-3 px-0">
             <h4 className="text-sm font-semibold text-gray-900">Medication Information</h4>
@@ -565,28 +750,121 @@ export default function ChildDetails() {
         }
         fields={addMedicationFields}
         onSubmit={handleAddMedicationSubmit}
-        submitText="Save Medication"
+        initialValues={editingMedication ? {
+          medicationName: editingMedication.name,
+          category: editingMedication.category,
+          dose: editingMedication.dose.split(" ")[0] ?? "",
+          unit: editingMedication.dose.split(" ")[1] ?? "mg",
+          frequency: editingMedication.frequency === "Once daily - evening" ? "once-daily-eve" : "once-daily",
+          administrationTime: "morning",
+          startDate: editingMedication.start,
+          reviewDue: editingMedication.reviewDue,
+          prescribedBy: editingMedication.prescribedBy,
+          status: editingMedication.status,
+          instructions: editingMedication.instructions ?? "",
+        } : undefined}
+        submitText={editingMedication ? "Update Medication" : "Save Medication"}
         cancelText="Cancel"
         size="lg"
         footerAlign="center"
         overlayBlur={false}
         modalClassName="!w-[78vw] !max-w-[980px] !max-h-[78vh] !rounded-[10px] !bg-white !p-0 !shadow-[0_16px_40px_rgba(0,0,0,0.18)]"
       >
-        <div className="px-8 pt-1 pb-3">
+        <div className="pt-1 pb-3">
           <div className="mb-1.5">
             <label className="block text-xs font-bold text-black">
               Attach Reports / Documents
             </label>
           </div>
-          <div className="w-full h-[76px] rounded-[10px] border border-dashed border-gray-300 flex items-center justify-center gap-2 text-[12px] text-gray-500 cursor-pointer">
-            <DownloadIcon className="w-4 h-4 shrink-0" />
-            <div className="text-left leading-5">
-              <span>Drag & drop or </span>
-              <span className="text-blue-600 font-medium">browse files</span>
-              <span> Jpeg, Png</span>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            className="flex h-[76px] w-full items-center justify-center rounded-[10px] border border-dashed border-gray-300 bg-gray-50/60 px-4 text-center text-[12px] text-gray-500 transition-colors hover:border-brand-400 hover:bg-blue-50/40"
+          >
+            <div className="flex items-center justify-center gap-2 leading-none">
+              <DownloadIcon className="h-4 w-4 shrink-0" />
+              <span>
+                Drag & drop or <span className="font-medium text-blue-600">browse files</span> Jpeg, Png
+              </span>
             </div>
-          </div>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".jpg,.jpeg,.png,.pdf"
+            multiple
+            className="hidden"
+            onChange={handleFileInputChange}
+          />
+          {uploadError && <p className="mt-2 text-xs text-red-600">{uploadError}</p>}
+          {selectedFiles.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {selectedFiles.map((file) => (
+                <div key={getFileKey(file)} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-gray-700">{file.name}</p>
+                    <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveFile(file)}
+                    className="ml-3 text-sm text-gray-400 transition-colors hover:text-red-500"
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      </CustomModal>
+
+      <CustomModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedMedication(null);
+        }}
+        title="Delete Medication"
+        showOverlay
+        backdropBlur={false}
+        maxWidth="max-w-[480px]"
+        padding="px-8 py-6"
+        showCloseIcon
+        customFooter={
+          <div className="flex w-full items-center justify-end gap-3 border-t border-gray-100 px-8 py-5">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setSelectedMedication(null);
+              }}
+              className="cursor-pointer rounded-lg bg-gray-100 px-6 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteMedication}
+              disabled={isDeletingMedication}
+              className="cursor-pointer rounded-lg bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isDeletingMedication ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+        }
+      >
+        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+          Are you sure you want to delete this medication? This action cannot be undone.
+        </p>
+        {selectedMedication && (
+          <p className="mt-3 text-sm font-semibold text-gray-800">
+            Medication: {selectedMedication.name}
+          </p>
+        )}
       </CustomModal>
     </>
   );

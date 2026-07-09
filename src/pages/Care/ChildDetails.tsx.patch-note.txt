@@ -1,0 +1,3 @@
+Patched medication history and added header divider to match DiagnosesTab style.
+Replaced grid-based history with DiagnosesTab-like timeline entries and added border under prescribed-by summary.
+Date: 2026-07-09

@@ -170,6 +170,8 @@ export default function StaffParents() {
   // Invite/Edit Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // Count variables for subtitle
   const totalUsers = users.length;
@@ -219,9 +221,18 @@ export default function StaffParents() {
     setOpenMenuUserId(null);
   };
 
-  const handleDeleteUser = (userId: number) => {
-    setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userId));
+  const handleOpenDeleteModal = (user: User) => {
+    setSelectedUser(user);
+    setIsDeleteModalOpen(true);
     setOpenMenuUserId(null);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedUser) {
+      setUsers((prevUsers) => prevUsers.filter((u) => u.id !== selectedUser.id));
+      setIsDeleteModalOpen(false);
+      setSelectedUser(null);
+    }
   };
 
   // Helper to filter users list
@@ -550,7 +561,7 @@ export default function StaffParents() {
                               Edit User
                             </DropdownItem>
                             <DropdownItem
-                              onClick={() => handleDeleteUser(user.id)}
+                              onClick={() => handleOpenDeleteModal(user)}
                               className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20"
                             >
                               Delete
@@ -590,6 +601,45 @@ export default function StaffParents() {
         asteriskColor="black"
         overlayBlur={false}
       />
+
+      <CustomModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedUser(null);
+        }}
+        title="Delete User"
+        showOverlay
+        backdropBlur={false}
+        width="max-w-[480px]"
+        padding="px-8 py-6"
+        showCloseIcon
+        customFooter={
+          <div className="flex justify-end items-center gap-3 px-8 py-5 border-t border-gray-100 w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setSelectedUser(null);
+              }}
+              className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteConfirm}
+              className="px-6 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors text-sm cursor-pointer"
+            >
+              Delete
+            </button>
+          </div>
+        }
+      >
+        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+          Are you sure you want to delete this user? This action cannot be undone.
+        </p>
+      </CustomModal>
     </>
   );
 }
