@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PageMeta from "../../components/common/PageMeta";
-import { Link } from "react-router";
 import CustomModal from "../../components/ui/modal/CustomModal";
 import InputField from "../../components/form/input/InputField";
 
@@ -280,6 +279,19 @@ export default function HomeObservations() {
   const [description, setDescription] = useState("");
   const [recipients, setRecipients] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All Statuses");
+  const [filterCategory, setFilterCategory] = useState("All Categories");
+  const [detail, setDetail] = useState<any>(null);
+  const [observationsList, setObservationsList] = useState(observations);
+  const [attachments, setAttachments] = useState<{ id: string; name: string; type: "image" | "video" | "document"; size: string }[]>([]);
+
+  const filteredObservations = observationsList.filter(obs => {
+    if (filterStatus !== "All Statuses" && obs.status !== filterStatus) return false;
+    if (filterCategory !== "All Categories" && obs.category !== filterCategory) return false;
+    if (search && !obs.title.toLowerCase().includes(search.toLowerCase()) && !obs.description.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   // Reset state when opened
   React.useEffect(() => {
@@ -290,6 +302,7 @@ export default function HomeObservations() {
       setCategory("");
       setDescription("");
       setRecipients([]);
+      setAttachments([]);
       setErrors({});
     }
   }, [isModalOpen]);
@@ -318,14 +331,60 @@ export default function HomeObservations() {
       setErrors({ recipients: "Select at least one recipient" });
       return;
     }
-    const data = { title, date, category, description, recipients };
-    console.log("New observation submitted:", data);
+    
+    const categoryInfo = CATEGORIES.find(c => c.id === category) || CATEGORIES[0];
+    const newObs = {
+      title,
+      category: categoryInfo.label,
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      daysAgo: "Just now",
+      description,
+      attachments: attachments.length,
+      status: "Submitted",
+      icon: categoryInfo.icon,
+      iconColor: categoryInfo.color,
+      iconBg: categoryInfo.bg,
+      statusBadge: "bg-[#f0f6fe] text-[#7db9fb]",
+      statusIcon: (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      )
+    };
+    
+    setObservationsList([newObs, ...observationsList]);
     setIsModalOpen(false);
-    // Handle submission...
   };
 
   const toggleRecipient = (id: string) => {
     setRecipients(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
+  };
+
+  const imageInputRef = React.useRef<HTMLInputElement>(null);
+  const videoInputRef = React.useRef<HTMLInputElement>(null);
+  const documentInputRef = React.useRef<HTMLInputElement>(null);
+
+  const formatFileSize = (bytes: number) => {
+    const kb = bytes / 1024;
+    return kb > 1024 ? (kb / 1024).toFixed(1) + " MB" : Math.round(kb) + " KB";
+  };
+
+  const handleFileChange = (type: "image" | "video" | "document", e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const id = `att_${Date.now()}`;
+      setAttachments(prev => [...prev, {
+        id,
+        name: file.name,
+        type,
+        size: formatFileSize(file.size)
+      }]);
+    }
+    e.target.value = "";
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
   };
 
   // Custom modal footer to match standard designs and multi-step flow
@@ -413,16 +472,23 @@ export default function HomeObservations() {
               </div>
               <input
                 type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search observations..."
                 className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] transition-colors"
               />
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="relative w-full sm:w-auto">
-                <select className="block w-full sm:w-[140px] pl-3 pr-10 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] appearance-none cursor-pointer transition-colors">
+                <select 
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="block w-full sm:w-[140px] pl-3 pr-10 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] appearance-none cursor-pointer transition-colors"
+                >
                   <option>All Statuses</option>
                   <option>Actioned</option>
-                  <option>Pending</option>
+                  <option>Submitted</option>
+                  <option>Viewed</option>
                   <option>Acknowledged</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
@@ -430,11 +496,13 @@ export default function HomeObservations() {
                 </div>
               </div>
               <div className="relative w-full sm:w-auto">
-                <select className="block w-full sm:w-[160px] pl-3 pr-10 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] appearance-none cursor-pointer transition-colors">
+                <select 
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="block w-full sm:w-[160px] pl-3 pr-10 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] appearance-none cursor-pointer transition-colors"
+                >
                   <option>All Categories</option>
-                  <option>Behavior</option>
-                  <option>Communication</option>
-                  <option>Learning</option>
+                  {CATEGORIES.map(c => <option key={c.id} value={c.label}>{c.label}</option>)}
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                   <ChevronDownIcon />
@@ -444,9 +512,24 @@ export default function HomeObservations() {
           </div>
 
           {/* List Items */}
-          <div className="flex flex-col divide-y divide-gray-100">
-            {observations.map((obs, idx) => (
-              <div key={idx} className="p-[20px] sm:p-[24px] hover:bg-gray-50/50 transition-colors flex gap-[16px] sm:gap-[24px] cursor-pointer group">
+          {filteredObservations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                <HomeIcon />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">No observations found</p>
+                <p className="text-sm text-gray-500 mt-1">Try adjusting your filters or submit a new observation.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col divide-y divide-gray-100">
+              {filteredObservations.map((obs, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => setDetail(obs)}
+                  className="p-[20px] sm:p-[24px] hover:bg-gray-50/50 transition-colors flex gap-[16px] sm:gap-[24px] cursor-pointer group"
+                >
                 <div 
                   className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
                   style={{ backgroundColor: obs.iconBg, color: obs.iconColor }}
@@ -510,6 +593,7 @@ export default function HomeObservations() {
               </div>
             ))}
           </div>
+          )}
           
         </div>
       </div>
@@ -633,16 +717,40 @@ export default function HomeObservations() {
               <div>
                 <label className="block text-[15px] font-semibold text-gray-900 mb-2">Attachments <span className="font-normal text-gray-500">(optional)</span></label>
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                  <input type="file" ref={imageInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange("image", e)} />
+                  <input type="file" ref={videoInputRef} className="hidden" accept="video/*" onChange={(e) => handleFileChange("video", e)} />
+                  <input type="file" ref={documentInputRef} className="hidden" accept=".pdf,.doc,.docx,.txt" onChange={(e) => handleFileChange("document", e)} />
+                  
+                  <button type="button" onClick={() => imageInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
                     <ImageIcon /> Image
                   </button>
-                  <button type="button" className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                  <button type="button" onClick={() => videoInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
                     <VideoIcon /> Video
                   </button>
-                  <button type="button" className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                  <button type="button" onClick={() => documentInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
                     <FileIcon /> Document
                   </button>
                 </div>
+                {attachments.length > 0 && (
+                  <div className="space-y-2 mt-4">
+                    {attachments.map(att => (
+                      <div key={att.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <div className="w-8 h-8 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                           {att.type === 'image' && <ImageIcon />}
+                           {att.type === 'video' && <VideoIcon />}
+                           {att.type === 'document' && <FileIcon />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-medium text-gray-900 truncate">{att.name}</div>
+                          <div className="text-[11px] text-gray-500">{att.size}</div>
+                        </div>
+                        <button type="button" onClick={() => removeAttachment(att.id)} className="text-gray-400 hover:text-gray-600 px-2 transition-colors">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="bg-[#f8fafc] rounded-xl p-5 border border-gray-100">
@@ -670,6 +778,80 @@ export default function HomeObservations() {
           )}
         </div>
       </CustomModal>
+
+      {/* Detail View Modal */}
+      {detail && (
+        <CustomModal
+          isOpen={!!detail}
+          onClose={() => setDetail(null)}
+          title={detail.title}
+          subtitle={`${detail.category} · ${detail.date}`}
+          size="md"
+          padding="p-0"
+          customFooter={
+            <div className="flex items-center justify-end px-8 py-4 border-t border-gray-100 w-full bg-gray-50/50">
+              <button 
+                type="button" 
+                onClick={() => setDetail(null)} 
+                className="px-5 py-2 rounded-lg text-gray-700 bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          }
+        >
+          <div className="px-6 py-5">
+            {/* Status + meta */}
+            <div className="flex items-center gap-3 flex-wrap mb-5">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium ${detail.statusBadge}`}>
+                {detail.statusIcon}
+                {detail.status}
+              </span>
+              <span className="text-[12px] text-gray-500">{detail.daysAgo}</span>
+            </div>
+
+            {/* Description */}
+            <div className="mb-6">
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Observation</p>
+              <p className="text-[14px] text-gray-800 leading-relaxed">{detail.description}</p>
+            </div>
+
+            {/* Recipients (mock dynamic) */}
+            <div className="mb-6">
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Shared With</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                {RECIPIENTS.slice(0, 2).map(rec => (
+                   <div key={rec.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50">
+                     <span className="text-gray-500 w-4 h-4">{rec.icon}</span>
+                     <span className="text-[12px] font-medium text-gray-700">{rec.label}</span>
+                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Attachments */}
+            {detail.attachments > 0 && (
+              <div>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Attachments</p>
+                <div className="space-y-2">
+                  {Array.from({ length: detail.attachments }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                      <div className="w-8 h-8 rounded-md bg-white border border-gray-200 flex items-center justify-center text-gray-400">
+                         <FileIcon />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-medium text-gray-900 truncate">attachment_{i+1}.pdf</div>
+                        <div className="text-[11px] text-gray-500">120 KB · Document</div>
+                      </div>
+                      <button type="button" className="text-[12px] font-medium text-[#7db9fb] hover:underline px-2">View</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CustomModal>
+      )}
     </>
   );
 }
