@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import { PlusIcon, UserIcon, CheckLineIcon, AlertIcon, TimeIcon } from "../../icons";
 import { CustomModal } from "../../components/ui/modal/CustomModal";
@@ -130,9 +131,10 @@ export default function Children() {
       {/* Children Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredChildren.map((child) => (
-          <div
+          <Link
+            to={`/care/children/${child.id}`}
             key={child.id}
-            className="bg-white rounded-[20px] border border-gray-100 shadow-[0px_4px_16px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col"
+            className="bg-white rounded-[20px] border border-gray-100 shadow-[0px_4px_16px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col hover:shadow-lg transition-shadow cursor-pointer block"
           >
             {/* Top Row: Avatar and Details */}
             <div className="p-5 pb-4 relative">
@@ -218,7 +220,7 @@ export default function Children() {
                 Next: {child.nextAppointment}
               </span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

@@ -8,24 +8,24 @@ export default function LineChartOne() {
       position: "top",
       horizontalAlign: "left",
     },
-    colors: ["#465FFF", "#9CB9FF"], // Define line colors
+    colors: ["#3b82f6", "#a855f7", "#f97316"], // OT, Speech, ABA colors
     chart: {
       fontFamily: "Outfit, sans-serif",
-      height: 310,
-      type: "line", // Set the chart type to 'line'
+      height: 250,
+      type: "area", // Set the chart type to 'area'
       toolbar: {
         show: false, // Hide chart toolbar
       },
+      parentHeightOffset: 0,
     },
     stroke: {
-      curve: "straight", // Define the line style (straight, smooth, or step)
-      width: [2, 2], // Line width for each dataset
+      curve: "smooth", // Define the line style (straight, smooth, or step)
+      width: [2, 2, 2], // Line width for each dataset
     },
-
     fill: {
       type: "gradient",
       gradient: {
-        opacityFrom: 0.55,
+        opacityFrom: 0.15,
         opacityTo: 0,
       },
     },
@@ -54,25 +54,14 @@ export default function LineChartOne() {
     },
     tooltip: {
       enabled: true, // Enable tooltip
-      x: {
-        format: "dd MMM yyyy", // Format for x-axis tooltip
-      },
+      shared: true,
+      intersect: false,
     },
     xaxis: {
       type: "category", // Category-based x-axis
       categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        "Mar 4", "Mar 5", "Mar 6", "Mar 7", "Mar 8", "Mar 9", 
+        "Mar 10", "Mar 11", "Mar 12", "Mar 13", "Mar 14", "Mar 15"
       ],
       axisBorder: {
         show: false, // Hide x-axis border
@@ -102,18 +91,22 @@ export default function LineChartOne() {
 
   const series = [
     {
-      name: "Sales",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
+      name: "OT",
+      data: [12, 18, 15, 20, 25, 22, 18, 14, 28, 25, 20, 15],
     },
     {
-      name: "Revenue",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
+      name: "Speech",
+      data: [8, 12, 25, 18, 20, 15, 22, 18, 12, 15, 20, 22],
+    },
+    {
+      name: "ABA",
+      data: [5, 8, 10, 12, 15, 10, 8, 12, 15, 18, 12, 10],
     },
   ];
   return (
-    <div className="max-w-full overflow-x-auto custom-scrollbar">
-      <div id="chartEight" className="min-w-[1000px]">
-        <Chart options={options} series={series} type="area" height={310} />
+    <div className="w-full">
+      <div id="chartEight" className="w-full">
+        <Chart options={options} series={series} type="area" height={250} />
       </div>
     </div>
   );

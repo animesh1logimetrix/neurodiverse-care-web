@@ -29,6 +29,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import ParentDashboard from "./pages/Dashboard/ParentDashboard";
 import ClinicAdminDashboard from "./pages/Dashboard/ClinicAdminDashboard";
 import Children from "./pages/Care/Children";
+import ChildDetails from "./pages/Care/ChildDetails";
 import Dashboard from "./pages/Dashboard";
 
 import { AuthProvider } from "./context/AuthContext";
@@ -75,6 +76,7 @@ export default function App() {
               {/* Care */}
               <Route element={<ProtectedRoute moduleRequired="Children" />}>
                 <Route path="/care/children" element={<Children />} />
+                <Route path="/care/children/:id" element={<ChildDetails />} />
               </Route>
 
               {/* Others Pages (No specific backend module needed, just login) */}

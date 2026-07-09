@@ -3,20 +3,21 @@ import { ApexOptions } from "apexcharts";
 
 export default function BarChartOne() {
   const options: ApexOptions = {
-    colors: ["#465fff"],
+    colors: ["#60a5fa"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "bar",
-      height: 180,
+      height: 250,
       toolbar: {
         show: false,
       },
+      parentHeightOffset: 0,
     },
     plotOptions: {
       bar: {
         horizontal: false,
-        columnWidth: "39%",
-        borderRadius: 5,
+        columnWidth: "15%",
+        borderRadius: 4,
         borderRadiusApplication: "end",
       },
     },
@@ -30,18 +31,12 @@ export default function BarChartOne() {
     },
     xaxis: {
       categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        "Communication",
+        "Social Skills",
+        "Emotional Reg",
+        "Fine Motor",
+        "Academics",
+        "Self-Care",
       ],
       axisBorder: {
         show: false,
@@ -49,17 +44,26 @@ export default function BarChartOne() {
       axisTicks: {
         show: false,
       },
+      labels: {
+        style: {
+          colors: "#6B7280",
+          fontSize: "12px",
+        }
+      }
     },
     legend: {
-      show: true,
-      position: "top",
-      horizontalAlign: "left",
-      fontFamily: "Outfit",
+      show: false,
     },
     yaxis: {
       title: {
         text: undefined,
       },
+      labels: {
+        style: {
+          colors: "#6B7280",
+          fontSize: "12px",
+        }
+      }
     },
     grid: {
       yaxis: {
@@ -67,30 +71,27 @@ export default function BarChartOne() {
           show: true,
         },
       },
+      strokeDashArray: 4,
     },
     fill: {
       opacity: 1,
     },
-
     tooltip: {
-      x: {
-        show: false,
-      },
       y: {
-        formatter: (val: number) => `${val}`,
+        formatter: (val: number) => `${val}%`,
       },
     },
   };
   const series = [
     {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
+      name: "On Track",
+      data: [75, 85, 60, 45, 90, 80],
     },
   ];
   return (
-    <div className="max-w-full overflow-x-auto custom-scrollbar">
-      <div id="chartOne" className="min-w-[1000px]">
-        <Chart options={options} series={series} type="bar" height={180} />
+    <div className="w-full">
+      <div id="chartOne" className="w-full">
+        <Chart options={options} series={series} type="bar" height={250} />
       </div>
     </div>
   );
