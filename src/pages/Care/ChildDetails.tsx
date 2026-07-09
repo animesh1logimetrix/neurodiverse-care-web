@@ -4,6 +4,7 @@ import PageMeta from "../../components/common/PageMeta";
 import { PencilIcon, DownloadIcon, UserIcon, ArrowUpIcon } from "../../icons";
 import LineChartOne from "../../components/charts/line/LineChartOne";
 import BarChartOne from "../../components/charts/bar/BarChartOne";
+import DiagnosesTab from "../../components/Care/DiagnosesTab";
 
 export default function ChildDetails() {
   const { id } = useParams();
@@ -287,6 +288,11 @@ export default function ChildDetails() {
           </div>
 
         </div>
+      )}
+
+      {/* Diagnoses Content */}
+      {activeTab === "Diagnoses" && (
+        <DiagnosesTab />
       )}
     </>
   );
