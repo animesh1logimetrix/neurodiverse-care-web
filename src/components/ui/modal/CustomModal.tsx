@@ -36,6 +36,8 @@ export type FieldConfig = {
   required?: boolean;
   /** Placeholder text shown inside the input */
   placeholder?: string;
+  /** Optional custom class for the rendered input element */
+  inputClassName?: string;
   /** Disable the field */
   disabled?: boolean;
   /** Additional hint text shown below the field */
@@ -95,6 +97,8 @@ export interface CustomModalProps {
   infoAlert?: ReactNode;
   /** Extra content at the bottom of the body, below the info alert */
   bodyFooter?: ReactNode;
+  /** Content rendered at the top of the body, above auto-generated fields */
+  bodyHeader?: ReactNode;
   /** Completely replaces the default Cancel / Submit footer */
   customFooter?: ReactNode;
 
@@ -202,6 +206,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   showOverlay = true,
   isLoading = false,
   infoAlert,
+  bodyHeader,
   bodyFooter,
   customFooter,
   padding = "px-8 py-6",
@@ -357,7 +362,10 @@ export const CustomModal: React.FC<CustomModalProps> = ({
                   }
                   value={formData[field.name] ?? ""}
                   onChange={(e) => handleChange(field.name, e.target.value)}
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={
+                    field.inputClassName ??
+                    "h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  }
                 />
               )}
 
@@ -444,6 +452,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
       className={`overflow-y-auto ${padding} ${bodyClassName}`}
       style={{ maxHeight: resolvedBodyMaxHeight }}
     >
+      {bodyHeader}
       {renderAutoFields()}
       {children}
       {infoAlert && (

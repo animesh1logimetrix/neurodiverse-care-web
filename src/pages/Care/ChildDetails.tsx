@@ -1,14 +1,106 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
-import { PencilIcon, DownloadIcon, UserIcon, ArrowUpIcon } from "../../icons";
+import { PencilIcon, DownloadIcon, UserIcon, ArrowUpIcon, PlusIcon } from "../../icons";
 import LineChartOne from "../../components/charts/line/LineChartOne";
 import BarChartOne from "../../components/charts/bar/BarChartOne";
 import DiagnosesTab from "../../components/Care/DiagnosesTab";
+import CustomModal, { FieldConfig } from "../../components/ui/modal/CustomModal";
 
 export default function ChildDetails() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("Overview");
+
+  // ── Medication modal state ─────────────────────────────────────────────
+  type Medication = {
+    name: string;
+    category: string;
+    dose: string;
+    frequency: string;
+    prescribedBy: string;
+    start: string;
+    reviewDue: string;
+    status: "Active" | "Inactive" | "Pending";
+  };
+  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
+  const [isMedicationModalOpen, setIsMedicationModalOpen] = useState(false);
+  const [isAddMedicationOpen, setIsAddMedicationOpen] = useState(false);
+
+  
+
+  const openMedicationModal = (med: Medication) => {
+    setSelectedMedication(med);
+    setIsMedicationModalOpen(true);
+  };
+  const closeMedicationModal = () => {
+    setIsMedicationModalOpen(false);
+    setSelectedMedication(null);
+  };
+
+  // ── Medications data ───────────────────────────────────────────────────
+  const medications: Medication[] = [
+    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Active" },
+    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive" },
+    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive" },
+    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive" },
+    { name: "Methylphenidate HCI (Ritalin LA)", category: "Stimulant/ADHD", dose: "10 mg", frequency: "Once daily - morning", prescribedBy: "Dr. Suresh Mehta", start: "Feb 1, 2024", reviewDue: "Jun 1, 2026", status: "Inactive" },
+  ];
+
+  // Add Medication form fields (defined after `medications` so options can reference it)
+  const addMedicationFields: FieldConfig[] = [
+    { name: "medicationName", label: "Medication Name", type: "select", required: true, placeholder: "Select medication", options: medications.map((m) => ({ label: m.name, value: m.name })), colSpan: 1 },
+    { name: "category", label: "Category", type: "select", required: true, placeholder: "Select category", options: [{ label: "Stimulant/ADHD", value: "Stimulant/ADHD" }, { label: "Antipsychotic", value: "Antipsychotic" }], colSpan: 1 },
+    { name: "dose", label: "Dose", type: "text", placeholder: "e.g. 10", colSpan: 1 },
+    { name: "unit", label: "Unit", type: "select", placeholder: "Select unit", options: [{ label: "mg", value: "mg" }, { label: "ml", value: "ml" }], colSpan: 1 },
+    { name: "frequency", label: "Frequency", type: "select", required: true, placeholder: "Select frequency", options: [{ label: "Once daily - morning", value: "once-daily" }, { label: "Once daily - evening", value: "once-daily-eve" }], colSpan: 1 },
+    { name: "administrationTime", label: "Administration Time", type: "select", required: true, placeholder: "Select time", options: [{ label: "Morning", value: "morning" }, { label: "Evening", value: "evening" }], colSpan: 1 },
+    { name: "startDate", label: "Start Date", type: "date", required: true, placeholder: "Select start date", colSpan: 1 },
+    { name: "reviewDue", label: "Review Due Date", type: "date", required: true, placeholder: "Select review date", colSpan: 1 },
+    { name: "prescribedBy", label: "Prescribed By", type: "select", required: true, placeholder: "Select prescriber", options: [{ label: "Dr. Suresh Mehta", value: "Dr. Suresh Mehta" }], colSpan: 1 },
+    { name: "status", label: "Status", type: "select", required: true, placeholder: "Select status", options: [{ label: "Active", value: "Active" }, { label: "Pending", value: "Pending" }, { label: "Inactive", value: "Inactive" }], colSpan: 1 },
+    {
+      name: "instructions",
+      label: "Instructions for Care Team / Parents",
+      type: "text",
+      colSpan: 2,
+      placeholder: "Enter instructions",
+      inputClassName:
+        "h-8 w-full rounded-[10px] border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+    },
+  ];
+
+  const handleAddMedicationSubmit = (formData: Record<string, any>) => {
+    console.log("Add medication submitted:", formData);
+    setIsAddMedicationOpen(false);
+  };
+
+  const documents = [
+    { name: "Prescription J", date: "18:2023", size: "p120 0" },
+    { name: "Side Effects Info Sheet", date: "Jun 15 2027", size: "DM-310KB" },
+    { name: "Ah 15:2003 Parent Information Sheet", date: "pdf-180 KB", size: "" },
+    { name: "Medication Guide", date: "Jun 15.2073", size: "pat-450 Kn" },
+  ];
+
+  const historyItems = [
+    {
+      dot: "bg-emerald-500",
+      date: "Sep 15, 2022",
+      event: "Diagnosis confirmed",
+      detail: "By Dr. Reena Kapoor",
+    },
+    {
+      dot: "bg-red-500",
+      date: "Aug 28, 2022",
+      event: "Reports added",
+      detail: "MRI Brain Scan, EEG Report",
+    },
+    {
+      dot: "bg-blue-700",
+      date: "Jul 10, 2022",
+      event: "Initial assessment completed",
+      detail: "Developmental Assessment uploaded",
+    },
+  ];
 
   const tabs = [
     "Overview",
@@ -294,6 +386,208 @@ export default function ChildDetails() {
       {activeTab === "Diagnoses" && (
         <DiagnosesTab />
       )}
+
+      {/* Medications Content */}
+      {activeTab === "Medications" && (
+        <div>
+          {/* Top row: title + Add button */}
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-bold text-gray-900">Medications</h2>
+            <button
+              onClick={() => setIsAddMedicationOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+            >
+              <PlusIcon className="w-4 h-4 text-white fill-current" />
+              Add Medication
+            </button>
+          </div>
+
+          {/* Table card */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <table className="w-full border-collapse">
+              {/* Header */}
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {["Medication", "Category", "Dose", "Frequency", "Prescribed By", "Start", "Review Due", "Status", "Actions"].map((col) => (
+                    <th
+                      key={col}
+                      className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                    >
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              {/* Body */}
+              <tbody>
+                {medications.map((med, idx) => (
+                  <tr
+                    key={idx}
+                    className="border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 transition-colors"
+                  >
+                    <td className="px-5 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap">{med.name}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.category}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600">{med.dose}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.frequency}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.prescribedBy}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.start}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">{med.reviewDue}</td>
+                    <td className="px-5 py-4">
+                      {med.status === "Active" ? (
+                        <span className="inline-block px-3 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-600 whitespace-nowrap">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-block w-16 h-5 rounded-md bg-emerald-100/50" />
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      {/* Three-dot action button — only this triggers the modal */}
+                      <button
+                        onClick={() => openMedicationModal(med)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                        title="View details"
+                      >
+                        <span className="text-lg font-bold leading-none tracking-widest">···</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Medication Details Modal (inlined using CustomModal) */}
+      <CustomModal
+        isOpen={isMedicationModalOpen}
+        onClose={closeMedicationModal}
+        title={selectedMedication?.name ?? "Medication Details"}
+        modalClassName="!w-[78vw] !max-w-[980px] !max-h-[78vh] !rounded-[10px] !bg-white !p-0 !shadow-[0_16px_40px_rgba(0,0,0,0.18)]"
+      >
+        <div className="px-8 pt-4 pb-4">
+          <div className="mt-2 space-y-1">
+            <p className="text-[12px] text-gray-500">Antipsychotic / Behcnonsi</p>
+            <p className="text-[12px] text-gray-500">0.25 mg Once daily evening</p>
+            <p className="text-[12px] text-gray-500">Prescribed by Dr. Suresh Mehta</p>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200" />
+
+        <div className="grid grid-cols-[1fr_1fr] px-8 py-4">
+          <div className="pr-8">
+            <h3 className="text-[12px] font-bold text-gray-700 mb-4">Medication Details</h3>
+
+            <div className="space-y-2">
+              {[
+                ["Category", "Antipsychotic/Betuvional"],
+                ["Dose", "0.25 mg"],
+                ["Frequency", "Once daily evening"],
+                ["Start Date", "Jun 15, 2023"],
+                ["Review Due", "Jun 15, 2024"],
+                ["Stut", "On Holu"],
+                ["Prescribed By", "Dr. Suresh Mehta"],
+                ["Lust Updated", "May 20, 2024 by Dr. Reena Kapoor"],
+              ].map(([label, value]) => (
+                <div key={label} className="grid grid-cols-[180px_1fr] text-[12px] leading-tight">
+                  <span className="text-gray-500">{label}</span>
+                  <span className="text-gray-600">{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-l border-gray-200 pl-8">
+            <h3 className="text-[12px] font-normal text-gray-600 mt-8 mb-6">Instructions for Care Team/Parenta</h3>
+
+            <div className="space-y-2 text-[12px] text-gray-600 leading-snug">
+              <p>Give in the evening after food.</p>
+              <p>Monitor for drowsiness, dizziness, or unusual movements</p>
+              <p>Do not stand suddenly Consult the doctor before any change.</p>
+              <p>Report immediately if any swelling, fever, or stiff muscles occur</p>
+              <p>Keep a record of mood, sleep, and behavior changes.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200 mx-8" />
+
+        <div className="px-8 py-5">
+          <h3 className="text-[12px] font-bold text-gray-700 mb-4">Reports &amp; Documents</h3>
+
+          <div className="grid grid-cols-5 gap-4">
+            {documents.map((doc, index) => (
+              <div key={index} className="h-[128px] rounded-[7px] border border-orange-300 px-4 pb-4 flex flex-col justify-end text-[12px]">
+                <p className="font-bold text-gray-700 leading-tight">{doc.name}</p>
+                <p className="text-gray-600 mt-1">{doc.date}</p>
+                {doc.size && <p className="text-gray-600">{doc.size}</p>}
+              </div>
+            ))}
+
+            <div className="h-[128px] rounded-[7px] border border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 text-[12px] text-gray-500 cursor-pointer">
+              <DownloadIcon className="w-4 h-4" />
+              <span>Upload More</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200" />
+
+        <div className="px-8 py-6">
+          <h3 className="text-[12px] font-bold text-gray-700 mb-6">Medication History</h3>
+
+          <div className="space-y-4">
+            {historyItems.map((item, index) => (
+              <div key={index} className="grid grid-cols-[18px_130px_18px_190px_1fr] items-center text-[12px] text-gray-600">
+                <span className={`w-2 h-2 rounded-full ${item.dot}`} />
+                <span>{item.date}</span>
+                <span className={`w-2 h-2 rounded-full ${item.dot}`} />
+                <span>{item.event}</span>
+                <span className="text-[11px]">{item.detail}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CustomModal>
+
+      {/* Add Medication Modal */}
+      <CustomModal
+        isOpen={isAddMedicationOpen}
+        onClose={() => setIsAddMedicationOpen(false)}
+        title="Add Medication"
+        bodyHeader={
+          <div className="mb-3 px-0">
+            <h4 className="text-sm font-semibold text-gray-900">Medication Information</h4>
+          </div>
+        }
+        fields={addMedicationFields}
+        onSubmit={handleAddMedicationSubmit}
+        submitText="Save Medication"
+        cancelText="Cancel"
+        size="lg"
+        footerAlign="center"
+        overlayBlur={false}
+        modalClassName="!w-[78vw] !max-w-[980px] !max-h-[78vh] !rounded-[10px] !bg-white !p-0 !shadow-[0_16px_40px_rgba(0,0,0,0.18)]"
+      >
+        <div className="px-8 pt-1 pb-3">
+          <div className="mb-1.5">
+            <label className="block text-xs font-bold text-black">
+              Attach Reports / Documents
+            </label>
+          </div>
+          <div className="w-full h-[76px] rounded-[10px] border border-dashed border-gray-300 flex items-center justify-center gap-2 text-[12px] text-gray-500 cursor-pointer">
+            <DownloadIcon className="w-4 h-4 shrink-0" />
+            <div className="text-left leading-5">
+              <span>Drag & drop or </span>
+              <span className="text-blue-600 font-medium">browse files</span>
+              <span> Jpeg, Png</span>
+            </div>
+          </div>
+        </div>
+      </CustomModal>
     </>
   );
 }
