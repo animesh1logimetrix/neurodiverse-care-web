@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
@@ -82,10 +83,10 @@ const goals = [
 ];
 
 const quickActions = [
-  { label: "Log Home Observation",  icon: <PlusIcon />,     bg: "#7db9fb", hover: "#6aa8e7" },
+  { label: "Log Home Observation",  icon: <PlusIcon />,     bg: "#7db9fb", hover: "#6aa8e7", path: "/dashboard/home-observations" },
   // { label: "Message Priya Sharma",  icon: <MessageIcon />,  bg: "#0d9488", hover: "#0f766e" },
-  { label: "Book Advisory Session", icon: <CalendarIcon />, bg: "#12b76a", hover: "#039855" },
-  { label: "View Progress Report",  icon: <ReportIcon />,   bg: "#7a5af8", hover: "#6941c6" },
+  { label: "Book Advisory Session", icon: <CalendarIcon />, bg: "#12b76a", hover: "#039855", path: "#" },
+  { label: "View Progress Report",  icon: <ReportIcon />,   bg: "#7a5af8", hover: "#6941c6", path: "#" },
 ];
 
 const weekStats = [
@@ -96,6 +97,7 @@ const weekStats = [
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function ParentDashboard() {
+  const navigate = useNavigate();
   return (
     <>
       <PageMeta
@@ -225,6 +227,7 @@ export default function ParentDashboard() {
                     key={idx}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white text-[14px] font-semibold transition-all duration-150 active:scale-[0.98] cursor-pointer text-left"
                     style={{ backgroundColor: action.bg }}
+                    onClick={() => action.path && action.path !== "#" && navigate(action.path)}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLButtonElement).style.backgroundColor = action.hover;
                     }}

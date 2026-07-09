@@ -16,6 +16,7 @@ import {
   UserCircleIcon,
   GroupIcon,
   DocsIcon,
+  HomeIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -95,6 +96,11 @@ const getNavItems = (role: string): NavItem[] => {
         path: "/dashboard"
       },
       {
+        name: "Home Observations",
+        icon: <HomeIcon />,
+        path: "/dashboard/home-observations"
+      },
+      {
         name: "Care",
         icon: <GroupIcon />,
         subItems: [
@@ -135,6 +141,11 @@ const getNavItems = (role: string): NavItem[] => {
       subItems: [
         { name: "Children", path: "/care/children", pro: false },
       ]
+    },
+    {
+      name: "Home Observations",
+      icon: <HomeIcon />,
+      path: "/dashboard/home-observations"
     }
   ];
 };

@@ -1,4 +1,5 @@
 import { ReactComponent as PlusIcon } from "./plus.svg?react";
+import { ReactComponent as HomeIcon } from "./home.svg?react";
 import { ReactComponent as CloseIcon } from "./close.svg?react";
 import { ReactComponent as BoxIcon } from "./box.svg?react";
 import { ReactComponent as CheckCircleIcon } from "./check-circle.svg?react";
@@ -112,4 +113,5 @@ export {
   ChatIcon,
   AngleLeftIcon,
   AngleRightIcon,
+  HomeIcon,
 };

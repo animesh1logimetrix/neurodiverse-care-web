@@ -31,6 +31,7 @@ import ClinicAdminDashboard from "./pages/Dashboard/ClinicAdminDashboard";
 import Children from "./pages/Care/Children";
 import ChildDetails from "./pages/Care/ChildDetails";
 import Dashboard from "./pages/Dashboard";
+import HomeObservations from "./pages/Dashboard/HomeObservations";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -49,6 +50,7 @@ export default function App() {
               {/* Dashboard Modules */}
               <Route element={<ProtectedRoute moduleRequired="Dashboard" />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/home-observations" element={<HomeObservations />} />
               </Route>
 
               {/* Administration Modules */}
