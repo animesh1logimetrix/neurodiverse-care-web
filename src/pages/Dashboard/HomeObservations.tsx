@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import PageMeta from "../../components/common/PageMeta";
 import { Link } from "react-router";
+import CustomModal from "../../components/ui/modal/CustomModal";
+import InputField from "../../components/form/input/InputField";
 
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
 
@@ -121,6 +123,34 @@ function MortarboardIcon() {
     </svg>
   );
 }
+function BrainIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.5 2A2.5 2.5 0 0 0 7 4.5v15a2.5 2.5 0 0 0 5 0v-15A2.5 2.5 0 0 0 9.5 2z"/><path d="M14.5 2A2.5 2.5 0 0 1 17 4.5v15a2.5 2.5 0 0 1-5 0v-15A2.5 2.5 0 0 1 14.5 2z"/>
+    </svg>
+  );
+}
+function ImageIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+    </svg>
+  );
+}
+function VideoIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+    </svg>
+  );
+}
+function FileIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+    </svg>
+  );
+}
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const stats = [
@@ -223,8 +253,106 @@ const observations = [
   }
 ];
 
+const CATEGORIES = [
+  { id: "Behavior", label: "Behavior", icon: <LightningIcon />, color: "#f79009", bg: "#fffaeb" },
+  { id: "Communication", label: "Communication", icon: <BookIcon />, color: "#3b82f6", bg: "#eff6ff" },
+  { id: "Learning", label: "Learning", icon: <MortarboardIcon />, color: "#a855f7", bg: "#faf5ff" },
+  { id: "Social Interaction", label: "Social Interaction", icon: <UsersIcon />, color: "#10b981", bg: "#ecfdf5" },
+  { id: "Sensory Response", label: "Sensory Response", icon: <PulseIcon />, color: "#ef4444", bg: "#fef2f2" },
+  { id: "Emotional Regulation", label: "Emotional Regulation", icon: <BrainIcon />, color: "#6366f1", bg: "#eef2ff" },
+  { id: "Daily Living", label: "Daily Living", icon: <HomeIcon />, color: "#14b8a6", bg: "#f0fdfa" },
+  { id: "Motor Skills", label: "Motor Skills", icon: <PulseIcon />, color: "#f97316", bg: "#fff7ed" },
+];
+
+const RECIPIENTS = [
+  { id: "Therapist", label: "Therapist", icon: <UserIcon />, color: "#3b82f6", bg: "#eff6ff" },
+  { id: "Psychologist", label: "Psychologist", icon: <BrainIcon />, color: "#a855f7", bg: "#faf5ff" },
+  { id: "School", label: "School", icon: <MortarboardIcon />, color: "#0ea5e9", bg: "#f0f9ff" },
+];
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function HomeObservations() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [step, setStep] = useState(1);
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+  const [recipients, setRecipients] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Reset state when opened
+  React.useEffect(() => {
+    if (isModalOpen) {
+      setStep(1);
+      setTitle("");
+      setDate("");
+      setCategory("");
+      setDescription("");
+      setRecipients([]);
+      setErrors({});
+    }
+  }, [isModalOpen]);
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleNext = () => {
+    const newErrors: Record<string, string> = {};
+    if (!category) newErrors.category = "Please select a category";
+    if (description.length < 20) newErrors.description = "Please provide more detail (at least 20 characters)";
+    if (!title.trim()) newErrors.title = "Please provide a title";
+    if (!date) newErrors.date = "Please provide a date";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
+    setStep(2);
+  };
+
+  const handleSubmit = () => {
+    if (recipients.length === 0) {
+      setErrors({ recipients: "Select at least one recipient" });
+      return;
+    }
+    const data = { title, date, category, description, recipients };
+    console.log("New observation submitted:", data);
+    setIsModalOpen(false);
+    // Handle submission...
+  };
+
+  const toggleRecipient = (id: string) => {
+    setRecipients(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
+  };
+
+  // Custom modal footer to match standard designs and multi-step flow
+  const customFooter = (
+    <div className="flex items-center justify-between px-8 py-5 border-t border-gray-100 w-full bg-gray-50/50">
+      {step === 1 ? (
+        <>
+          <button type="button" onClick={handleCloseModal} className="px-5 py-2.5 rounded-lg text-gray-700 bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button type="button" onClick={handleNext} className="flex items-center gap-1.5 px-6 py-2.5 rounded-lg text-white bg-[#7db9fb] hover:opacity-90 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]">
+            Continue <ChevronRightIcon />
+          </button>
+        </>
+      ) : (
+        <>
+          <button type="button" onClick={() => setStep(1)} className="px-5 py-2.5 rounded-lg text-gray-700 bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors">
+            ← Back
+          </button>
+          <button type="button" onClick={handleSubmit} className="px-6 py-2.5 rounded-lg text-white bg-[#7db9fb] hover:opacity-90 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]">
+            Submit Observation
+          </button>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <>
       <PageMeta
@@ -247,6 +375,7 @@ export default function HomeObservations() {
             </p>
           </div>
           <button
+            onClick={() => setIsModalOpen(true)}
             className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-white text-[15px] font-semibold transition-all duration-150 hover:opacity-90 active:scale-[0.98] shadow-sm"
             style={{ backgroundColor: "#7db9fb" }}
           >
@@ -384,6 +513,163 @@ export default function HomeObservations() {
           
         </div>
       </div>
+
+      <CustomModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title="New Home Observation"
+        subtitle={`Step ${step} of 2 — ${step === 1 ? "Observation Details" : "Recipients & Attachments"}`}
+        size="md"
+        padding="p-0"
+        customFooter={customFooter}
+      >
+        <div className="px-6 py-4 flex-1">
+          {/* Progress Bar */}
+          <div className="pb-4 flex gap-2 flex-shrink-0">
+            <div className={`h-1 flex-1 rounded-full ${step >= 1 ? 'bg-[#7db9fb]' : 'bg-gray-200'}`}></div>
+            <div className={`h-1 flex-1 rounded-full ${step >= 2 ? 'bg-[#7db9fb]' : 'bg-gray-200'}`}></div>
+          </div>
+
+          {step === 1 && (
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-black mb-1.5">Observation Title <span className="text-red-500">*</span></label>
+                <InputField
+                  type="text"
+                  placeholder="e.g., Increased aggression during transitions"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  error={!!errors.title}
+                  hint={errors.title}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-black mb-1.5">Observation Date <span className="text-red-500">*</span></label>
+                <InputField
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  error={!!errors.date}
+                  hint={errors.date}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-black mb-1.5">Category <span className="text-red-500">*</span></label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {CATEGORIES.map(cat => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setCategory(cat.id)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${category === cat.id ? 'border-[#7db9fb] bg-[#7db9fb]/10 shadow-sm' : 'border-gray-200 hover:border-gray-300 bg-gray-50/50'}`}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: cat.bg, color: cat.color }}>
+                        {cat.icon}
+                      </div>
+                      <span className="text-sm font-medium text-gray-800">{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {errors.category && <p className="text-red-500 text-xs mt-2">{errors.category}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-black mb-1.5">Detailed Description <span className="text-red-500">*</span></label>
+                <textarea
+                  placeholder="Describe what you observed — include context, triggers, duration, and any strategies you tried..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  className={`block w-full px-4 py-3 rounded-xl border ${errors.description ? 'border-red-300 ring-1 ring-red-500/20 focus:border-red-500' : 'border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700'} focus:outline-none text-sm resize-none text-gray-900 bg-transparent`}
+                />
+                <div className="flex justify-between items-center mt-1.5">
+                  {errors.description ? (
+                    <p className="text-red-500 text-xs">{errors.description}</p>
+                  ) : (
+                    <div></div>
+                  )}
+                  <span className="text-xs text-gray-400 font-medium">{description.length} chars</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-[15px] font-semibold text-gray-900">Send To <span className="text-red-500">*</span></label>
+                <p className="text-[13px] text-gray-500 mb-3 mt-0.5">This observation will be visible only to the selected recipients.</p>
+                <div className="space-y-3">
+                  {RECIPIENTS.map(rec => {
+                    const isSelected = recipients.includes(rec.id);
+                    return (
+                      <button
+                        key={rec.id}
+                        type="button"
+                        onClick={() => toggleRecipient(rec.id)}
+                        className={`w-full flex items-center justify-between px-4 py-4 rounded-xl border transition-all text-left ${isSelected ? 'border-[#7db9fb] bg-[#7db9fb]/10 shadow-sm' : 'border-gray-200 hover:border-gray-300 bg-gray-50/50'}`}
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: rec.bg, color: rec.color }}>
+                            {rec.icon}
+                          </div>
+                          <div>
+                            <div className="text-[15px] font-semibold text-gray-900">{rec.label}</div>
+                            <div className="text-[13px] text-gray-500 mt-0.5">Will receive this observation in their dashboard</div>
+                          </div>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-[#7db9fb] bg-[#7db9fb]' : 'border-gray-300'}`}>
+                          {isSelected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+                {errors.recipients && <p className="text-red-500 text-xs mt-2">{errors.recipients}</p>}
+              </div>
+
+              <div>
+                <label className="block text-[15px] font-semibold text-gray-900 mb-2">Attachments <span className="font-normal text-gray-500">(optional)</span></label>
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                    <ImageIcon /> Image
+                  </button>
+                  <button type="button" className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                    <VideoIcon /> Video
+                  </button>
+                  <button type="button" className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                    <FileIcon /> Document
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-[#f8fafc] rounded-xl p-5 border border-gray-100">
+                <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-4">OBSERVATION SUMMARY</h4>
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-[100px_1fr] text-sm">
+                    <span className="text-gray-500">Title</span>
+                    <span className="text-gray-900 font-medium truncate">{title || "—"}</span>
+                  </div>
+                  <div className="grid grid-cols-[100px_1fr] text-sm">
+                    <span className="text-gray-500">Date</span>
+                    <span className="text-gray-900 font-medium">{date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "—"}</span>
+                  </div>
+                  <div className="grid grid-cols-[100px_1fr] text-sm">
+                    <span className="text-gray-500">Category</span>
+                    <span className="text-gray-900 font-medium">{category || "—"}</span>
+                  </div>
+                  <div className="grid grid-cols-[100px_1fr] text-sm">
+                    <span className="text-gray-500">Recipients</span>
+                    <span className="text-gray-900 font-medium">{recipients.length > 0 ? recipients.join(", ") : "—"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </CustomModal>
     </>
   );
 }
