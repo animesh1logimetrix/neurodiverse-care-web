@@ -80,9 +80,11 @@ export default function DiagnosesTab() {
     diagnosedById: "",
     clinicalNotes: ""
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const updateForm = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setFormErrors(prev => ({ ...prev, [field]: "" }));
   };
 
   const uploadFilesMutation = useMutation({
@@ -115,9 +117,22 @@ export default function DiagnosesTab() {
     }
   });
 
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.categoryId) errors.categoryId = "Diagnosis Name is required.";
+    if (!formData.icd10.trim()) errors.icd10 = "ICD-10 Code is required.";
+    if (!formData.severityLevel) errors.severityLevel = "Severity Level is required.";
+    if (!formData.status) errors.status = "Status is required.";
+    if (!formData.diagnosisDate) errors.diagnosisDate = "Diagnosis Date is required.";
+    if (!formData.diagnosedById) errors.diagnosedById = "Diagnosed By is required.";
+    if (!formData.clinicalNotes.trim()) errors.clinicalNotes = "Clinical Notes is required.";
+    return errors;
+  };
+
   const handleSave = async () => {
-    if (!formData.categoryId || !formData.status || !formData.diagnosisDate || !formData.severityLevel || !formData.diagnosedById) {
-      toast.error("Please fill in all required fields.");
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
@@ -523,11 +538,13 @@ export default function DiagnosesTab() {
                 onChange={(val) => updateForm('categoryId', val)}
                 placeholder="Select Category"
               />
+              {formErrors.categoryId && <p className="mt-1 text-xs text-red-600">{formErrors.categoryId}</p>}
             </div>
             
             <div>
               <Label>ICD-10 Code *</Label>
               <Input value={formData.icd10} onChange={(e) => updateForm('icd10', e.target.value)} placeholder="Enter code" />
+              {formErrors.icd10 && <p className="mt-1 text-xs text-red-600">{formErrors.icd10}</p>}
             </div>
 
             <div>
@@ -543,6 +560,7 @@ export default function DiagnosesTab() {
                 onChange={(val) => updateForm('severityLevel', val)}
                 placeholder="Select Severity"
               />
+              {formErrors.severityLevel && <p className="mt-1 text-xs text-red-600">{formErrors.severityLevel}</p>}
             </div>
 
             <div>
@@ -557,6 +575,7 @@ export default function DiagnosesTab() {
                 onChange={(val) => updateForm('status', val)}
                 placeholder="Select Status"
               />
+              {formErrors.status && <p className="mt-1 text-xs text-red-600">{formErrors.status}</p>}
             </div>
 
             <div>
@@ -568,6 +587,7 @@ export default function DiagnosesTab() {
                 onChange={(dates) => updateForm('diagnosisDate', dates[0]?.toString() || '')} 
                 placeholder="Select Date" 
               />
+              {formErrors.diagnosisDate && <p className="mt-1 text-xs text-red-600">{formErrors.diagnosisDate}</p>}
             </div>
 
             <div>
@@ -590,12 +610,14 @@ export default function DiagnosesTab() {
                 onChange={(val) => updateForm('diagnosedById', val)}
                 placeholder="Select Doctor"
               />
+              {formErrors.diagnosedById && <p className="mt-1 text-xs text-red-600">{formErrors.diagnosedById}</p>}
             </div>
           </div>
 
           <div className="mb-8">
             <Label>Clinical Notes*</Label>
             <Input type="text" value={formData.clinicalNotes} onChange={(e) => updateForm('clinicalNotes', e.target.value)} placeholder="Enter Note" />
+            {formErrors.clinicalNotes && <p className="mt-1 text-xs text-red-600">{formErrors.clinicalNotes}</p>}
           </div>
 
           <div className="mb-8">
