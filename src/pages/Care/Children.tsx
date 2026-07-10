@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosClient from "../../api/axiosClient";
 import PageMeta from "../../components/common/PageMeta";
@@ -24,11 +24,12 @@ const baseChild = {
   nextAppointment: "Today, 11:00 AM",
 };
 const childrenData = Array.from({ length: 6 }, (_, i) => ({ ...baseChild, id: i + 1 }));
+// Dynamic Data Mapping
 
 export default function Children() {
   const [activeTab, setActiveTab] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [children, setChildren] = useState(childrenData);
+  // const [children, setChildren] = useState(childrenData);
   const [childForm, setChildForm] = useState({
     fullName: "",
     age: "",
@@ -48,6 +49,29 @@ export default function Children() {
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
 
   const queryClient = useQueryClient();
+
+  const { data: childrenRaw = [], isLoading: isLoadingChildren } = useQuery({
+    queryKey: ["children"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/child");
+      return res.data;
+    },
+  });
+
+  const children = childrenRaw.map((child: any) => ({
+    id: child.id,
+    name: child.full_name,
+    ageLoc: `${child.age} yrs ${child.address}`,
+    mrn: `NC-2025-${String(child.id).padStart(5, '0')}`,
+    status: "Active",
+    pendingAction: child.notes !== "NA" && child.notes ? child.notes : "No pending action",
+    tags: [
+      { label: child.diagnosis || "No Diagnosis", color: "bg-blue-100 text-blue-500" },
+    ],
+    metrics: { activeGoals: 0, achieved: 0, providers: 1 },
+    nextAppointment: "Not scheduled",
+    profileImageUrl: child.profile_picture && child.profile_picture.length > 0 ? child.profile_picture[0].file_url : null,
+  }));
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -319,7 +343,27 @@ export default function Children() {
       <hr className="border-gray-200 mb-6" />
 
       {/* Children Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {isLoadingChildren ? (
+        <div className="flex justify-center items-center py-20">
+          <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : filteredChildren.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center bg-gray-50 rounded-[20px] border border-dashed border-gray-300">
+          <UserIcon className="w-12 h-12 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">No children found</h3>
+          <p className="text-gray-500 text-sm max-w-sm mb-4">
+            Get started by adding a new child to your care roster.
+          </p>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+          >
+            <PlusIcon className="w-4 h-4 fill-current" />
+            Add Child
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredChildren.map((child) => (
           <Link
             to={`/care/children/${child.id}`}
@@ -329,8 +373,12 @@ export default function Children() {
             {/* Top Row: Avatar and Details */}
             <div className="p-5 pb-4 relative">
               <div className="flex items-start gap-3">
-                {/* Avatar Placeholder */}
-                <div className="w-[50px] h-[50px] rounded-full bg-[#fdf3e7] shrink-0" />
+                {/* Avatar */}
+                {child.profileImageUrl ? (
+                  <img src={child.profileImageUrl} alt={child.name} className="w-[50px] h-[50px] rounded-full object-cover shrink-0 border border-gray-200" />
+                ) : (
+                  <div className="w-[50px] h-[50px] rounded-full bg-[#fdf3e7] shrink-0" />
+                )}
                 
                 {/* Details */}
                 <div className="flex-1">
@@ -413,6 +461,7 @@ export default function Children() {
           </Link>
         ))}
       </div>
+      )}
 
       {/* Add New Child Modal using CustomModal component */}
       <CustomModal
