@@ -39,6 +39,10 @@ import { AuthProvider } from "./context/AuthContext";
 export default function App() {
   return (
     <AuthProvider>
+      <Toaster 
+        position="top-center" 
+        containerStyle={{ zIndex: 999999 }}
+      />
       <Router>
         <ScrollToTop />
         <Routes>

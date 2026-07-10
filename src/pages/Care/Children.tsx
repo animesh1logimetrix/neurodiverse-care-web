@@ -1,5 +1,8 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import axiosClient from "../../api/axiosClient";
 import PageMeta from "../../components/common/PageMeta";
 import { PlusIcon, UserIcon, CheckLineIcon, AlertIcon, TimeIcon } from "../../icons";
 import { CustomModal } from "../../components/ui/modal/CustomModal";
@@ -44,6 +47,49 @@ export default function Children() {
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
 
+  const queryClient = useQueryClient();
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file); // Changed from 'files' to 'file'
+      formData.append("folder", "uploads");
+      const res = await axiosClient.post("/media/upload", formData, { // Changed from '/media/uploads' to '/media/upload'
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    },
+  });
+
+  const createChildMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await axiosClient.post("/child", payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Child added successfully");
+      queryClient.invalidateQueries({ queryKey: ["children"] });
+      setIsModalOpen(false);
+      setChildForm({
+        fullName: "",
+        age: "",
+        gender: "",
+        address: "",
+        diagnoses: "",
+        bloodGroup: "",
+        motherName: "",
+        fatherName: "",
+        allergies: "",
+        school: "",
+        notes: "",
+      });
+      setSelectedPhoto(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to add child");
+    },
+  });
+
   const tabs = ["All", "ASD", "ADHD", "Speech", "Alerts"];
 
   // Filter children based on selected tab
@@ -81,12 +127,19 @@ export default function Children() {
   };
 
   const handlePhotoChange = (file: File | null) => {
+    if (file) {
+      const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+        toast.error("Please upload a valid image file (JPEG, PNG, GIF, WEBP)");
+        return;
+      }
+    }
     setSelectedPhoto(file);
     setSubmitMessage(null);
     setSubmitStatus(null);
   };
 
-  const handleAddChildSubmit = (_formData?: Record<string, any>) => {
+  const handleAddChildSubmit = async (_formData?: Record<string, any>) => {
     const errors = validateChildForm();
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) {
@@ -95,39 +148,86 @@ export default function Children() {
       return false;
     }
 
-    const newChild = {
-      id: children.length + 1,
-      name: childForm.fullName,
-      ageLoc: childForm.age,
-      mrn: `NC-2025-00${children.length + 1}`,
-      status: "Active",
-      pendingAction: "New child added",
-      tags: [
-        { label: childForm.diagnoses || "No diagnosis", color: "bg-blue-100 text-blue-500" },
-      ],
-      metrics: { activeGoals: 0, achieved: 0, providers: 0 },
-      nextAppointment: "Not scheduled",
+    let fileIds: number[] = [];
+    if (selectedPhoto) {
+      try {
+        const uploadRes = await uploadMutation.mutateAsync(selectedPhoto);
+        if (uploadRes && uploadRes.file && uploadRes.file.id) {
+          fileIds = [uploadRes.file.id];
+        } else if (uploadRes && uploadRes.data && uploadRes.data.file && uploadRes.data.file.id) {
+          fileIds = [uploadRes.data.file.id];
+        } else if (Array.isArray(uploadRes)) {
+          fileIds = uploadRes.map((f: any) => typeof f === "object" ? f.id : f).filter(Boolean);
+        } else if (uploadRes && uploadRes.fileIds) {
+          fileIds = uploadRes.fileIds;
+        } else if (uploadRes && uploadRes.data && Array.isArray(uploadRes.data)) {
+          fileIds = uploadRes.data.map((f: any) => typeof f === "object" ? f.id : f).filter(Boolean);
+        } else if (uploadRes && uploadRes.data && uploadRes.data.id) {
+          fileIds = [uploadRes.data.id];
+        } else if (uploadRes && uploadRes.id) {
+          fileIds = [uploadRes.id];
+        }
+      } catch (error) {
+        toast.error("Failed to upload photo");
+        return false;
+      }
+    }
+
+    let calculatedAge = 0;
+    if (childForm.age) {
+      const dobDate = new Date(childForm.age);
+      const today = new Date();
+      calculatedAge = today.getFullYear() - dobDate.getFullYear();
+      const m = today.getMonth() - dobDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+        calculatedAge--;
+      }
+    }
+
+    const mapGender = (g: string) => {
+      if (g === "Male") return "MALE";
+      if (g === "Female") return "FEMALE";
+      if (g === "Other") return "OTHER";
+      return g;
     };
 
-    setChildren((prev) => [newChild, ...prev]);
-    setSelectedPhoto(null);
-    setSubmitMessage("Child added successfully.");
-    setSubmitStatus("success");
-    setChildForm({
-      fullName: "",
-      age: "",
-      gender: "",
-      address: "",
-      diagnoses: "",
-      bloodGroup: "",
-      motherName: "",
-      fatherName: "",
-      allergies: "",
-      school: "",
-      notes: "",
-    });
-    setIsModalOpen(false);
-    return undefined;
+    const mapBloodGroup = (bg: string) => {
+      const mapping: Record<string, string> = {
+        "A+": "A_POSITIVE",
+        "A-": "A_NEGATIVE",
+        "B+": "B_POSITIVE",
+        "B-": "B_NEGATIVE",
+        "AB+": "AB_POSITIVE",
+        "AB-": "AB_NEGATIVE",
+        "O+": "O_POSITIVE",
+        "O-": "O_NEGATIVE",
+      };
+      return mapping[bg] || bg;
+    };
+
+    const payload = {
+      full_name: childForm.fullName,
+      age: Math.max(0, calculatedAge),
+      gender: mapGender(childForm.gender),
+      address: childForm.address,
+      diagnosis: childForm.diagnoses,
+      blood_group: mapBloodGroup(childForm.bloodGroup),
+      mother_name: childForm.motherName,
+      father_name: childForm.fatherName,
+      allergies: childForm.allergies,
+      school: childForm.school,
+      notes: childForm.notes,
+      dob: childForm.age ? new Date(childForm.age).toISOString() : "", // Convert date string to ISO
+      referred_by: "",
+      fileIds: fileIds,
+    };
+
+    try {
+      await createChildMutation.mutateAsync(payload);
+      return undefined;
+    } catch (error) {
+      return false;
+    }
   };
 
   return (
@@ -338,9 +438,10 @@ export default function Children() {
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors text-sm cursor-pointer min-w-[120px]"
+              disabled={createChildMutation.isPending || uploadMutation.isPending}
+              className="px-6 py-2.5 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors text-sm cursor-pointer min-w-[120px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add Child
+              {(createChildMutation.isPending || uploadMutation.isPending) ? "Adding..." : "Add Child"}
             </button>
           </div>
         }
@@ -372,6 +473,7 @@ export default function Children() {
                 id="add-child-dob"
                 placeholder="Select date"
                 defaultDate={childForm.age || undefined}
+                maxDate="today"
                 onChange={([dates], currentDateString) =>
                   handleChildFormChange("age", currentDateString || "")
                 }
@@ -567,22 +669,38 @@ export default function Children() {
             <label className="block text-xs font-bold text-black">
               Upload Photo
             </label>
-            <div className="border border-dashed border-gray-300 rounded-lg min-h-[88px] bg-white hover:bg-gray-50 transition-colors cursor-pointer relative flex items-center justify-center gap-2 px-4 py-4">
-              <input
-                type="file"
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                accept="image/jpeg,image/png"
-                onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)}
-              />
-              <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              <p className="text-sm text-gray-500 leading-none">
-                Drag & drop or <span className="text-brand-500 font-semibold">browse files</span> Jpeg, Png
-              </p>
-            </div>
-            {selectedPhoto && (
-              <p className="text-sm text-gray-600">Selected file: {selectedPhoto.name}</p>
+            {selectedPhoto ? (
+              <div className="relative inline-block w-fit">
+                <img
+                  src={URL.createObjectURL(selectedPhoto)}
+                  alt="Selected preview"
+                  className="h-24 w-24 object-cover rounded-lg border border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => handlePhotoChange(null)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <div className="border border-dashed border-gray-300 rounded-lg min-h-[88px] bg-white hover:bg-gray-50 transition-colors cursor-pointer relative flex items-center justify-center gap-2 px-4 py-4">
+                <input
+                  type="file"
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)}
+                />
+                <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <p className="text-sm text-gray-500 leading-none">
+                  Drag & drop or <span className="text-brand-500 font-semibold">browse files</span> Jpeg, Png, Gif, Webp
+                </p>
+              </div>
             )}
           </div>
       </CustomModal>
