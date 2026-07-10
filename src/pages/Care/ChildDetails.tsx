@@ -8,6 +8,7 @@ import LineChartOne from "../../components/charts/line/LineChartOne";
 import BarChartOne from "../../components/charts/bar/BarChartOne";
 import DiagnosesTab from "../../components/Care/DiagnosesTab";
 import MedicationsTab from "../../components/Care/MedicationsTab";
+import GeneticTestingTab from "../../components/Care/GeneticTestingTab";
 
 export default function ChildDetails() {
   const { id } = useParams();
@@ -353,6 +354,9 @@ export default function ChildDetails() {
 
       {/* Medications Content */}
       {activeTab === "Medications" && <MedicationsTab />}
+
+      {/* Genetic Testing Content */}
+      {activeTab === "Genetic Testing" && <GeneticTestingTab />}
     </>
   );
 }

@@ -1,12 +1,16 @@
-import { useMemo, useState, useRef, type ChangeEvent, type DragEvent } from "react";
+import { useMemo, useState, useRef, type ChangeEvent } from "react";
 import { useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosClient from "../../api/axiosClient";
-import CustomModal, { FieldConfig } from "../ui/modal/CustomModal";
+import CustomModal from "../ui/modal/CustomModal";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { PlusIcon, HorizontaLDots, DownloadIcon } from "../../icons";
+import { HorizontaLDots } from "../../icons";
+import Input from "../form/input/InputField";
+import Select from "../form/Select";
+import DatePicker from "../form/date-picker";
+import Label from "../form/Label";
 
 interface CreateMedicationPayload {
   child_id: number;
@@ -32,24 +36,19 @@ type Medication = {
   unit?: string;
   frequency?: string;
   prescribedBy?: { name?: string } | string;
+  prescribedBy_id?: number;
   start_date?: string;
   review_due_date?: string;
   status?: string;
   instructions?: { text?: string };
   child_id?: number;
+  category_id?: number;
+  administration_time?: { time?: string };
+  documents?: any[];
+  files?: any[];
 };
 
-const uploadMultipleFiles = async (files: File[], folder: string) => {
-  const uploadData = new FormData();
-  files.forEach((file) => uploadData.append("files", file));
-  uploadData.append("folder", folder);
-
-  return axiosClient.post("/media/uploads", uploadData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-};
-
-const formatDateValue = (value: unknown) => {
+const formatDateValue = (value: unknown): string => {
   if (!value) return "";
   if (value instanceof Date) {
     return value.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -108,20 +107,14 @@ const getFrequencyFormValue = (value: string) => {
 const getMedicationStatusLabel = (value: string) =>
   value.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-const extractUploadedFileIds = (responseData: any): number[] => {
-  const candidates = Array.isArray(responseData?.data)
-    ? responseData.data
-    : Array.isArray(responseData)
-      ? responseData
-      : Array.isArray(responseData?.files)
-        ? responseData.files
-        : Array.isArray(responseData?.data?.data)
-          ? responseData.data.data
-          : [];
-
-  return candidates
-    .map((item: any) => Number(typeof item === "object" ? item.file?.id ?? item.id : item))
-    .filter((fileId: number) => Number.isFinite(fileId) && fileId > 0);
+const getCategoryLabel = (value: unknown) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object") {
+    const category = value as { full_category_name?: string; name?: string };
+    return category.full_category_name ?? category.name ?? "";
+  }
+  return String(value);
 };
 
 const getApiResponseData = (response: any) => {
@@ -132,10 +125,50 @@ const getApiResponseData = (response: any) => {
   return [];
 };
 
+const normalizeMedicationDocument = (file: any) => {
+  if (!file) return null;
+
+  const normalizedId = file.id ?? file.file_id ?? file.fileId ?? file.file?.id ?? file.file?.file_id ?? file.document_id ?? file.documentId;
+  if (!normalizedId && !file.file_url && !file.fileUrl && !file.path && !file.file_path && !file.url && !file.name && !file.original_file_name && !file.file_name) {
+    return null;
+  }
+
+  return {
+    ...file,
+    id: normalizedId,
+    file_url: file.file_url ?? file.fileUrl ?? file.path ?? file.file_path ?? file.url ?? file.file?.path ?? file.file?.file_url ?? "",
+    original_file_name: file.original_file_name ?? file.file_name ?? file.name ?? file.file?.name ?? "Document",
+    file_type: file.file_type ?? file.fileType ?? file.file?.type ?? "File",
+    file_size: file.file_size ?? file.fileSize ?? file.size ?? file.file?.size,
+    createdAt: file.createdAt ?? file.created_at ?? file.updatedAt ?? file.file?.createdAt ?? file.file?.created_at,
+  };
+};
+
+const normalizeMedicationDocuments = (value: any) => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.map(normalizeMedicationDocument).filter(Boolean);
+  }
+  if (Array.isArray(value.documents)) return value.documents.map(normalizeMedicationDocument).filter(Boolean);
+  if (Array.isArray(value.files)) return value.files.map(normalizeMedicationDocument).filter(Boolean);
+  if (Array.isArray(value.reports)) return value.reports.map(normalizeMedicationDocument).filter(Boolean);
+  if (Array.isArray(value.attachments)) return value.attachments.map(normalizeMedicationDocument).filter(Boolean);
+  if (Array.isArray(value.media)) return value.media.map(normalizeMedicationDocument).filter(Boolean);
+  if (Array.isArray(value.data)) return value.data.map(normalizeMedicationDocument).filter(Boolean);
+  return [];
+};
+
+const normalizeMedicationDetails = (details: any) => ({
+  ...details,
+  documents: normalizeMedicationDocuments(details?.documents ?? details?.files ?? details?.reports ?? details?.attachments ?? details?.media),
+  files: normalizeMedicationDocuments(details?.files ?? details?.documents ?? details?.reports ?? details?.attachments ?? details?.media),
+});
+
 const MedicationsTab = () => {
   const { id: childId } = useParams();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const viewModalUploadInputRef = useRef<HTMLInputElement>(null);
 
   const [openMenuMedicationId, setOpenMenuMedicationId] = useState<string | null>(null);
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
@@ -143,47 +176,85 @@ const MedicationsTab = () => {
   const [isAddMedicationOpen, setIsAddMedicationOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [existingFiles, setExistingFiles] = useState<any[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isLoadingMedicationDetails, setIsLoadingMedicationDetails] = useState(false);
+  const [isSubmittingMedication, setIsSubmittingMedication] = useState(false);
+  const [isUploadingMoreDocuments, setIsUploadingMoreDocuments] = useState(false);
   const [isDeletingMedication, setIsDeletingMedication] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState({
+    medicationName: "",
+    category: "",
+    dose: "",
+    unit: "mg",
+    frequency: "",
+    administrationTime: "morning",
+    startDate: "",
+    reviewDue: "",
+    prescribedBy: "",
+    status: "ACTIVE",
+    instructions: "",
+  });
 
   const { data: medicationData = [], isLoading: isLoadingMedications } = useQuery({
     queryKey: ["medications", childId],
     queryFn: async () => {
-      const res = await axiosClient.get("/medication", { params: { child_id: childId } });
+      const res = await axiosClient.get("/medication", { params: { childId } });
       return res.data;
     },
     enabled: !!childId,
     staleTime: 1000 * 60 * 2,
   });
 
-  const { data: medicationOptionsData = [] } = useQuery({
-    queryKey: ["medicationOptions"],
+  const { data: categoriesData } = useQuery({
+    queryKey: ["category"],
     queryFn: async () => {
-      const res = await axiosClient.get("/medication");
+      const res = await axiosClient.get("/category");
       return res.data;
     },
-    staleTime: 1000 * 60 * 5,
   });
 
-  const medications = useMemo(() => getApiResponseData(medicationData), [medicationData]);
-  const medicationOptions = useMemo(() => {
-    const optionsSource = getApiResponseData(medicationOptionsData);
-    const names = Array.from(
-      new Set(
-        optionsSource
-          .map((item: any) => item.medication_name ?? item.name ?? "")
-          .filter((name: string) => typeof name === "string" && name.trim() !== "")
-      )
-    ).sort((a, b) => a.localeCompare(b));
-
-    return names.map((name: string) => ({ label: name, value: name }));
-  }, [medicationOptionsData]);
-
-  const uploadMedicationFilesMutation = useMutation({
-    mutationFn: (files: File[]) => uploadMultipleFiles(files, "uploads"),
+  const { data: usersData } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/user");
+      return res.data;
+    },
   });
+
+  const categories = Array.isArray(categoriesData) ? categoriesData : categoriesData?.data || [];
+  const users = Array.isArray(usersData) ? usersData : usersData?.data || [];
+
+  const medications = useMemo(() => {
+    const rawMedications = getApiResponseData(medicationData);
+    return rawMedications.map((medication: any) => ({
+      ...medication,
+      documents: normalizeMedicationDocuments(medication.documents ?? medication.files ?? medication.reports ?? medication.attachments ?? medication.media),
+      files: normalizeMedicationDocuments(medication.files ?? medication.documents ?? medication.reports ?? medication.attachments ?? medication.media),
+    }));
+  }, [medicationData]);
+
+  const uploadFilesMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append("files", file);
+      });
+      formData.append("folder", "uploads");
+      const res = await axiosClient.post("/media/uploads", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    },
+  });
+
+  const resetMedicationModalState = () => {
+    setIsAddMedicationOpen(false);
+    setSelectedFiles([]);
+    setExistingFiles([]);
+  };
 
   const createMedicationMutation = useMutation({
     mutationFn: async (payload: CreateMedicationPayload) => {
@@ -193,8 +264,7 @@ const MedicationsTab = () => {
     onSuccess: () => {
       toast.success("Medication added successfully.");
       queryClient.invalidateQueries({ queryKey: ["medications", childId] });
-      setIsAddMedicationOpen(false);
-      setSelectedFiles([]);
+      resetMedicationModalState();
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message;
@@ -210,8 +280,7 @@ const MedicationsTab = () => {
     onSuccess: () => {
       toast.success("Medication updated successfully.");
       queryClient.invalidateQueries({ queryKey: ["medications", childId] });
-      setIsAddMedicationOpen(false);
-      setSelectedFiles([]);
+      resetMedicationModalState();
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message;
@@ -227,8 +296,7 @@ const MedicationsTab = () => {
     onSuccess: () => {
       toast.success("Medication deleted successfully.");
       queryClient.invalidateQueries({ queryKey: ["medications", childId] });
-      setIsDeleteModalOpen(false);
-      setSelectedMedication(null);
+      closeDeleteModal();
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message;
@@ -241,10 +309,13 @@ const MedicationsTab = () => {
 
     setOpenMenuMedicationId(null);
     setIsLoadingMedicationDetails(true);
+    setExistingFiles([]);
     try {
       const response = await axiosClient.get(`/medication/${med.id}`);
       const details = response.data?.data ?? response.data;
-      setSelectedMedication(details);
+      const normalizedDetails = normalizeMedicationDetails(details);
+      setSelectedMedication(normalizedDetails);
+      setExistingFiles(normalizedDetails.documents || normalizedDetails.files || []);
       setIsMedicationModalOpen(true);
     } catch (error) {
       const message = (error as any)?.response?.data?.message;
@@ -257,23 +328,88 @@ const MedicationsTab = () => {
   const closeMedicationModal = () => {
     setIsMedicationModalOpen(false);
     setSelectedMedication(null);
+    setExistingFiles([]);
   };
 
   const resetUploadState = () => {
     setSelectedFiles([]);
+    setExistingFiles([]);
     setUploadError(null);
   };
 
   const handleOpenAddMedicationModal = () => {
     resetUploadState();
     setEditingMedication(null);
+    setFormData({
+      medicationName: "",
+      category: "",
+      dose: "",
+      unit: "mg",
+      frequency: "",
+      administrationTime: "morning",
+      startDate: "",
+      reviewDue: "",
+      prescribedBy: "",
+      status: "ACTIVE",
+      instructions: "",
+    });
+    setFormErrors({});
     setIsAddMedicationOpen(true);
   };
 
-  const handleOpenEditMedicationModal = (med: Medication) => {
+  const updateFormField = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormErrors(prev => ({ ...prev, [field]: "" }));
+  };
+
+  const validateAddMedicationForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.medicationName?.trim()) errors.medicationName = "Medication name is required.";
+    if (!formData.category) errors.category = "Category is required.";
+    if (!formData.dose) errors.dose = "Dose is required.";
+    if (!formData.unit) errors.unit = "Unit is required.";
+    if (!formData.frequency) errors.frequency = "Frequency is required.";
+    if (!formData.administrationTime) errors.administrationTime = "Administration time is required.";
+    if (!formData.startDate) errors.startDate = "Start date is required.";
+    if (!formData.prescribedBy) errors.prescribedBy = "Prescriber is required.";
+    if (!formData.status) errors.status = "Status is required.";
+    return errors;
+  };
+
+  const handleOpenEditMedicationModal = async (med: Medication) => {
     resetUploadState();
-    setEditingMedication(med);
-    setIsAddMedicationOpen(true);
+    try {
+      const response = await axiosClient.get(`/medication/${med.id}`);
+      const details = response.data?.data ?? response.data;
+      const normalizedDetails = normalizeMedicationDetails(details);
+      const detailDocuments = normalizedDetails.documents || normalizedDetails.files || [];
+      setExistingFiles(detailDocuments);
+      setFormData({
+        medicationName: normalizedDetails.medication_name || med.medication_name || "",
+        category: normalizedDetails.category_id ? String(normalizedDetails.category_id) : med.category_id ? String(med.category_id) : "",
+        dose: normalizedDetails.dose?.toString() ?? med.dose?.toString() ?? "",
+        unit: normalizedDetails.unit ?? med.unit ?? "mg",
+        frequency: getFrequencyFormValue(normalizedDetails.frequency ?? med.frequency ?? ""),
+        administrationTime: normalizedDetails.administration_time?.time ?? med.administration_time?.time ?? "morning",
+        startDate: normalizedDetails.start_date || med.start_date || "",
+        reviewDue: normalizedDetails.review_due_date || med.review_due_date || "",
+        prescribedBy: normalizedDetails.prescribedBy_id ? String(normalizedDetails.prescribedBy_id) : med.prescribedBy_id ? String(med.prescribedBy_id) : "",
+        status: normalizedDetails.status ?? med.status ?? "ACTIVE",
+        instructions: normalizedDetails.instructions?.text ?? med.instructions?.text ?? "",
+      });
+      setFormErrors({});
+      setEditingMedication(normalizedDetails as Medication);
+      setIsAddMedicationOpen(true);
+      setOpenMenuMedicationId(null);
+    } catch (error) {
+      const message = (error as any)?.response?.data?.message;
+      toast.error(Array.isArray(message) ? message.join(", ") : message || "Failed to load medication details for edit.");
+    }
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedMedication(null);
     setOpenMenuMedicationId(null);
   };
 
@@ -316,162 +452,100 @@ const MedicationsTab = () => {
     }
   };
 
+  const handleUploadMoreDocuments = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (isUploadingMoreDocuments || !e.target.files?.length || !selectedMedication) return;
+
+    setIsUploadingMoreDocuments(true);
+    const newFiles = Array.from(e.target.files);
+    try {
+      const uploadRes = await uploadFilesMutation.mutateAsync(newFiles);
+      const filesArray = uploadRes?.files || [];
+      const uploadedDocuments = filesArray
+        .map((item: any) => item.file)
+        .filter(Boolean)
+        .map((file: any) => ({
+          id: file.id,
+          file_url: file.path || file.file_url,
+          original_file_name: file.name || file.original_file_name,
+          file_type: file.type || file.file_type,
+          file_size: file.size || file.file_size,
+          file: file,
+        }));
+
+      const existingFileIds = existingFiles?.map((r: any) => r.id ?? r.file_id ?? r.fileId ?? r.file?.id ?? r.file?.file_id ?? r.document_id ?? r.documentId).filter(Boolean) || [];
+      const newFileIds = uploadedDocuments.map((item: any) => item.id).filter(Boolean);
+      const allFileIds = [...new Set([...existingFileIds, ...newFileIds])];
+
+      const payload: CreateMedicationPayload = {
+        child_id: Number((selectedMedication as any).child_id ?? selectedMedication.child_id ?? childId ?? 0),
+        category_id: Number((selectedMedication as any).category_id ?? selectedMedication.category_id),
+        medication_name: (selectedMedication as any).medication_name ?? selectedMedication.medication_name ?? "",
+        dose: Number((selectedMedication as any).dose ?? selectedMedication.dose ?? 0),
+        unit: (selectedMedication as any).unit ?? selectedMedication.unit ?? "",
+        frequency: (selectedMedication as any).frequency ?? selectedMedication.frequency ?? "",
+        administration_time: { time: (selectedMedication as any).administration_time?.time ?? selectedMedication.administration_time?.time ?? "morning" },
+        start_date: (selectedMedication as any).start_date ?? selectedMedication.start_date ?? "",
+        review_due_date: (selectedMedication as any).review_due_date ?? selectedMedication.review_due_date,
+        prescribedBy_id: Number((selectedMedication as any).prescribedBy_id ?? selectedMedication.prescribedBy_id ?? 0),
+        status: (selectedMedication as any).status ?? selectedMedication.status ?? "",
+        instructions: { text: (selectedMedication as any).instructions?.text ?? selectedMedication.instructions?.text ?? "" },
+        fileIds: allFileIds,
+      };
+
+      await updateMedicationMutation.mutateAsync({ medicationId: selectedMedication.id, payload });
+      setExistingFiles((prev) => [...prev, ...uploadedDocuments]);
+      setSelectedMedication((prev) =>
+        prev
+          ? {
+              ...prev,
+              documents: [...(prev.documents || []), ...uploadedDocuments],
+              files: [...(prev.files || []), ...uploadedDocuments],
+            }
+          : prev
+      );
+      toast.success("Documents uploaded successfully");
+    } catch (err) {
+      const message = (err as any)?.response?.data?.message;
+      toast.error(Array.isArray(message) ? message.join(", ") : message || "Failed to upload documents");
+    } finally {
+      setIsUploadingMoreDocuments(false);
+      if (viewModalUploadInputRef.current) {
+        viewModalUploadInputRef.current.value = "";
+      }
+    }
+  };
+
   const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     handleFileSelect(event.target.files);
     event.target.value = "";
   };
 
-  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-  };
+  const handleAddMedicationSubmit = async () => {
+    if (isSubmittingMedication) return;
 
-  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    handleFileSelect(event.dataTransfer.files);
-  };
-
-  const medicationNameOptions = useMemo(() => {
-    if (medicationOptions.length > 0) return medicationOptions;
-    return medications
-      .map((item: any) => item.medication_name ?? item.name ?? "")
-      .filter((value: string) => value.trim() !== "")
-      .map((value: string) => ({ label: value, value }));
-  }, [medicationOptions, medications]);
-
-  const addMedicationFields: FieldConfig[] = useMemo(() => [
-    {
-      name: "medicationName",
-      label: "Medication Name",
-      type: "select",
-      required: true,
-      placeholder: "Select medication",
-      options: medicationNameOptions,
-      colSpan: 1,
-    },
-    {
-      name: "category",
-      label: "Category",
-      type: "select",
-      placeholder: "Select category",
-      options: [
-        { label: "Stimulant/ADHD", value: "1" },
-        { label: "Antipsychotic", value: "2" },
-      ],
-      colSpan: 1,
-    },
-    { name: "dose", label: "Dose", type: "number", required: true, placeholder: "e.g. 10", colSpan: 1 },
-    {
-      name: "unit",
-      label: "Unit",
-      type: "select",
-      required: true,
-      placeholder: "Select unit",
-      options: [
-        { label: "mg", value: "mg" },
-        { label: "ml", value: "ml" },
-      ],
-      colSpan: 1,
-    },
-    {
-      name: "frequency",
-      label: "Frequency",
-      type: "select",
-      required: true,
-      placeholder: "Select frequency",
-      options: [
-        { label: "Once daily", value: "ONCE_DAILY" },
-        { label: "Twice daily", value: "TWICE_DAILY" },
-        { label: "Three times daily", value: "THREE_TIMES_DAILY" },
-        { label: "Four times daily", value: "FOUR_TIMES_DAILY" },
-        { label: "Every 4 hours", value: "EVERY_4_HOURS" },
-        { label: "Every 6 hours", value: "EVERY_6_HOURS" },
-        { label: "Every 8 hours", value: "EVERY_8_HOURS" },
-        { label: "Every 12 hours", value: "EVERY_12_HOURS" },
-        { label: "Weekly", value: "WEEKLY" },
-        { label: "As needed", value: "AS_NEEDED" },
-      ],
-      colSpan: 1,
-    },
-    {
-      name: "administrationTime",
-      label: "Administration Time",
-      type: "select",
-      required: true,
-      placeholder: "Select time",
-      options: [
-        { label: "Morning", value: "morning" },
-        { label: "Evening", value: "evening" },
-      ],
-      colSpan: 1,
-    },
-    { name: "startDate", label: "Start Date", type: "date", required: true, placeholder: "Select start date", colSpan: 1 },
-    { name: "reviewDue", label: "Review Due Date", type: "date", placeholder: "Select review date", colSpan: 1 },
-    {
-      name: "prescribedBy",
-      label: "Prescribed By",
-      type: "select",
-      required: true,
-      placeholder: "Select prescriber",
-      options: [
-        { label: "Dr. Suresh Mehta", value: "1" },
-      ],
-      colSpan: 1,
-    },
-    {
-      name: "status",
-      label: "Status",
-      type: "select",
-      required: true,
-      placeholder: "Select status",
-      options: [
-        { label: "Active", value: "ACTIVE" },
-        { label: "Pending", value: "PENDING" },
-        { label: "Completed", value: "COMPLETED" },
-        { label: "Discontinued", value: "DISCONTINUED" },
-        { label: "On Hold", value: "ON_HOLD" },
-      ],
-      colSpan: 1,
-    },
-    {
-      name: "instructions",
-      label: "Instructions for Care Team / Parents",
-      type: "text",
-      colSpan: 2,
-      placeholder: "Enter instructions",
-      inputClassName:
-        "h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
-    },
-  ], [medicationNameOptions]);
-
-  const handleAddMedicationSubmit = async (formData: Record<string, any>) => {
-    if (createMedicationMutation.isPending || updateMedicationMutation.isPending || uploadMedicationFilesMutation.isPending) return false;
-
-    const requiredFields = [
-      [childId, "Child"],
-      [formData.medicationName?.trim(), "Medication name"],
-      [formData.dose, "Dose"],
-      [formData.unit, "Unit"],
-      [formData.frequency, "Frequency"],
-      [formData.administrationTime, "Administration time"],
-      [formData.startDate, "Start date"],
-      [formData.prescribedBy, "Prescriber"],
-      [formData.status, "Status"],
-    ];
-    const missingField = requiredFields.find(([value]) => value === undefined || value === null || String(value).trim() === "");
-    if (missingField) {
-      toast.error(`${missingField[1]} is required.`);
-      return false;
+    const errors = validateAddMedicationForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
     }
 
+    setIsSubmittingMedication(true);
     let uploadedFileIds: number[] = [];
+    
+    // Include existing file IDs from edit mode
+    if (existingFiles.length > 0) {
+      uploadedFileIds = existingFiles
+        .map((f: any) => f.id ?? f.file_id ?? f.fileId ?? f.file?.id ?? f.file?.file_id ?? f.document_id ?? f.documentId)
+        .filter(Boolean);
+    }
+    
+    // Upload new files if any
     if (selectedFiles.length > 0) {
       try {
-        const uploadResponse = await uploadMedicationFilesMutation.mutateAsync(selectedFiles);
-        uploadedFileIds = extractUploadedFileIds(uploadResponse.data);
-        if (uploadedFileIds.length !== selectedFiles.length) {
-          toast.error("Upload completed without media IDs. The backend must return an ID for each uploaded file.");
-          return false;
-        }
+        const uploadResponse = await uploadFilesMutation.mutateAsync(selectedFiles);
+        const filesArray = uploadResponse?.files || [];
+        const newFileIds = filesArray.map((item: any) => item.file?.id).filter(Boolean);
+        uploadedFileIds = [...new Set([...uploadedFileIds, ...newFileIds])];
       } catch (error) {
         const message = (error as any)?.response?.data?.message;
         toast.error(Array.isArray(message) ? message.join(", ") : message || "Failed to upload attachments.");
@@ -482,7 +556,7 @@ const MedicationsTab = () => {
     const payload: CreateMedicationPayload = {
       child_id: Number(childId),
       category_id: formData.category ? Number(formData.category) : undefined,
-      medication_name: formData.medicationName.trim(),
+      medication_name: formData.medicationName?.trim() || "",
       dose: Number(formData.dose),
       unit: formData.unit,
       frequency: getFrequencyApiValue(formData.frequency),
@@ -498,83 +572,118 @@ const MedicationsTab = () => {
     if (editingMedication) {
       try {
         await updateMedicationMutation.mutateAsync({ medicationId: editingMedication.id, payload });
-        return;
+        return true;
       } catch {
         return false;
+      } finally {
+        setIsSubmittingMedication(false);
       }
     }
 
     try {
       await createMedicationMutation.mutateAsync(payload);
-      return;
+      return true;
     } catch {
       return false;
+    } finally {
+      setIsSubmittingMedication(false);
     }
   };
 
-  const documents = [
-    { name: "Prescription J", date: "18:2023", size: "p120 0" },
-    { name: "Side Effects Info Sheet", date: "Jun 15 2027", size: "DM-310KB" },
-    { name: "Ah 15:2003 Parent Information Sheet", date: "pdf-180 KB", size: "" },
-    { name: "Medication Guide", date: "Jun 15.2073", size: "pat-450 Kn" },
-  ];
+  const documents = existingFiles.map((file: any) => {
+    const normalizedFile = normalizeMedicationDocument(file);
+    const displayName = normalizedFile?.original_file_name || "Document";
+    const displayDate = normalizedFile?.createdAt || "";
+    const displaySize = normalizedFile?.file_size;
+    const displayType = normalizedFile?.file_type || "File";
+    const displayUrl = normalizedFile?.file_url || "";
+
+    return {
+      id: normalizedFile?.id,
+      name: displayName,
+      date: displayDate ? new Date(displayDate).toLocaleDateString() : "Unknown",
+      size: displaySize ? `${(Number(displaySize) / 1024 / 1024).toFixed(2)} MB` : "Unknown Size",
+      type: displayType,
+      url: displayUrl,
+    };
+  });
 
   const historyItems = [
-    { dot: "bg-emerald-500", date: "Sep 15, 2022", event: "Medication prescribed", detail: "Initial dose created" },
-    { dot: "bg-red-500", date: "Aug 28, 2022", event: "Medication record updated", detail: "Dose adjusted" },
-    { dot: "bg-blue-700", date: "Jul 10, 2022", event: "Medication review completed", detail: "No adverse effects" },
+    { dot: "bg-[#10b981]", date: "Sep 15, 2022", event: "Medication prescribed", detail: "Initial dose created" },
+    { dot: "bg-[#ef4444]", date: "Aug 28, 2022", event: "Medication record updated", detail: "Dose adjusted" },
+    { dot: "bg-[#2563eb]", date: "Jul 10, 2022", event: "Medication review completed", detail: "No adverse effects" },
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-bold text-gray-900">Medications</h2>
-        <button
+    <>
+      <div className="space-y-4">
+        {/* Action Bar */}
+        <div className="flex justify-end">
+        <button 
           onClick={handleOpenAddMedicationModal}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
         >
-          <PlusIcon className="w-4 h-4 text-white fill-current" />
-          Add Medication
+          + Add Medication
         </button>
       </div>
 
-      <div className="w-full overflow-visible rounded-xl border border-gray-100 bg-white shadow-sm">
-        <div className="w-full overflow-visible">
-          <table className="w-full table-fixed border-collapse">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                {[
-                  { label: "Medication", width: "w-[22%]" },
-                  { label: "Category", width: "w-[12%]" },
-                  { label: "Dose", width: "w-[8%]" },
-                  { label: "Frequency", width: "w-[14%]" },
-                  { label: "Prescribed By", width: "w-[15%]" },
-                  { label: "Start", width: "w-[10%]" },
-                  { label: "Review Due", width: "w-[10%]" },
-                  { label: "Status", width: "w-[7%]" },
-                  { label: "Actions", width: "w-[6%]" },
-                ].map((col) => (
-                  <th
-                    key={col.label}
-                    className={`px-3 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 ${col.width}`}
-                  >
-                    {col.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {medications.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-3 py-10 text-center text-sm text-gray-500">
-                    {isLoadingMedications ? "Loading medications..." : "No medication records found."}
-                  </td>
+      {/* Main Card */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-800">Medications</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            {medications.length} Active Medications on Record
+          </p>
+        </div>
+
+        {/* Loading State */}
+        {isLoadingMedications ? (
+          <div className="py-12 flex flex-col items-center justify-center text-gray-500">
+            <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-sm font-medium">Loading medications...</p>
+          </div>
+        ) : medications.length === 0 ? (
+          /* Empty State */
+          <div className="py-12 flex flex-col items-center justify-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <svg className="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p className="text-gray-600 font-medium">No medications found</p>
+            <p className="text-sm mt-1">Click "Add Medication" to create a new record.</p>
+          </div>
+        ) : (
+          /* Medications Table */
+          <div className="w-full overflow-visible">
+            <table className="w-full table-fixed border-collapse">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  {[
+                    { label: "Medication", width: "w-[22%]" },
+                    { label: "Category", width: "w-[12%]" },
+                    { label: "Dose", width: "w-[8%]" },
+                    { label: "Frequency", width: "w-[14%]" },
+                    { label: "Prescribed By", width: "w-[15%]" },
+                    { label: "Start", width: "w-[10%]" },
+                    { label: "Review Due", width: "w-[10%]" },
+                    { label: "Status", width: "w-[7%]" },
+                    { label: "Actions", width: "w-[6%]" },
+                  ].map((col) => (
+                    <th
+                      key={col.label}
+                      className={`px-3 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 ${col.width}`}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
                 </tr>
-              ) : (
-                medications.map((med: any, medicationIndex: number) => {
+              </thead>
+              <tbody>
+                {medications.map((med: any, medicationIndex: number) => {
                   const medicationMenuKey = `${med.id}-${medicationIndex}`;
-                  const categoryLabel =
-                    med.category?.full_category_name ?? med.category?.name ?? String(med.category ?? "");
+                  const categoryLabel = getCategoryLabel(med.category);
                   const doseLabel = [med.dose, med.unit].filter(Boolean).join(" ");
                   const prescribedByLabel = typeof med.prescribedBy === "string"
                     ? med.prescribedBy
@@ -635,14 +744,15 @@ const MedicationsTab = () => {
                       </td>
                     </tr>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+    </div>
 
-      <CustomModal
+    <CustomModal
         isOpen={isMedicationModalOpen}
         onClose={closeMedicationModal}
         title={selectedMedication?.medication_name ?? "Medication Details"}
@@ -655,14 +765,14 @@ const MedicationsTab = () => {
           <div className="flex flex-col">
             <div className="p-6 pt-6">
               <div className="mb-4 px-0">
-                <p className="text-sm text-gray-500">{selectedMedication.category?.toString()} / {getMedicationStatusLabel(selectedMedication.status ?? "")}</p>
+                <p className="text-sm text-gray-500">{getCategoryLabel(selectedMedication.category)} / {getMedicationStatusLabel(selectedMedication.status ?? "")}</p>
                 <p className="text-sm text-gray-500">{[selectedMedication.dose, selectedMedication.unit].filter(Boolean).join(" ")} · {getFrequencyLabel(selectedMedication.frequency ?? "")}</p>
                 <p className="text-sm text-gray-500">Prescribed by {typeof selectedMedication.prescribedBy === "string" ? selectedMedication.prescribedBy : selectedMedication.prescribedBy?.name ?? "N/A"}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 <div className="grid grid-cols-[140px_1fr] gap-y-3">
                   <span className="text-[12px] text-gray-500">Category</span>
-                  <span className="text-sm text-gray-800">{selectedMedication.category?.toString()}</span>
+                  <span className="text-sm text-gray-800">{getCategoryLabel(selectedMedication.category)}</span>
 
                   <span className="text-[12px] text-gray-500">Dose</span>
                   <span className="text-sm text-gray-800">{[selectedMedication.dose, selectedMedication.unit].filter(Boolean).join(" ")}</span>
@@ -702,18 +812,52 @@ const MedicationsTab = () => {
               <div className="mb-8 pt-6 border-t border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">Reports & Documents</h3>
                 <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
-                  {documents.map((doc, index) => (
-                    <div key={index} className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40">
-                      <p className="font-bold text-gray-800 text-sm mb-1">{doc.name}</p>
-                      <p className="text-xs text-gray-500 mb-0.5">{doc.date}</p>
-                      <p className="text-xs text-gray-500">{doc.size}</p>
+                  {documents.length > 0 ? (
+                    documents.map((doc) => (
+                      <a
+                        key={doc.id}
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40 hover:bg-orange-50 transition-colors"
+                      >
+                        <p className="font-bold text-gray-800 text-sm mb-1 line-clamp-2" title={doc.name}>{doc.name}</p>
+                        <p className="text-xs text-gray-500 mb-0.5">{doc.date}</p>
+                        <p className="text-xs text-gray-500 capitalize">{doc.type}</p>
+                        <p className="text-xs text-gray-400 mt-2">{doc.size}</p>
+                      </a>
+                    ))
+                  ) : (
+                    <div className="w-40 shrink-0 border border-gray-200 rounded-xl p-4 flex flex-col justify-center items-center h-40 text-center">
+                      <p className="text-xs text-gray-400">No reports found</p>
                     </div>
-                  ))}
+                  )}
 
-                  <div className="w-40 shrink-0 border border-dashed rounded-xl p-4 flex flex-col items-center justify-center h-40 text-[12px] text-gray-500">
-                    <DownloadIcon className="w-4 h-4 mb-2" />
-                    <span>Upload More</span>
-                  </div>
+                  <label className="w-40 shrink-0 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-40 hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer relative">
+                    <input
+                      ref={viewModalUploadInputRef}
+                      type="file"
+                      className="hidden"
+                      multiple
+                      accept="image/jpeg, image/png, application/pdf"
+                      disabled={uploadFilesMutation.isPending || updateMedicationMutation.isPending || isUploadingMoreDocuments}
+                      onChange={handleUploadMoreDocuments}
+                    />
+                    {(uploadFilesMutation.isPending || updateMedicationMutation.isPending) ? (
+                      <div className="flex flex-col items-center">
+                        <svg className="animate-spin h-6 w-6 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="text-sm font-medium">Uploading...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <svg className="w-6 h-6 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <span className="text-sm font-medium">Upload More</span>
+                      </>
+                    )}
+                  </label>
                 </div>
               </div>
 
@@ -727,6 +871,7 @@ const MedicationsTab = () => {
                     <div key={index} className="flex items-center gap-8 mb-6 relative z-10">
                       <div className={`w-2 h-2 rounded-full ${item.dot} ring-4 ring-white shrink-0`} />
                       <div className="w-24 text-sm text-[#64748b] shrink-0">{item.date}</div>
+                      <div className={`w-2 h-2 rounded-full ${item.dot} ring-4 ring-white shrink-0`} />
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <p className="text-sm text-[#334155]">{item.event}</p>
                         <p className="text-xs text-[#64748b]">{item.detail}</p>
@@ -744,87 +889,239 @@ const MedicationsTab = () => {
         isOpen={isAddMedicationOpen}
         onClose={() => setIsAddMedicationOpen(false)}
         title={editingMedication ? "Edit Medication" : "Add Medication"}
-        bodyHeader={
-          <div className="mb-3 px-0">
-            <h4 className="text-sm font-semibold text-gray-900">Medication Information</h4>
+        maxWidth="max-w-3xl"
+        customFooter={
+          <div className="flex justify-center gap-4 px-8 py-5 border-t border-gray-100 w-full">
+            <button
+              onClick={() => setIsAddMedicationOpen(false)}
+              className="px-8 py-2 text-sm font-bold text-gray-600 bg-[#e2e8f0] rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddMedicationSubmit}
+              disabled={isSubmittingMedication || createMedicationMutation.isPending || updateMedicationMutation.isPending || uploadFilesMutation.isPending}
+              className="px-8 py-2 text-sm font-bold text-white bg-[#7dd3fc] rounded-lg hover:bg-[#38bdf8] transition-colors disabled:opacity-50"
+            >
+              {createMedicationMutation.isPending || updateMedicationMutation.isPending || uploadFilesMutation.isPending ? editingMedication ? "Updating..." : "Creating..." : editingMedication ? "Update Medication" : "Save Medication"}
+            </button>
           </div>
         }
-        fields={addMedicationFields}
-        onSubmit={handleAddMedicationSubmit}
-        initialValues={editingMedication ? {
-          medicationName: editingMedication.medication_name,
-          category: String(editingMedication.category?.full_category_name || editingMedication.category?.name || ""),
-          dose: editingMedication.dose?.toString() ?? "",
-          unit: editingMedication.unit ?? "mg",
-          frequency: getFrequencyFormValue(editingMedication.frequency ?? ""),
-          administrationTime: "morning",
-          startDate: editingMedication.start_date || "",
-          reviewDue: editingMedication.review_due_date || "",
-          prescribedBy: typeof editingMedication.prescribedBy === "string" ? editingMedication.prescribedBy : String(editingMedication.prescribedBy?.name ?? ""),
-          status: editingMedication.status ?? "ACTIVE",
-          instructions: editingMedication.instructions?.text ?? "",
-        } : undefined}
-        submitText={editingMedication ? "Update Medication" : "Save Medication"}
-        submittingText={editingMedication ? "Updating..." : "Creating..."}
-        isLoading={createMedicationMutation.isPending || updateMedicationMutation.isPending || uploadMedicationFilesMutation.isPending}
-        cancelText="Cancel"
-        size="lg"
-        footerAlign="center"
-        overlayBlur={false}
-        modalClassName="!w-[78vw] !max-w-[980px] !max-h-[78vh] !rounded-[10px] !bg-white !p-0 !shadow-[0_16px_40px_rgba(0,0,0,0.18)]"
       >
-        <div className="pt-1 pb-3">
-          <div className="mb-1.5">
-            <label className="block text-xs font-bold text-black">Attach Reports / Documents</label>
+        <div>
+          <h3 className="text-gray-800 font-semibold mb-6">Medication Information</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-6">
+            <div>
+              <Label>Medication Name *</Label>
+              <Input 
+                value={formData.medicationName} 
+                onChange={(e) => updateFormField('medicationName', e.target.value)} 
+                placeholder="Enter medication name" 
+              />
+              {formErrors.medicationName && <p className="mt-1 text-xs text-red-600">{formErrors.medicationName}</p>}
+            </div>
+
+            <div>
+              <Label>Category *</Label>
+              <Select 
+                key={`category-${formData.category}`}
+                defaultValue={formData.category}
+                options={categories.map((c: any) => ({ value: String(c.id), label: c.full_category_name || `Category ${c.id}` }))}
+                onChange={(val) => updateFormField('category', val)}
+                placeholder="Select category"
+              />
+              {formErrors.category && <p className="mt-1 text-xs text-red-600">{formErrors.category}</p>}
+            </div>
+
+            <div>
+              <Label>Dose *</Label>
+              <Input 
+                type="number" 
+                value={formData.dose} 
+                onChange={(e) => updateFormField('dose', e.target.value)} 
+                placeholder="e.g. 10" 
+              />
+              {formErrors.dose && <p className="mt-1 text-xs text-red-600">{formErrors.dose}</p>}
+            </div>
+
+            <div>
+              <Label>Unit *</Label>
+              <Select 
+                key={`unit-${formData.unit}`}
+                defaultValue={formData.unit}
+                options={[
+                  { value: "mg", label: "mg" },
+                  { value: "ml", label: "ml" },
+                ]}
+                onChange={(val) => updateFormField('unit', val)}
+                placeholder="Select unit"
+              />
+              {formErrors.unit && <p className="mt-1 text-xs text-red-600">{formErrors.unit}</p>}
+            </div>
+
+            <div>
+              <Label>Frequency *</Label>
+              <Select 
+                key={`frequency-${formData.frequency}`}
+                defaultValue={formData.frequency}
+                options={[
+                  { value: "ONCE_DAILY", label: "Once daily" },
+                  { value: "TWICE_DAILY", label: "Twice daily" },
+                  { value: "THREE_TIMES_DAILY", label: "Three times daily" },
+                  { value: "FOUR_TIMES_DAILY", label: "Four times daily" },
+                  { value: "EVERY_4_HOURS", label: "Every 4 hours" },
+                  { value: "EVERY_6_HOURS", label: "Every 6 hours" },
+                  { value: "EVERY_8_HOURS", label: "Every 8 hours" },
+                  { value: "EVERY_12_HOURS", label: "Every 12 hours" },
+                  { value: "WEEKLY", label: "Weekly" },
+                  { value: "AS_NEEDED", label: "As needed" },
+                ]}
+                onChange={(val) => updateFormField('frequency', val)}
+                placeholder="Select frequency"
+              />
+              {formErrors.frequency && <p className="mt-1 text-xs text-red-600">{formErrors.frequency}</p>}
+            </div>
+
+            <div>
+              <Label>Administration Time *</Label>
+              <Select 
+                key={`adminTime-${formData.administrationTime}`}
+                defaultValue={formData.administrationTime}
+                options={[
+                  { value: "morning", label: "Morning" },
+                  { value: "evening", label: "Evening" },
+                ]}
+                onChange={(val) => updateFormField('administrationTime', val)}
+                placeholder="Select time"
+              />
+              {formErrors.administrationTime && <p className="mt-1 text-xs text-red-600">{formErrors.administrationTime}</p>}
+            </div>
+
+            <div>
+              <Label>Start Date *</Label>
+              <DatePicker 
+                key={`startDate-${formData.startDate}`}
+                id="startDate"
+                defaultDate={formData.startDate}
+                maxDate="today"
+                onChange={(dates) => updateFormField('startDate', dates[0]?.toString() || '')} 
+                placeholder="Select date" 
+              />
+              {formErrors.startDate && <p className="mt-1 text-xs text-red-600">{formErrors.startDate}</p>}
+            </div>
+
+            <div>
+              <Label>Review Due Date</Label>
+              <DatePicker 
+                key={`reviewDue-${formData.reviewDue}`}
+                id="reviewDue"
+                defaultDate={formData.reviewDue}
+                onChange={(dates) => updateFormField('reviewDue', dates[0]?.toString() || '')} 
+                placeholder="Select date" 
+              />
+            </div>
+
+            <div>
+              <Label>Prescribed By *</Label>
+              <Select 
+                key={`prescribedBy-${formData.prescribedBy}`}
+                defaultValue={formData.prescribedBy}
+                options={users.map((u: any) => ({ value: String(u.id), label: u.name || `User ${u.id}` }))}
+                onChange={(val) => updateFormField('prescribedBy', val)}
+                placeholder="Select prescriber"
+              />
+              {formErrors.prescribedBy && <p className="mt-1 text-xs text-red-600">{formErrors.prescribedBy}</p>}
+            </div>
+
+            <div>
+              <Label>Status *</Label>
+              <Select 
+                key={`status-${formData.status}`}
+                defaultValue={formData.status}
+                options={[
+                  { value: "ACTIVE", label: "Active" },
+                  { value: "PENDING", label: "Pending" },
+                  { value: "COMPLETED", label: "Completed" },
+                  { value: "DISCONTINUED", label: "Discontinued" },
+                  { value: "ON_HOLD", label: "On Hold" },
+                ]}
+                onChange={(val) => updateFormField('status', val)}
+                placeholder="Select status"
+              />
+              {formErrors.status && <p className="mt-1 text-xs text-red-600">{formErrors.status}</p>}
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            className="flex h-[76px] w-full items-center justify-center rounded-[10px] border border-dashed border-gray-300 bg-gray-50/60 px-4 text-center text-[12px] text-gray-500 transition-colors hover:border-brand-400 hover:bg-blue-50/40"
-          >
-            <div className="flex items-center justify-center gap-2 leading-none">
-              <DownloadIcon className="h-4 w-4 shrink-0" />
-              <span>Drag & drop or <span className="font-medium text-blue-600">browse files</span> Jpeg, Png</span>
+
+          <div className="mb-8">
+            <Label>Instructions for Care Team / Parents</Label>
+            <Input 
+              type="text" 
+              value={formData.instructions} 
+              onChange={(e) => updateFormField('instructions', e.target.value)} 
+              placeholder="Enter instructions" 
+            />
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-sm font-bold text-gray-800 mb-3">Reports & Documents</h3>
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors"
+            >
+              <svg className="w-6 h-6 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              <p className="text-sm text-gray-500">
+                Drag & drop or <span className="text-[#60a5fa] font-medium">browse files</span> Jpeg, Png, Pdf
+              </p>
             </div>
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".jpg,.jpeg,.png,.pdf"
-            multiple
-            className="hidden"
-            onChange={handleFileInputChange}
-          />
-          {uploadError && <p className="mt-2 text-xs text-red-600">{uploadError}</p>}
-          {selectedFiles.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {selectedFiles.map((file) => (
-                <div key={getFileKey(file)} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-700">{file.name}</p>
-                    <p className="text-xs text-gray-500">{file.size} bytes</p>
+            <input 
+              type="file" 
+              multiple 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={handleFileInputChange} 
+              accept="image/jpeg, image/png, application/pdf"
+            />
+            {uploadError && <p className="mt-2 text-xs text-red-600">{uploadError}</p>}
+            {selectedFiles.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {selectedFiles.map((file) => (
+                  <div key={getFileKey(file)} className="text-xs bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md flex items-center gap-2">
+                    {file.name}
+                    <button 
+                      type="button" 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setSelectedFiles(prev => prev.filter((f) => getFileKey(f) !== getFileKey(file))); 
+                      }} 
+                      className="text-gray-400 hover:text-red-500 font-bold"
+                    >
+                      X
+                    </button>
                   </div>
-                  <button type="button" onClick={() => setSelectedFiles((prev) => prev.filter((f) => getFileKey(f) !== getFileKey(file)))} className="ml-3 text-sm text-gray-400 transition-colors hover:text-red-500" aria-label={`Remove ${file.name}`}>
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+            {existingFiles.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {existingFiles.map((file, idx) => (
+                  <div key={`exist-${idx}`} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md flex items-center gap-2">
+                    <a href={file.file?.path || file.path} target="_blank" rel="noreferrer" className="hover:underline">
+                      {file.file?.name || file.name}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </CustomModal>
 
       <CustomModal
         isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setSelectedMedication(null);
-        }}
+        onClose={closeDeleteModal}
         title="Delete Medication"
         showOverlay
-        backdropBlur={false}
         maxWidth="max-w-[480px]"
         padding="px-8 py-6"
         showCloseIcon
@@ -832,9 +1129,7 @@ const MedicationsTab = () => {
           <div className="flex w-full items-center justify-end gap-3 border-t border-gray-100 px-8 py-5">
             <button
               type="button"
-              onClick={() => {
-                setSelectedMedication(null);
-              }}
+              onClick={closeDeleteModal}
               className="cursor-pointer rounded-lg bg-gray-100 px-6 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
             >
               Cancel
@@ -859,7 +1154,7 @@ const MedicationsTab = () => {
           </p>
         )}
       </CustomModal>
-    </div>
+    </>
   );
 };
 
