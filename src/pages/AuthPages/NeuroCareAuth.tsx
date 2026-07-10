@@ -66,7 +66,8 @@ export default function NeuroCareAuth() {
 
       if (userData && tokens?.accessToken) {
          login(userData, tokens);
-         toast.success("Logged in successfully!");
+         const toastId = toast.success("Logged in successfully!");
+         setTimeout(() => toast.dismiss(toastId), 2000);
          navigate("/dashboard");
       }
     } catch (error: any) {

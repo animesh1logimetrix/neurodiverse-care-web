@@ -184,10 +184,10 @@ export default function ChildDetails() {
                 <ArrowUpIcon className="w-4 h-4 fill-current text-gray-400" />
                 Upload Photo
               </button>
-              <button className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors rounded-b-xl">
+              {/* <button className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors rounded-b-xl">
                 <UserIcon className="w-4 h-4 fill-current text-gray-400" />
                 View Profile
-              </button>
+              </button> */}
             </div>
           </div>
           

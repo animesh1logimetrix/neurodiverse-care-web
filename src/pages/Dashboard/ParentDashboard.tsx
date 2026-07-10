@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
+import { useAuth } from "../../context/AuthContext";
 
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
 
@@ -98,6 +100,10 @@ const weekStats = [
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function ParentDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const parentName = user?.name ? user.name.split(" ")[0] : "Parent";
+  const [timeFilter, setTimeFilter] = useState("Weekly Progress");
+
   return (
     <>
       <PageMeta
@@ -110,13 +116,33 @@ export default function ParentDashboard() {
         style={{ fontFamily: "Outfit, sans-serif" }}
       >
         {/* ── Welcome Header ─────────────────────────────────────────────── */}
-        <div className="mb-[32px]">
-          <h1 className="text-[36px] font-bold text-gray-900 leading-tight">
-            Welcome back, Meera
-          </h1>
-          <p className="text-[18px] text-gray-400 mt-1">
-            Here's how Arjun is progressing
-          </p>
+        <div className="mb-[32px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-[36px] font-bold text-gray-900 leading-tight">
+              Welcome back, {parentName}
+            </h1>
+            <p className="text-[18px] text-gray-400 mt-1">
+              Here's how Arjun is progressing
+            </p>
+          </div>
+          
+          <div className="flex-shrink-0">
+            <select 
+              value={timeFilter}
+              onChange={(e) => setTimeFilter(e.target.value)}
+              className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb] focus:border-[#7db9fb] hover:bg-gray-50 transition-colors cursor-pointer appearance-none pr-10 relative"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                backgroundPosition: `right 12px center`,
+                backgroundRepeat: `no-repeat`,
+                backgroundSize: `16px`,
+              }}
+            >
+              <option value="Daily Progress">Daily Progress</option>
+              <option value="Weekly Progress">Weekly Progress</option>
+              <option value="Monthly Progress">Monthly Progress</option>
+            </select>
+          </div>
         </div>
 
         {/* ── Child Summary Card ──────────────────────────────────────────── */}

@@ -96,17 +96,17 @@ const getNavItems = (role: string): NavItem[] => {
         path: "/dashboard"
       },
       {
-        name: "Home Observations",
-        icon: <HomeIcon />,
-        path: "/dashboard/home-observations"
-      },
-      {
         name: "Care",
         icon: <GroupIcon />,
         subItems: [
           { name: "Children", path: "/care/children", pro: false },
         ]
-      }
+      },
+      {
+        name: "Home Observations",
+        icon: <HomeIcon />,
+        path: "/dashboard/home-observations"
+      },
     ];
   }
 
@@ -392,25 +392,25 @@ const AppSidebar: React.FC = () => {
     >
       <div
         className={`py-8 flex ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          !isExpanded && !isHovered ? "lg:justify-center" : "justify-center"
         }`}
       >
-        <Link to="/">
+        <Link to="/" className="w-full">
           {isExpanded || isHovered || isMobileOpen ? (
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex flex-col items-center gap-1 w-full">
               <img
                 src="/images/logo/theraverse-logo.jpeg"
                 alt="Logo"
-                className="w-16 h-auto mb-1 rounded-md"
+                className="w-full max-w-[180px] h-24 object-contain mb-1 rounded-md"
               />
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">NeuroCare</h1>
-              <p className="text-sm text-gray-500 font-medium">{role}</p>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight text-center">NeuroCare</h1>
+              <p className="text-sm text-gray-500 font-medium text-center">{role}</p>
             </div>
           ) : (
             <img
               src="/images/logo/theraverse-logo.jpeg"
               alt="Logo"
-              className="w-8 h-8 rounded-md object-cover"
+              className="w-10 h-10 rounded-md object-contain mx-auto block"
             />
           )}
         </Link>

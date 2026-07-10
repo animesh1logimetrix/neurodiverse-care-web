@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PageMeta from "../../components/common/PageMeta";
 import CustomModal from "../../components/ui/modal/CustomModal";
 import InputField from "../../components/form/input/InputField";
-
+import DatePicker from "../../components/form/date-picker";
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
 
 function PlusIcon() {
@@ -435,8 +435,8 @@ export default function HomeObservations() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-white text-[15px] font-semibold transition-all duration-150 hover:opacity-90 active:scale-[0.98] shadow-sm"
-            style={{ backgroundColor: "#7db9fb" }}
+            className="flex items-center justify-center gap-2 bg-[#60a5fa] px-5 py-2.5 rounded-lg text-white text-[15px] font-semibold transition-all duration-150 hover:opacity-90 active:scale-[0.98] shadow-sm"
+            // style={{ backgroundColor: "#7db9fb" }}
           >
             <PlusIcon />
             New Observation
@@ -630,13 +630,18 @@ export default function HomeObservations() {
 
               <div>
                 <label className="block text-sm font-bold text-black mb-1.5">Observation Date <span className="text-red-500">*</span></label>
-                <InputField
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  error={!!errors.date}
-                  hint={errors.date}
-                />
+                <div>
+                  <DatePicker
+                    id="observation-date"
+                    placeholder="Select date"
+                    defaultDate={date || undefined}
+                    maxDate="today"
+                    onChange={(_, currentDateString) =>
+                      setDate(currentDateString || "")
+                    }
+                  />
+                  {errors.date && <p className="mt-1 text-[13px] text-red-500">{errors.date}</p>}
+                </div>
               </div>
 
               <div>
