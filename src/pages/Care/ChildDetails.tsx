@@ -1,5 +1,7 @@
 import { useState, useRef, type ChangeEvent, type DragEvent } from "react";
 import { useParams, Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import axiosClient from "../../api/axiosClient";
 import PageMeta from "../../components/common/PageMeta";
 import { PencilIcon, DownloadIcon, UserIcon, ArrowUpIcon, PlusIcon, HorizontaLDots } from "../../icons";
 import LineChartOne from "../../components/charts/line/LineChartOne";
@@ -12,6 +14,15 @@ import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
 export default function ChildDetails() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("Overview");
+
+  const { data: child, isLoading } = useQuery({
+    queryKey: ["child", id],
+    queryFn: async () => {
+      const res = await axiosClient.get(`/child/${id}`);
+      return res.data;
+    },
+    enabled: !!id,
+  });
 
   // ── Medication modal state ─────────────────────────────────────────────
   type Medication = {
@@ -257,6 +268,14 @@ export default function ChildDetails() {
     "Session Notes",
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       <PageMeta
@@ -293,8 +312,12 @@ export default function ChildDetails() {
       <div className="flex flex-col md:flex-row gap-8 mb-8 items-start">
         {/* Avatar (Left) */}
         <div className="w-52 h-52 rounded-[28px] bg-[#fdf3e7] overflow-hidden shrink-0 flex items-center justify-center shadow-sm border border-[#ffedd5]">
-          {/* Placeholder for Photo */}
-          <UserIcon className="w-24 h-24 text-[#fed7aa]" />
+          {/* Photo */}
+          {child?.profile_picture?.[0]?.file_url ? (
+            <img src={child.profile_picture[0].file_url} alt={child.full_name} className="w-full h-full object-cover" />
+          ) : (
+            <UserIcon className="w-24 h-24 text-[#fed7aa]" />
+          )}
         </div>
 
         {/* Right Side (Details + Actions + Note) */}
@@ -306,7 +329,7 @@ export default function ChildDetails() {
             {/* Details */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Sana Iyer</h2>
+                <h2 className="text-2xl font-bold text-gray-800">{child?.full_name || "Loading..."}</h2>
                 <span className="bg-[#e5f5e8] text-[#16a34a] px-3 py-1 rounded-md text-xs font-bold tracking-wide capitalize">
                   Active
                 </span>
@@ -315,39 +338,45 @@ export default function ChildDetails() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-5 gap-x-4">
                 <div>
                   <p className="text-sm text-gray-500 mb-0.5">Child Code</p>
-                  <p className="font-bold text-gray-800 text-sm">ABCD</p>
+                  <p className="font-bold text-gray-800 text-sm">
+                    {child?.id ? `NC-2025-${String(child.id).padStart(5, '0')}` : "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-0.5">DOB</p>
-                  <p className="font-bold text-gray-800 text-sm">ABCD</p>
+                  <p className="font-bold text-gray-800 text-sm">
+                    {child?.dob ? new Date(child.dob).toLocaleDateString() : "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-0.5">Gender</p>
-                  <p className="font-bold text-gray-800 text-sm">ABCD</p>
+                  <p className="font-bold text-gray-800 text-sm capitalize">{child?.gender?.toLowerCase() || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-0.5">Blood Group</p>
-                  <p className="font-bold text-gray-800 text-sm">ABCD</p>
+                  <p className="font-bold text-gray-800 text-sm">{child?.blood_group?.replace("_", " ") || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-0.5">Primary Diagnosis</p>
-                  <p className="font-bold text-gray-800 text-sm">ABCD</p>
+                  <p className="font-bold text-gray-800 text-sm">{child?.diagnosis || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-0.5">Referred By</p>
-                  <p className="font-bold text-gray-800 text-sm">ABCD</p>
+                  <p className="font-bold text-gray-800 text-sm">{child?.referred_by || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-0.5">Address</p>
-                  <p className="font-bold text-gray-800 text-sm">ABCD</p>
+                  <p className="font-bold text-gray-800 text-sm">{child?.address || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-0.5">Allergies</p>
-                  <p className="font-bold text-gray-800 text-sm">ABCD</p>
+                  <p className="font-bold text-gray-800 text-sm">{child?.allergies || "N/A"}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-sm text-gray-500 mb-0.5">Parents</p>
-                  <p className="font-bold text-gray-800 text-sm">ABCD</p>
+                  <p className="font-bold text-gray-800 text-sm">
+                    {child?.childUsers?.filter((cu: any) => cu.relation === "PARENT").map((cu: any) => cu.user?.name).join(", ") || "N/A"}
+                  </p>
                 </div>
               </div>
             </div>
