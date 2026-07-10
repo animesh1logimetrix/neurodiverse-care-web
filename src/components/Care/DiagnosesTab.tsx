@@ -48,9 +48,30 @@ export default function DiagnosesTab() {
   const users = Array.isArray(usersData) ? usersData : usersData?.data || [];
   const allIepGoals = Array.isArray(iepGoalsData) ? iepGoalsData : iepGoalsData?.data || [];
 
+  const { data: childDiagnosesData, isLoading: isDiagnosesLoading } = useQuery({
+    queryKey: ["diagnoses", childId],
+    queryFn: async () => {
+      const res = await axiosClient.get(`/diagnosis?childId=${childId}`);
+      return res.data;
+    },
+    enabled: !!childId,
+  });
+
+  const diagnoses = Array.isArray(childDiagnosesData) ? childDiagnosesData : childDiagnosesData?.data || [];
+
+  const { data: allFilesData } = useQuery({
+    queryKey: ["files"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/file");
+      return res.data;
+    },
+  });
+  const allFiles = Array.isArray(allFilesData) ? allFilesData : allFilesData?.data || [];
+
   const [selectedIepGoals, setSelectedIepGoals] = useState<number[]>([]);
 
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [existingFiles, setExistingFiles] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleGoalSelect = (val: string) => {
@@ -93,8 +114,8 @@ export default function DiagnosesTab() {
       files.forEach(file => {
         formData.append("files", file); // Adjust to 'files' for multiple or 'file' if API is different
       });
-      formData.append("folder", "diagnoses");
-      const res = await axiosClient.post("/media/upload", formData, {
+      formData.append("folder", "uploads");
+      const res = await axiosClient.post("/media/uploads", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       return res.data;
@@ -114,6 +135,22 @@ export default function DiagnosesTab() {
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Failed to add diagnosis");
+    }
+  });
+
+  const updateDiagnosisMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: number, payload: any }) => {
+      const res = await axiosClient.patch(`/diagnosis/${id}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Diagnosis updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["child", childId] });
+      queryClient.invalidateQueries({ queryKey: ["diagnoses", childId] });
+      closeModal();
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update diagnosis");
     }
   });
 
@@ -137,11 +174,12 @@ export default function DiagnosesTab() {
     }
 
     try {
-      let fileIds: number[] = [];
+      let fileIds: number[] = existingFiles ? existingFiles.map((f: any) => f.id) : [];
       if (uploadedFiles.length > 0) {
         const uploadRes = await uploadFilesMutation.mutateAsync(uploadedFiles);
-        const filesData = Array.isArray(uploadRes) ? uploadRes : (uploadRes?.data || []);
-        fileIds = filesData.map((f: any) => f.id);
+        const filesArray = uploadRes?.files || [];
+        const newFileIds = filesArray.map((item: any) => item.file?.id).filter(Boolean);
+        fileIds = [...fileIds, ...newFileIds];
       }
 
       const payload = {
@@ -157,7 +195,12 @@ export default function DiagnosesTab() {
         fileIds: fileIds,
       };
 
-      await createDiagnosisMutation.mutateAsync(payload);
+      if (modalMode === 'edit' && activeDiagnosisIndex !== null) {
+        const activeId = diagnoses[activeDiagnosisIndex].id;
+        await updateDiagnosisMutation.mutateAsync({ id: activeId, payload });
+      } else {
+        await createDiagnosisMutation.mutateAsync(payload);
+      }
     } catch (error) {
       console.error("Error saving diagnosis:", error);
     }
@@ -172,16 +215,17 @@ export default function DiagnosesTab() {
     setActiveDiagnosisIndex(index);
     const item = diagnoses[index];
     setFormData({
-      categoryId: "", // In a real scenario, map from item
-      icd10: "F84.0",
-      severityLevel: item.severity,
-      status: item.status,
-      diagnosisDate: item.diagnosedDate,
-      reviewDate: "Sep 15, 2023",
-      diagnosedById: "", // Map from item.by
-      clinicalNotes: item.notes
+      categoryId: String(item.categoryId || ""),
+      icd10: item.category?.icd_code || "",
+      severityLevel: item.severityLevel || "",
+      status: item.status || "",
+      diagnosisDate: item.diagnosisDate || "",
+      reviewDate: item.reviewDate || "",
+      diagnosedById: String(item.diagnosedById || ""),
+      clinicalNotes: item.clinicalNotes || ""
     });
-    setSelectedIepGoals([]);
+    setSelectedIepGoals(item.linkedGoals ? item.linkedGoals.map((g: any) => g.goal_id) : []);
+    setExistingFiles(item.reports || []);
     setModalMode('edit');
   };
 
@@ -199,6 +243,7 @@ export default function DiagnosesTab() {
     });
     setSelectedIepGoals([]);
     setUploadedFiles([]);
+    setExistingFiles([]);
     setModalMode('add');
   };
 
@@ -210,45 +255,6 @@ export default function DiagnosesTab() {
   const toggleAccordion = (index: number) => {
     setOpenStates((prev) => ({ ...prev, [index]: !prev[index] }));
   };
-
-  const diagnoses = [
-    {
-      title: "Autism Spectrum Disorder",
-      level: "(Level 2)",
-      status: "Confirmed",
-      severity: "Moderate",
-      diagnosedDate: "Sep 15, 2022",
-      by: "Dr. Reena Kapoor",
-      iepGoals: 4,
-      notes:
-        "Requires substantial support. Significant deficits in social communication. Restricted, repetitive behaviors impacting daily function.",
-      documents: 4,
-    },
-    {
-      title: "Autism Spectrum Disorder",
-      level: "(Level 2)",
-      status: "Confirmed",
-      severity: "Moderate",
-      diagnosedDate: "Sep 15, 2022",
-      by: "Dr. Reena Kapoor",
-      iepGoals: 4,
-      notes:
-        "Requires substantial support. Significant deficits in social communication. Restricted, repetitive behaviors impacting daily function.",
-      documents: 4,
-    },
-    {
-      title: "Autism Spectrum Disorder",
-      level: "(Level 2)",
-      status: "Confirmed",
-      severity: "Moderate",
-      diagnosedDate: "Sep 15, 2022",
-      by: "Dr. Reena Kapoor",
-      iepGoals: 4,
-      notes:
-        "Requires substantial support. Significant deficits in social communication. Restricted, repetitive behaviors impacting daily function.",
-      documents: 4,
-    },
-  ];
 
   return (
     <div className="space-y-4">
@@ -272,9 +278,26 @@ export default function DiagnosesTab() {
         </div>
 
         <div className="space-y-0">
-          {diagnoses.map((item, index) => {
-            const isOpen = openStates[index];
-            return (
+          {isDiagnosesLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center text-gray-500">
+              <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="text-sm font-medium">Loading diagnoses...</p>
+            </div>
+          ) : diagnoses.length === 0 ? (
+            <div className="py-12 flex flex-col items-center justify-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              <svg className="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <p className="text-gray-600 font-medium">No diagnoses found</p>
+              <p className="text-sm mt-1">Click "Add Diagnoses" to create a new record.</p>
+            </div>
+          ) : (
+            diagnoses.map((item: any, index: number) => {
+              const isOpen = openStates[index];
+              return (
               <div
                 key={index}
                 className="border-t border-gray-100 py-4 first:border-t-0"
@@ -286,19 +309,19 @@ export default function DiagnosesTab() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-bold text-gray-800 text-sm">
-                        {item.title}{" "}
-                        <span className="font-normal">{item.level}</span>
+                        {item.category?.full_category_name || "Unknown Diagnosis"}{" "}
+                        <span className="font-normal">{item.category?.short_name ? `(${item.category.short_name})` : ""}</span>
                       </h3>
                       <span className="bg-[#e5f5e8] text-[#16a34a] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
                         {item.status}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span>Severity: {item.severity}</span>
-                      <span>Diagnosed: {item.diagnosedDate}</span>
-                      <span>By: {item.by}</span>
+                      <span>Severity: {item.severityLevel}</span>
+                      <span>Diagnosed: {item.diagnosisDate ? new Date(item.diagnosisDate).toLocaleDateString() : 'N/A'}</span>
+                      <span>By: {item.diagnosedBy?.name || 'Unknown'}</span>
                       <span className="bg-[#e5f5e8] text-[#16a34a] px-2 py-0.5 rounded text-[10px] font-bold">
-                        {item.iepGoals} IEP goals
+                        {item.linkedGoals?.length || 0} IEP goals
                       </span>
                     </div>
                   </div>
@@ -351,7 +374,7 @@ export default function DiagnosesTab() {
                     <p className="text-sm font-semibold text-gray-700 mb-1">
                       Clinical Notes
                     </p>
-                    <p className="text-sm text-gray-600 mb-4">{item.notes}</p>
+                    <p className="text-sm text-gray-600 mb-4">{item.clinicalNotes || 'No clinical notes provided.'}</p>
 
                     <div className="flex items-center gap-3">
                       <button 
@@ -376,14 +399,15 @@ export default function DiagnosesTab() {
                         Archive
                       </button>
                       <span className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-100 rounded-md">
-                        {item.documents} Documents
+                        {item.reports?.length || 0} Documents
                       </span>
                     </div>
                   </div>
                 )}
               </div>
             );
-          })}
+          })
+          )}
         </div>
       </div>
 
@@ -437,32 +461,32 @@ export default function DiagnosesTab() {
                 <div className="mb-8 pt-6 border-t border-gray-100">
                   <h3 className="text-sm font-semibold text-gray-700 mb-4">Reports & Documents</h3>
                   <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
-                    {/* Card 1 */}
-                    <div className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40">
-                      <p className="font-bold text-gray-800 text-sm mb-1">Diagnostic Report</p>
-                      <p className="text-xs text-gray-500 mb-0.5">Sep 15, 2022</p>
-                      <p className="text-xs text-gray-500">Dr. Reena Kapoor</p>
-                      <p className="text-xs text-gray-400 mt-2">1.2 MB</p>
-                    </div>
-                    {/* Card 2 */}
-                    <div className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40">
-                      <p className="font-bold text-gray-800 text-sm mb-1">MRI Brain Scan</p>
-                      <p className="text-xs text-gray-500 mb-0.5">Aug 28, 2022</p>
-                      <p className="text-xs text-gray-500">Image</p>
-                      <p className="text-xs text-gray-400 mt-2">2.4 MB</p>
-                    </div>
-                    {/* Card 3 */}
-                    <div className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40">
-                      <p className="font-bold text-gray-800 text-sm mb-1">EEG Report</p>
-                      <p className="text-xs text-gray-500 mb-0.5">Aug 20, 2022</p>
-                      <p className="text-xs text-gray-400 mt-2">pdf 1.1 MB</p>
-                    </div>
-                    {/* Card 4 */}
-                    <div className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40">
-                      <p className="font-bold text-gray-800 text-sm mb-1">Developmental Assessment</p>
-                      <p className="text-xs text-gray-500 mb-0.5">Jul 10, 2022</p>
-                      <p className="text-xs text-gray-400 mt-2">pdf 1.5 MB</p>
-                    </div>
+                    {item.reports && item.reports.length > 0 ? (
+                      item.reports.map((report: any) => (
+                        <a 
+                          key={report.id} 
+                          href={report.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40 hover:bg-orange-50 transition-colors"
+                        >
+                          <p className="font-bold text-gray-800 text-sm mb-1 line-clamp-2" title={report.original_file_name}>
+                            {report.original_file_name || "Document"}
+                          </p>
+                          <p className="text-xs text-gray-500 mb-0.5">
+                            {new Date(report.createdAt).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-gray-500 capitalize">{report.file_type || "File"}</p>
+                          <p className="text-xs text-gray-400 mt-2">
+                            {report.file_size ? `${(report.file_size / 1024 / 1024).toFixed(2)} MB` : "Unknown Size"}
+                          </p>
+                        </a>
+                      ))
+                    ) : (
+                      <div className="w-40 shrink-0 border border-gray-200 rounded-xl p-4 flex flex-col justify-center items-center h-40 text-center">
+                        <p className="text-xs text-gray-400">No reports found</p>
+                      </div>
+                    )}
                     {/* Upload Card */}
                     <label className="w-40 shrink-0 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-40 hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer">
                       <input type="file" className="hidden" multiple />
@@ -553,9 +577,9 @@ export default function DiagnosesTab() {
                 key={`severityLevel-${formData.severityLevel}`}
                 defaultValue={formData.severityLevel}
                 options={[
-                  { value: 'Mild', label: 'Mild' },
-                  { value: 'Moderate', label: 'Moderate' },
-                  { value: 'Severe', label: 'Severe' }
+                  { value: 'MILD', label: 'Mild' },
+                  { value: 'MODERATE', label: 'Moderate' },
+                  { value: 'SEVERE', label: 'Severe' }
                 ]}
                 onChange={(val) => updateForm('severityLevel', val)}
                 placeholder="Select Severity"
@@ -569,8 +593,11 @@ export default function DiagnosesTab() {
                 key={`status-${formData.status}`}
                 defaultValue={formData.status}
                 options={[
-                  { value: 'Confirmed', label: 'Confirmed' },
-                  { value: 'Suspected', label: 'Suspected' }
+                  { value: 'ACTIVE', label: 'Active' },
+                  { value: 'CONFIRMED', label: 'Confirmed' },
+                  { value: 'IMPROVED', label: 'Improved' },
+                  { value: 'RESOLVED', label: 'Resolved' },
+                  { value: 'UNDER_REVIEW', label: 'Under Review' }
                 ]}
                 onChange={(val) => updateForm('status', val)}
                 placeholder="Select Status"
@@ -584,6 +611,7 @@ export default function DiagnosesTab() {
                 key={`diag-date-${formData.diagnosisDate}`}
                 id="diagnosisDate"
                 defaultDate={formData.diagnosisDate}
+                maxDate="today"
                 onChange={(dates) => updateForm('diagnosisDate', dates[0]?.toString() || '')} 
                 placeholder="Select Date" 
               />
@@ -596,6 +624,7 @@ export default function DiagnosesTab() {
                 key={`rev-date-${formData.reviewDate}`}
                 id="reviewDate"
                 defaultDate={formData.reviewDate}
+                maxDate="today"
                 onChange={(dates) => updateForm('reviewDate', dates[0]?.toString() || '')} 
                 placeholder="Select Date" 
               />
@@ -686,6 +715,17 @@ export default function DiagnosesTab() {
                 ))}
               </div>
             )}
+            {existingFiles.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {existingFiles.map((file, idx) => (
+                  <div key={`exist-${idx}`} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md flex items-center gap-2">
+                    <a href={file.file_url} target="_blank" rel="noreferrer" className="hover:underline">
+                      {file.original_file_name || file.file_name}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-center gap-4 mt-10">
@@ -697,10 +737,10 @@ export default function DiagnosesTab() {
             </button>
             <button
               onClick={handleSave}
-              disabled={createDiagnosisMutation.isPending || uploadFilesMutation.isPending}
+              disabled={createDiagnosisMutation.isPending || updateDiagnosisMutation.isPending || uploadFilesMutation.isPending}
               className="px-8 py-2 text-sm font-bold text-white bg-[#7dd3fc] rounded-lg hover:bg-[#38bdf8] transition-colors disabled:opacity-50"
             >
-              {createDiagnosisMutation.isPending || uploadFilesMutation.isPending ? "Saving..." : "Save Diagnosis"}
+              {createDiagnosisMutation.isPending || updateDiagnosisMutation.isPending || uploadFilesMutation.isPending ? "Saving..." : "Save Diagnosis"}
             </button>
           </div>
 
