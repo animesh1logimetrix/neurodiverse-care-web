@@ -397,8 +397,11 @@ export const CustomModal: React.FC<CustomModalProps> = ({
                     <option value="" disabled>
                       {field.placeholder ?? `Select ${field.label.toLowerCase()}`}
                     </option>
-                    {(field.options ?? []).map((opt) => (
-                      <option key={opt.value} value={opt.value}>
+                    {(field.options ?? []).map((opt, optionIndex) => (
+                      <option
+                        key={`${field.name}-${opt.value}-${optionIndex}`}
+                        value={opt.value}
+                      >
                         {opt.label}
                       </option>
                     ))}
