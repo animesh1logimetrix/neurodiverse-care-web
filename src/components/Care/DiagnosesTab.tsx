@@ -16,6 +16,8 @@ export default function DiagnosesTab() {
   });
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'add' | null>(null);
   const [activeDiagnosisIndex, setActiveDiagnosisIndex] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [diagnosisToDelete, setDiagnosisToDelete] = useState<number | null>(null);
   
   const queryClient = useQueryClient();
 
@@ -154,6 +156,22 @@ export default function DiagnosesTab() {
     }
   });
 
+  const deleteDiagnosisMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await axiosClient.delete(`/diagnosis/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Diagnosis deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["diagnoses", childId] });
+      setIsDeleteModalOpen(false);
+      setDiagnosisToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete diagnosis");
+    }
+  });
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
     if (!formData.categoryId) errors.categoryId = "Diagnosis Name is required.";
@@ -253,7 +271,7 @@ export default function DiagnosesTab() {
   };
 
   const toggleAccordion = (index: number) => {
-    setOpenStates((prev) => ({ ...prev, [index]: !prev[index] }));
+    setOpenStates((prev) => ({ [index]: !prev[index] }));
   };
 
   return (
@@ -395,7 +413,14 @@ export default function DiagnosesTab() {
                       >
                         View linked IEP goals
                       </button>
-                      <button className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                      <button 
+                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDiagnosisToDelete(item.id);
+                          setIsDeleteModalOpen(true);
+                        }}
+                      >
                         Archive
                       </button>
                       <span className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-100 rounded-md">
@@ -429,31 +454,30 @@ export default function DiagnosesTab() {
                 {/* Row 1: Details and IEP Goals */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                   <div className="grid grid-cols-[140px_1fr] gap-y-3 text-sm">
-                    <span className="text-gray-500">ICD-10 Code</span> <span className="text-gray-800">F84.0</span>
-                    <span className="text-gray-500">Diagnosis Date</span> <span className="text-gray-800">{item.diagnosedDate}</span>
-                    <span className="text-gray-500">Diagnosed By</span> <span className="text-gray-800">{item.by}</span>
-                    <span className="text-gray-500">Severity</span> <span className="text-gray-800">{item.severity} {item.level}</span>
+                    <span className="text-gray-500">ICD-10 Code</span> <span className="text-gray-800">{item.category?.icd_code || "N/A"}</span>
+                    <span className="text-gray-500">Diagnosis Date</span> <span className="text-gray-800">{item.diagnosisDate ? new Date(item.diagnosisDate).toLocaleDateString() : 'N/A'}</span>
+                    <span className="text-gray-500">Diagnosed By</span> <span className="text-gray-800">{item.diagnosedBy?.name || "N/A"}</span>
+                    <span className="text-gray-500">Severity</span> <span className="text-gray-800">{item.severityLevel || "N/A"}</span>
                     <span className="text-gray-500">Status</span> 
                     <div>
                       <span className="bg-[#e5f5e8] text-[#16a34a] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-                        {item.status}
+                        {item.status || "N/A"}
                       </span>
                     </div>
-                    <span className="text-gray-500">Review Date</span> <span className="text-gray-800">Sep 15, 2023</span>
-                    <span className="text-gray-500">Last Updated</span> <span className="text-gray-800">Sep 15, 2022</span>
+                    <span className="text-gray-500">Review Date</span> <span className="text-gray-800">{item.reviewDate ? new Date(item.reviewDate).toLocaleDateString() : 'N/A'}</span>
+                    <span className="text-gray-500">Last Updated</span> <span className="text-gray-800">{item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : 'N/A'}</span>
                   </div>
 
                   <div className="border-l border-gray-100 pl-8">
-                    <p className="text-sm font-semibold text-gray-700 mb-3">Linked IEP Goals ({item.iepGoals})</p>
+                    <p className="text-sm font-semibold text-gray-700 mb-3">Linked IEP Goals ({item.linkedGoals?.length || 0})</p>
                     <ul className="text-sm text-gray-600 space-y-2 mb-4">
-                      <li className="flex gap-2"><span>•</span> Improve social communication skills</li>
-                      <li className="flex gap-2"><span>•</span> Increase independent play</li>
-                      <li className="flex gap-2"><span>•</span> Reduce repetitive behaviors</li>
-                      <li className="flex gap-2"><span>•</span> Enhance daily living skills</li>
+                      {item.linkedGoals?.map((link: any, idx: number) => (
+                        <li key={idx} className="flex gap-2"><span>•</span> {link.goal?.goal_title || 'Unknown Goal'}</li>
+                      ))}
+                      {(!item.linkedGoals || item.linkedGoals.length === 0) && (
+                         <li className="text-gray-400 italic text-xs">No linked goals</li>
+                      )}
                     </ul>
-                    <button className="text-sm font-medium text-gray-600 border border-[#ea580c] rounded-md px-4 py-2 hover:bg-orange-50 transition-colors">
-                      View All IEP Goals
-                    </button>
                   </div>
                 </div>
 
@@ -488,10 +512,57 @@ export default function DiagnosesTab() {
                       </div>
                     )}
                     {/* Upload Card */}
-                    <label className="w-40 shrink-0 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-40 hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer">
-                      <input type="file" className="hidden" multiple />
-                      <svg className="w-6 h-6 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                      <span className="text-sm font-medium">Upload More</span>
+                    <label className="w-40 shrink-0 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-40 hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer relative">
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        multiple 
+                        accept="image/jpeg, image/png, application/pdf"
+                        disabled={uploadFilesMutation.isPending || updateDiagnosisMutation.isPending}
+                        onChange={async (e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            const newFiles = Array.from(e.target.files);
+                            try {
+                              const uploadRes = await uploadFilesMutation.mutateAsync(newFiles);
+                              const filesArray = uploadRes?.files || [];
+                              const newFileIds = filesArray.map((i: any) => i.file?.id).filter(Boolean);
+                              
+                              const existingFileIds = item.reports?.map((r: any) => r.id) || [];
+                              const allFileIds = [...existingFileIds, ...newFileIds];
+
+                              const payload = {
+                                childId: Number(childId),
+                                categoryId: Number(item.categoryId),
+                                diagnosisDate: item.diagnosisDate,
+                                reviewDate: item.reviewDate,
+                                severityLevel: item.severityLevel,
+                                status: item.status,
+                                diagnosedById: Number(item.diagnosedById),
+                                clinicalNotes: item.clinicalNotes,
+                                linkedGoals: item.linkedGoals ? item.linkedGoals.map((g: any) => g.goal_id) : [],
+                                fileIds: allFileIds,
+                              };
+                              await updateDiagnosisMutation.mutateAsync({ id: item.id, payload });
+                            } catch (err) {
+                               console.error("Upload more error:", err);
+                            }
+                          }
+                        }}
+                      />
+                      {(uploadFilesMutation.isPending || updateDiagnosisMutation.isPending) ? (
+                        <div className="flex flex-col items-center">
+                          <svg className="animate-spin h-6 w-6 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span className="text-sm font-medium">Uploading...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <svg className="w-6 h-6 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                          <span className="text-sm font-medium">Upload More</span>
+                        </>
+                      )}
                     </label>
                   </div>
                 </div>
@@ -745,6 +816,50 @@ export default function DiagnosesTab() {
           </div>
 
         </div>
+      </CustomModal>
+
+      <CustomModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDiagnosisToDelete(null);
+        }}
+        title="Delete Diagnosis"
+        showOverlay
+        backdropBlur={false}
+        width="max-w-[480px]"
+        padding="px-8 py-6"
+        showCloseIcon
+        customFooter={
+          <div className="flex justify-end items-center gap-3 px-8 py-5 border-t border-gray-100 w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setDiagnosisToDelete(null);
+              }}
+              className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (diagnosisToDelete) {
+                  deleteDiagnosisMutation.mutate(diagnosisToDelete);
+                }
+              }}
+              disabled={deleteDiagnosisMutation.isPending}
+              className="px-6 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors text-sm cursor-pointer disabled:opacity-50"
+            >
+              {deleteDiagnosisMutation.isPending ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+        }
+      >
+        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+          Are you sure you want to delete this diagnosis? This action cannot be undone.
+        </p>
       </CustomModal>
     </div>
   );
