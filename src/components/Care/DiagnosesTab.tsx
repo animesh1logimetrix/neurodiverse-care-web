@@ -1,4 +1,8 @@
 import { useState, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router";
+import toast from "react-hot-toast";
+import axiosClient from "../../api/axiosClient";
 import CustomModal from "../ui/modal/CustomModal";
 import Input from "../form/input/InputField";
 import Select from "../form/Select";
@@ -6,36 +10,58 @@ import DatePicker from "../form/date-picker";
 import Label from "../form/Label";
 
 export default function DiagnosesTab() {
+  const { id: childId } = useParams();
   const [openStates, setOpenStates] = useState<Record<number, boolean>>({
     0: true, // First item open by default based on image
   });
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'add' | null>(null);
   const [activeDiagnosisIndex, setActiveDiagnosisIndex] = useState<number | null>(null);
+  
+  const queryClient = useQueryClient();
 
-  const allIepGoals = [
-    "Improve social communication skills",
-    "Increase independent play",
-    "Reduce repetitive behaviors",
-    "Enhance daily living skills"
-  ];
-  const [selectedIepGoals, setSelectedIepGoals] = useState<string[]>([
-    "Improve social communication skills",
-    "Increase independent play",
-    "Reduce repetitive behaviors",
-    "Enhance daily living skills"
-  ]);
+  // Queries for dropdown data
+  const { data: categoriesData } = useQuery({
+    queryKey: ["category"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/category");
+      return res.data;
+    },
+  });
+
+  const { data: usersData } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/user");
+      return res.data;
+    },
+  });
+
+  const { data: iepGoalsData } = useQuery({
+    queryKey: ["iep-goal"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/iep-goal");
+      return res.data;
+    },
+  });
+
+  const categories = Array.isArray(categoriesData) ? categoriesData : categoriesData?.data || [];
+  const users = Array.isArray(usersData) ? usersData : usersData?.data || [];
+  const allIepGoals = Array.isArray(iepGoalsData) ? iepGoalsData : iepGoalsData?.data || [];
+
+  const [selectedIepGoals, setSelectedIepGoals] = useState<number[]>([]);
 
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleGoalSelect = (val: string) => {
-    if (val && !selectedIepGoals.includes(val)) {
-      setSelectedIepGoals(prev => [...prev, val]);
+    const goalId = Number(val);
+    if (goalId && !selectedIepGoals.includes(goalId)) {
+      setSelectedIepGoals(prev => [...prev, goalId]);
     }
   };
 
-  const removeGoal = (goal: string) => {
-    setSelectedIepGoals(prev => prev.filter(g => g !== goal));
+  const removeGoal = (goalId: number) => {
+    setSelectedIepGoals(prev => prev.filter(id => id !== goalId));
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,18 +71,81 @@ export default function DiagnosesTab() {
   };
 
   const [formData, setFormData] = useState({
-    title: "",
+    categoryId: "",
     icd10: "",
-    severity: "",
+    severityLevel: "",
     status: "",
-    diagnosedDate: "",
+    diagnosisDate: "",
     reviewDate: "",
-    by: "",
-    notes: ""
+    diagnosedById: "",
+    clinicalNotes: ""
   });
 
   const updateForm = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const uploadFilesMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append("files", file); // Adjust to 'files' for multiple or 'file' if API is different
+      });
+      formData.append("folder", "diagnoses");
+      const res = await axiosClient.post("/media/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    },
+  });
+
+  const createDiagnosisMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await axiosClient.post("/diagnosis", payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Diagnosis added successfully");
+      queryClient.invalidateQueries({ queryKey: ["child", childId] });
+      queryClient.invalidateQueries({ queryKey: ["diagnoses", childId] });
+      closeModal();
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to add diagnosis");
+    }
+  });
+
+  const handleSave = async () => {
+    if (!formData.categoryId || !formData.status || !formData.diagnosisDate || !formData.severityLevel || !formData.diagnosedById) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    try {
+      let fileIds: number[] = [];
+      if (uploadedFiles.length > 0) {
+        const uploadRes = await uploadFilesMutation.mutateAsync(uploadedFiles);
+        const filesData = Array.isArray(uploadRes) ? uploadRes : (uploadRes?.data || []);
+        fileIds = filesData.map((f: any) => f.id);
+      }
+
+      const payload = {
+        childId: Number(childId),
+        categoryId: Number(formData.categoryId),
+        diagnosisDate: formData.diagnosisDate,
+        reviewDate: formData.reviewDate,
+        severityLevel: formData.severityLevel,
+        status: formData.status,
+        diagnosedById: Number(formData.diagnosedById),
+        clinicalNotes: formData.clinicalNotes,
+        linkedGoals: selectedIepGoals,
+        fileIds: fileIds,
+      };
+
+      await createDiagnosisMutation.mutateAsync(payload);
+    } catch (error) {
+      console.error("Error saving diagnosis:", error);
+    }
   };
 
   const openViewModal = (index: number) => {
@@ -68,42 +157,33 @@ export default function DiagnosesTab() {
     setActiveDiagnosisIndex(index);
     const item = diagnoses[index];
     setFormData({
-      title: item.title,
+      categoryId: "", // In a real scenario, map from item
       icd10: "F84.0",
-      severity: item.severity,
+      severityLevel: item.severity,
       status: item.status,
-      diagnosedDate: item.diagnosedDate,
+      diagnosisDate: item.diagnosedDate,
       reviewDate: "Sep 15, 2023",
-      by: item.by,
-      notes: item.notes
+      diagnosedById: "", // Map from item.by
+      clinicalNotes: item.notes
     });
-    setSelectedIepGoals([
-      "Improve social communication skills",
-      "Increase independent play",
-      "Reduce repetitive behaviors",
-      "Enhance daily living skills"
-    ]);
+    setSelectedIepGoals([]);
     setModalMode('edit');
   };
 
   const openAddModal = () => {
     setActiveDiagnosisIndex(null);
     setFormData({
-      title: "",
+      categoryId: "",
       icd10: "",
-      severity: "",
+      severityLevel: "",
       status: "",
-      diagnosedDate: "",
+      diagnosisDate: "",
       reviewDate: "",
-      by: "",
-      notes: ""
+      diagnosedById: "",
+      clinicalNotes: ""
     });
-    setSelectedIepGoals([
-      "Improve social communication skills",
-      "Increase independent play",
-      "Reduce repetitive behaviors",
-      "Enhance daily living skills"
-    ]);
+    setSelectedIepGoals([]);
+    setUploadedFiles([]);
     setModalMode('add');
   };
 
@@ -172,7 +252,7 @@ export default function DiagnosesTab() {
         <div className="mb-6">
           <h2 className="text-xl font-bold text-gray-800">Diagnoses</h2>
           <p className="text-sm text-gray-500 mt-1">
-            5 Confirm Diagnoses on Record
+            {diagnoses.length} Confirm Diagnoses on Record
           </p>
         </div>
 
@@ -437,11 +517,11 @@ export default function DiagnosesTab() {
             <div>
               <Label>Diagnosis Name *</Label>
               <Select 
-                key={`title-${formData.title}`}
-                defaultValue={formData.title}
-                options={[{ value: 'Autism Spectrum Disorder', label: 'Autism Spectrum Disorder' }]}
-                onChange={(val) => updateForm('title', val)}
-                placeholder="Select"
+                key={`categoryId-${formData.categoryId}`}
+                defaultValue={formData.categoryId}
+                options={categories.map((c: any) => ({ value: String(c.id), label: c.full_category_name || `Category ${c.id}` }))}
+                onChange={(val) => updateForm('categoryId', val)}
+                placeholder="Select Category"
               />
             </div>
             
@@ -453,15 +533,15 @@ export default function DiagnosesTab() {
             <div>
               <Label>Severity Level *</Label>
               <Select 
-                key={`severity-${formData.severity}`}
-                defaultValue={formData.severity}
+                key={`severityLevel-${formData.severityLevel}`}
+                defaultValue={formData.severityLevel}
                 options={[
                   { value: 'Mild', label: 'Mild' },
                   { value: 'Moderate', label: 'Moderate' },
                   { value: 'Severe', label: 'Severe' }
                 ]}
-                onChange={(val) => updateForm('severity', val)}
-                placeholder="Select"
+                onChange={(val) => updateForm('severityLevel', val)}
+                placeholder="Select Severity"
               />
             </div>
 
@@ -475,18 +555,18 @@ export default function DiagnosesTab() {
                   { value: 'Suspected', label: 'Suspected' }
                 ]}
                 onChange={(val) => updateForm('status', val)}
-                placeholder="Select"
+                placeholder="Select Status"
               />
             </div>
 
             <div>
               <Label>Diagnosis Date*</Label>
               <DatePicker 
-                key={`diag-date-${formData.diagnosedDate}`}
-                id="diagnosedDate"
-                defaultDate={formData.diagnosedDate}
-                onChange={(dates) => updateForm('diagnosedDate', dates[0]?.toString() || '')} 
-                placeholder="Select" 
+                key={`diag-date-${formData.diagnosisDate}`}
+                id="diagnosisDate"
+                defaultDate={formData.diagnosisDate}
+                onChange={(dates) => updateForm('diagnosisDate', dates[0]?.toString() || '')} 
+                placeholder="Select Date" 
               />
             </div>
 
@@ -497,25 +577,25 @@ export default function DiagnosesTab() {
                 id="reviewDate"
                 defaultDate={formData.reviewDate}
                 onChange={(dates) => updateForm('reviewDate', dates[0]?.toString() || '')} 
-                placeholder="Select" 
+                placeholder="Select Date" 
               />
             </div>
 
             <div>
               <Label>Diagnosed By*</Label>
               <Select 
-                key={`by-${formData.by}`}
-                defaultValue={formData.by}
-                options={[{ value: 'Dr. Reena Kapoor', label: 'Dr. Reena Kapoor' }]}
-                onChange={(val) => updateForm('by', val)}
-                placeholder="Select"
+                key={`diagnosedById-${formData.diagnosedById}`}
+                defaultValue={formData.diagnosedById}
+                options={users.map((u: any) => ({ value: String(u.id), label: u.name || `User ${u.id}` }))}
+                onChange={(val) => updateForm('diagnosedById', val)}
+                placeholder="Select Doctor"
               />
             </div>
           </div>
 
           <div className="mb-8">
             <Label>Clinical Notes*</Label>
-            <Input type="text" value={formData.notes} onChange={(e) => updateForm('notes', e.target.value)} placeholder="Enter Note" />
+            <Input type="text" value={formData.clinicalNotes} onChange={(e) => updateForm('clinicalNotes', e.target.value)} placeholder="Enter Note" />
           </div>
 
           <div className="mb-8">
@@ -524,20 +604,24 @@ export default function DiagnosesTab() {
               <Select 
                 key={selectedIepGoals.length}
                 options={allIepGoals
-                  .filter(goal => !selectedIepGoals.includes(goal))
-                  .map(goal => ({ value: goal, label: goal }))}
+                  .filter((g: any) => !selectedIepGoals.includes(g.id))
+                  .map((g: any) => ({ value: String(g.id), label: g.goal_title || `Goal ${g.id}` }))}
                 onChange={handleGoalSelect}
                 placeholder="Select an IEP Goal"
               />
             </div>
             {selectedIepGoals.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {selectedIepGoals.map((goal, idx) => (
-                  <div key={idx} className="bg-[#e5fcf0] text-[#16a34a] text-xs font-semibold px-4 py-2 rounded-md flex justify-between items-center">
-                    {goal}
-                    <button type="button" onClick={() => removeGoal(goal)} className="text-[#16a34a] hover:text-green-700 font-bold ml-2">X</button>
-                  </div>
-                ))}
+                {selectedIepGoals.map((goalId, idx) => {
+                  const goalObj = allIepGoals.find((g: any) => g.id === goalId);
+                  const goalLabel = goalObj ? (goalObj.goal_title || `Goal ${goalId}`) : `Goal ${goalId}`;
+                  return (
+                    <div key={idx} className="bg-[#e5fcf0] text-[#16a34a] text-xs font-semibold px-4 py-2 rounded-md flex justify-between items-center">
+                      {goalLabel}
+                      <button type="button" onClick={() => removeGoal(goalId)} className="text-[#16a34a] hover:text-green-700 font-bold ml-2">X</button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -550,7 +634,7 @@ export default function DiagnosesTab() {
             >
               <svg className="w-6 h-6 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
               <p className="text-sm text-gray-500">
-                Drag & drop or <span className="text-[#60a5fa] font-medium">browse files</span> Jpeg, Png
+                Drag & drop or <span className="text-[#60a5fa] font-medium">browse files</span> Jpeg, Png, Pdf
               </p>
             </div>
             <input 
@@ -559,7 +643,7 @@ export default function DiagnosesTab() {
               ref={fileInputRef} 
               className="hidden" 
               onChange={handleFileSelect} 
-              accept="image/jpeg, image/png"
+              accept="image/jpeg, image/png, application/pdf"
             />
             {uploadedFiles.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
@@ -590,10 +674,11 @@ export default function DiagnosesTab() {
               Cancel
             </button>
             <button
-              onClick={closeModal}
-              className="px-8 py-2 text-sm font-bold text-white bg-[#7dd3fc] rounded-lg hover:bg-[#38bdf8] transition-colors"
+              onClick={handleSave}
+              disabled={createDiagnosisMutation.isPending || uploadFilesMutation.isPending}
+              className="px-8 py-2 text-sm font-bold text-white bg-[#7dd3fc] rounded-lg hover:bg-[#38bdf8] transition-colors disabled:opacity-50"
             >
-              Save Diagnosis
+              {createDiagnosisMutation.isPending || uploadFilesMutation.isPending ? "Saving..." : "Save Diagnosis"}
             </button>
           </div>
 
