@@ -50,8 +50,8 @@ export default function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
           {/* Dashboard Layout */}
-          <Route element={<AppLayout />}>
-            <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
               {/* Dashboard Modules */}
               <Route element={<ProtectedRoute moduleRequired="Dashboard" />}>
                 <Route path="/dashboard" element={<Dashboard />} />

@@ -12,7 +12,7 @@ import { useAuth } from "../../context/AuthContext";
 export default function NeuroCareAuth() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signup");
+  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
@@ -84,6 +84,10 @@ export default function NeuroCareAuth() {
        setSignupError("Please enter your full name.");
        return;
     }
+    if (!/^[A-Za-z\s]+$/.test(signupName.trim())) {
+       setSignupError("Full name can only contain letters and spaces.");
+       return;
+    }
     if (!signupEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupEmail)) {
        setSignupError("Please enter a valid email address.");
        return;
@@ -92,8 +96,9 @@ export default function NeuroCareAuth() {
        setSignupError("Please enter a password.");
        return;
     }
-    if (signupPassword.length < 8) {
-       setSignupError("Password must be at least 8 characters.");
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(signupPassword)) {
+       setSignupError("Password must be at least 8 chars with an uppercase, lowercase, number, and special character.");
        return;
     }
     if (signupPassword !== signupConfirmPassword) {
@@ -242,7 +247,7 @@ export default function NeuroCareAuth() {
               <h2 className="text-2xl font-semibold text-gray-900 mb-2">Welcome back</h2>
               <p className="text-gray-500 text-sm mb-8">Sign in to your NeuroCare account</p>
 
-              <form className="space-y-5">
+              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
                 {loginError && <div className="text-red-500 text-sm bg-red-50 p-2 rounded">{loginError}</div>}
                 
                 <div>
@@ -284,8 +289,7 @@ export default function NeuroCareAuth() {
                 </div>
 
                 <button 
-                  type="button" 
-                  onClick={handleLogin} 
+                  type="submit" 
                   disabled={isLoading}
                   className="w-full py-3 px-4 bg-[#0a7a66] hover:bg-[#086353] disabled:opacity-70 text-white rounded-full font-medium transition-colors flex items-center justify-center gap-2"
                 >
@@ -313,7 +317,7 @@ export default function NeuroCareAuth() {
               <h2 className="text-2xl font-semibold text-gray-900 mb-2">Create your account</h2>
               <p className="text-gray-500 text-sm mb-6">Join a child's care team on NeuroCare</p>
 
-              <form className="space-y-5">
+              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
                 {signupError && <div className="text-red-500 text-sm bg-red-50 p-2 rounded">{signupError}</div>}
                 <div>
                   <Label>I am a...</Label>
@@ -390,7 +394,7 @@ export default function NeuroCareAuth() {
 
                 <div>
                   <Label>Password</Label>
-                  <p className="text-xs text-gray-500 mb-1">Minimum 8 characters</p>
+                  <p className="text-xs text-gray-500 mb-1">Min 8 chars, with uppercase, lowercase, number & special char</p>
                   <div className="relative">
                     <Input
                       className="!rounded-full"
@@ -445,8 +449,7 @@ export default function NeuroCareAuth() {
                 </div>
 
                 <button 
-                  type="button" 
-                  onClick={handleRegister}
+                  type="submit" 
                   disabled={isLoading}
                   className="w-full py-3 px-4 bg-[#0a7a66] hover:bg-[#086353] disabled:opacity-70 text-white rounded-full font-medium transition-colors mt-2"
                 >

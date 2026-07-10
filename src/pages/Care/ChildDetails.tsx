@@ -91,9 +91,9 @@ export default function ChildDetails() {
             <h1 className="text-3xl font-bold text-gray-900 leading-tight">
               Children
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            {/* <p className="text-sm text-gray-500 mt-1">
               6 children 3 need attention
-            </p>
+            </p> */}
           </div>
           <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
             + Add Child
