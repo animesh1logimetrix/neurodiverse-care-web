@@ -69,7 +69,7 @@ const DocumentIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 
 // Status Badge Component
 const StatusBadge = ({ status }: { status: GeneticTestStatus }) => {
-  const cfg = statusConfig[status];
+  const cfg = statusConfig[status] ?? statusConfig["AWAITING_REPORT"];
   return (
     <span className={`${cfg.bg} ${cfg.border} ${cfg.text} border-2 rounded-full px-4 py-1 text-xs font-semibold whitespace-nowrap`}>
       {cfg.label}
@@ -294,16 +294,19 @@ export default function GeneticTestingTab() {
 
   // Update Genetic Test Mutation
   const updateTestMutation = useMutation({
-    mutationFn: async ({ id, payload }: { id: number; payload: any }) => {
+    mutationFn: async ({ id, payload, isNoteUpdate }: { id: number; payload: any; isNoteUpdate?: boolean }) => {
       const res = await axiosClient.patch(`/genetic-testing/${id}`, payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast.success("Genetic test updated successfully.");
       queryClient.invalidateQueries({ queryKey: ["genetic-testing", childId] });
-      setIsNoteModalOpen(false);
-      setIsUploadModalOpen(false);
-      setNoteForm({ text: "", status: "REVIEWED" });
+      if (variables.isNoteUpdate) {
+        setIsNoteModalOpen(false);
+        setNoteForm({ text: "", status: "REVIEWED" });
+      } else {
+        setIsUploadModalOpen(false);
+      }
     },
     onError: (error: any) => {
       const errMsg = error?.response?.data?.message;
@@ -342,11 +345,16 @@ export default function GeneticTestingTab() {
   const handleSaveNote = () => {
     if (!selectedNoteTest) return;
     const currentInterpretation = selectedNoteTest.interpretation?.join("\n") || "";
-    const newInterpretation = currentInterpretation ? `${currentInterpretation}\n\n${noteForm.text}` : noteForm.text;
+    const noteText = noteForm.text.trim();
+    const newInterpretation = currentInterpretation
+      ? noteText ? `${currentInterpretation}\n\n${noteText}` : currentInterpretation
+      : noteText;
     
     updateTestMutation.mutate({
       id: selectedNoteTest.id,
+      isNoteUpdate: true,
       payload: {
+        childId: Number(childId),
         clinical_interpretation: newInterpretation,
         status: noteForm.status,
       }
@@ -414,12 +422,12 @@ export default function GeneticTestingTab() {
       if (modalMode === 'add') {
         setFormData(initialFormState);
         setExistingFiles([]);
+        setOtherTestType("");
+        setOtherTestSubtype("");
+        setOtherSampleType("");
+        setOtherLaboratory("");
+        setOtherOrderingProvider("");
       }
-      setOtherTestType("");
-      setOtherTestSubtype("");
-      setOtherSampleType("");
-      setOtherLaboratory("");
-      setOtherOrderingProvider("");
       setReportFiles([]);
       setFormErrors({});
       setIsSaving(false);
@@ -607,7 +615,7 @@ export default function GeneticTestingTab() {
         ordered_date: formData.orderedDate,
         reported_date: formData.reportedDate || "",
         laboratory: finalLaboratory,
-        ordering_provider_id: parseInt(formData.orderingProvider, 10),
+        ordering_provider_id: formData.orderingProvider ? parseInt(formData.orderingProvider, 10) : undefined,
         sample_type: finalSampleType,
         collection_date: formData.collectionDate,
         clinical_summary: formData.clinicalSummary.trim() || "",
@@ -1249,8 +1257,9 @@ export default function GeneticTestingTab() {
                 
                 <button 
                   onClick={() => {
+                    const testToEdit = selectedTest;
                     setSelectedTest(null);
-                    handleOpenEditModal(selectedTest);
+                    if (testToEdit) handleOpenEditModal(testToEdit);
                   }}
                   className="w-full border border-green-300 text-green-700 bg-green-50/20 text-[12px] font-medium py-2 rounded flex items-center justify-center hover:bg-green-50 transition-colors mt-2"
                 >
@@ -1301,7 +1310,7 @@ export default function GeneticTestingTab() {
         isOpen={isNoteModalOpen}
         onClose={() => setIsNoteModalOpen(false)}
         title="Add Clinical Note"
-        width="600px"
+        maxWidth="max-w-[500px]"
         customFooter={
           <div className="flex justify-center gap-4 px-8 py-5 w-full border-t border-gray-100">
             <button
@@ -1341,7 +1350,7 @@ export default function GeneticTestingTab() {
             <Label>Clinical Note</Label>
             <TextArea
               value={noteForm.text}
-              onChange={(e) => setNoteForm(prev => ({ ...prev, text: e.target.value }))}
+              onChange={(val) => setNoteForm(prev => ({ ...prev, text: val }))}
               placeholder="Enter clinical note or interpretation..."
               rows={4}
             />
