@@ -917,7 +917,7 @@ const MedicationsTab = () => {
             <button
               onClick={handleAddMedicationSubmit}
               disabled={isSubmittingMedication || createMedicationMutation.isPending || updateMedicationMutation.isPending || uploadFilesMutation.isPending}
-              className="px-8 py-2 text-sm font-bold text-white bg-[#7dd3fc] rounded-lg hover:bg-[#38bdf8] transition-colors disabled:opacity-50"
+              className="px-8 py-2 text-sm font-bold text-white bg-[#60a5fa] rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
             >
               {createMedicationMutation.isPending || updateMedicationMutation.isPending || uploadFilesMutation.isPending ? editingMedication ? "Updating..." : "Creating..." : editingMedication ? "Update Medication" : "Save Medication"}
             </button>

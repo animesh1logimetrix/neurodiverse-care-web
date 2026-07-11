@@ -619,7 +619,23 @@ export default function DiagnosesTab() {
         onClose={closeModal}
         title={modalMode === 'add' ? "Add Diagnosis" : "Edit Diagnosis"}
         maxWidth="max-w-3xl"
-        customFooter={<></>}
+        customFooter={
+          <div className="flex justify-center gap-4 px-8 py-5 border-t border-gray-100 w-full">
+            <button
+              onClick={closeModal}
+              className="px-8 py-2 text-sm font-bold text-gray-600 bg-[#e2e8f0] rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={createDiagnosisMutation.isPending || updateDiagnosisMutation.isPending || uploadFilesMutation.isPending}
+              className="px-8 py-2 text-sm font-bold text-white bg-[#60a5fa] rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
+            >
+              {createDiagnosisMutation.isPending || updateDiagnosisMutation.isPending || uploadFilesMutation.isPending ? "Saving..." : "Save Diagnosis"}
+            </button>
+          </div>
+        }
       >
         <div>
           <h3 className="text-gray-800 font-semibold mb-6">Diagnosis Information</h3>
@@ -804,22 +820,6 @@ export default function DiagnosesTab() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="flex justify-center gap-4 mt-10">
-            <button
-              onClick={closeModal}
-              className="px-8 py-2 text-sm font-bold text-gray-600 bg-[#e2e8f0] rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={createDiagnosisMutation.isPending || updateDiagnosisMutation.isPending || uploadFilesMutation.isPending}
-              className="px-8 py-2 text-sm font-bold text-white bg-[#7dd3fc] rounded-lg hover:bg-[#38bdf8] transition-colors disabled:opacity-50"
-            >
-              {createDiagnosisMutation.isPending || updateDiagnosisMutation.isPending || uploadFilesMutation.isPending ? "Saving..." : "Save Diagnosis"}
-            </button>
           </div>
 
         </div>

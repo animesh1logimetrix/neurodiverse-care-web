@@ -10,6 +10,8 @@ import DiagnosesTab from "../../components/Care/DiagnosesTab";
 import MedicationsTab from "../../components/Care/MedicationsTab";
 import GeneticTestingTab from "../../components/Care/GeneticTestingTab";
 import AssessmentsTab from "../../components/Care/AssessmentsTab";
+import IEPGoalsTab from "../../components/Care/IEPGoalsTab";
+import SessionNotesTab from "../../components/Care/SessionNotesTab";
 
 export default function ChildDetails() {
   const { id } = useParams();
@@ -361,6 +363,12 @@ export default function ChildDetails() {
 
       {/* Assessments Content */}
       {activeTab === "Assessments" && <AssessmentsTab />}
+
+      {/* IEP Goals Content */}
+      {activeTab === "IEP Goals" && <IEPGoalsTab />}
+
+      {/* Session Notes Content */}
+      {activeTab === "Session Notes" && <SessionNotesTab />}
     </>
   );
 }
