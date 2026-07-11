@@ -177,6 +177,7 @@ const MedicationsTab = () => {
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [existingFiles, setExistingFiles] = useState<any[]>([]);
+  const [filesToRemove, setFilesToRemove] = useState<number[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isLoadingMedicationDetails, setIsLoadingMedicationDetails] = useState(false);
   const [isSubmittingMedication, setIsSubmittingMedication] = useState(false);
@@ -250,10 +251,21 @@ const MedicationsTab = () => {
     },
   });
 
+  const closeAddMedicationModal = () => {
+    setIsAddMedicationOpen(false);
+    setSelectedFiles([]);
+    setExistingFiles([]);
+    setFilesToRemove([]);
+    setEditingMedication(null);
+    setFormErrors({});
+  };
+
   const resetMedicationModalState = () => {
     setIsAddMedicationOpen(false);
     setSelectedFiles([]);
     setExistingFiles([]);
+    setFilesToRemove([]);
+    setEditingMedication(null);
   };
 
   const createMedicationMutation = useMutation({
@@ -334,6 +346,7 @@ const MedicationsTab = () => {
   const resetUploadState = () => {
     setSelectedFiles([]);
     setExistingFiles([]);
+    setFilesToRemove([]);
     setUploadError(null);
   };
 
@@ -354,6 +367,7 @@ const MedicationsTab = () => {
       instructions: "",
     });
     setFormErrors({});
+    setFilesToRemove([]);
     setIsAddMedicationOpen(true);
   };
 
@@ -492,7 +506,7 @@ const MedicationsTab = () => {
         fileIds: allFileIds,
       };
 
-      await updateMedicationMutation.mutateAsync({ medicationId: selectedMedication.id, payload });
+      await axiosClient.patch(`/medication/${selectedMedication.id}`, payload);
       setExistingFiles((prev) => [...prev, ...uploadedDocuments]);
       setSelectedMedication((prev) =>
         prev
@@ -504,6 +518,7 @@ const MedicationsTab = () => {
           : prev
       );
       toast.success("Documents uploaded successfully");
+      queryClient.invalidateQueries({ queryKey: ["medications", childId] });
     } catch (err) {
       const message = (err as any)?.response?.data?.message;
       toast.error(Array.isArray(message) ? message.join(", ") : message || "Failed to upload documents");
@@ -532,9 +547,10 @@ const MedicationsTab = () => {
     setIsSubmittingMedication(true);
     let uploadedFileIds: number[] = [];
     
-    // Include existing file IDs from edit mode
+    // Include existing file IDs from edit mode (excluding removed files)
     if (existingFiles.length > 0) {
       uploadedFileIds = existingFiles
+        .filter((f: any) => !filesToRemove.includes(f.id ?? f.file_id ?? f.fileId ?? f.file?.id ?? f.file?.file_id ?? f.document_id ?? f.documentId))
         .map((f: any) => f.id ?? f.file_id ?? f.fileId ?? f.file?.id ?? f.file?.file_id ?? f.document_id ?? f.documentId)
         .filter(Boolean);
     }
@@ -887,13 +903,13 @@ const MedicationsTab = () => {
 
       <CustomModal
         isOpen={isAddMedicationOpen}
-        onClose={() => setIsAddMedicationOpen(false)}
+        onClose={closeAddMedicationModal}
         title={editingMedication ? "Edit Medication" : "Add Medication"}
         maxWidth="max-w-3xl"
         customFooter={
           <div className="flex justify-center gap-4 px-8 py-5 border-t border-gray-100 w-full">
             <button
-              onClick={() => setIsAddMedicationOpen(false)}
+              onClick={closeAddMedicationModal}
               className="px-8 py-2 text-sm font-bold text-gray-600 bg-[#e2e8f0] rounded-lg hover:bg-gray-300 transition-colors"
             >
               Cancel
@@ -1104,13 +1120,43 @@ const MedicationsTab = () => {
             )}
             {existingFiles.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {existingFiles.map((file, idx) => (
-                  <div key={`exist-${idx}`} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md flex items-center gap-2">
-                    <a href={file.file?.path || file.path} target="_blank" rel="noreferrer" className="hover:underline">
-                      {file.file?.name || file.name}
-                    </a>
-                  </div>
-                ))}
+                {existingFiles.map((file, idx) => {
+                  const fileUrl = file.file_url || file.url || file.path || file.file?.file_url || "";
+                  const fileName = file.original_file_name || file.file_name || file.name || file.file?.name || "Document";
+                  const fileId = file.id ?? file.file_id ?? file.fileId ?? file.file?.id ?? file.file?.file_id ?? file.document_id ?? file.documentId;
+                  const isMarkedForRemoval = filesToRemove.includes(fileId);
+
+                  return (
+                    <div key={`exist-${idx}`} className={`text-xs border px-3 py-1.5 rounded-md flex items-center gap-2 ${
+                      isMarkedForRemoval
+                        ? "bg-red-50 text-red-700 border-red-200 opacity-50"
+                        : "bg-blue-50 text-blue-700 border-blue-200"
+                    }`}>
+                      {fileUrl && !isMarkedForRemoval ? (
+                        <a href={fileUrl} target="_blank" rel="noreferrer" className="hover:underline">
+                          {fileName}
+                        </a>
+                      ) : (
+                        <span>{fileName}</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isMarkedForRemoval) {
+                            setFilesToRemove(prev => prev.filter(id => id !== fileId));
+                          } else {
+                            setFilesToRemove(prev => [...prev, fileId]);
+                          }
+                        }}
+                        className="ml-1 font-bold hover:text-red-600"
+                        title={isMarkedForRemoval ? "Undo removal" : "Remove file"}
+                      >
+                        {isMarkedForRemoval ? "↶" : "×"}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
