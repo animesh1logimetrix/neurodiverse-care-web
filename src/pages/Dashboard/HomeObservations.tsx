@@ -1,8 +1,12 @@
 import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axiosClient from "../../api/axiosClient";
+import toast from "react-hot-toast";
 import PageMeta from "../../components/common/PageMeta";
 import CustomModal from "../../components/ui/modal/CustomModal";
 import InputField from "../../components/form/input/InputField";
 import DatePicker from "../../components/form/date-picker";
+import Select from "../../components/form/Select";
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
 
 function PlusIcon() {
@@ -269,24 +273,139 @@ const RECIPIENTS = [
   { id: "School", label: "School", icon: <MortarboardIcon />, color: "#0ea5e9", bg: "#f0f9ff" },
 ];
 
+const getCategoryTheme = (label: string) => {
+  const cat = CATEGORIES.find(c => c.label === label);
+  return cat ? { icon: cat.icon, iconColor: cat.color, iconBg: cat.bg } : { icon: <LightningIcon />, iconColor: "#f79009", iconBg: "#fffaeb" };
+};
+
+const getStatusTheme = (status: string) => {
+  switch (status) {
+    case "PENDING":
+      return { statusBadge: "bg-[#fffaeb] text-[#f79009]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> };
+    case "ACTIONED":
+      return { statusBadge: "bg-[#ecfdf3] text-[#12b76a]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> };
+    case "ACKNOWLEDGED":
+      return { statusBadge: "bg-[#f4f3ff] text-[#7a5af8]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> };
+    case "VIEWED":
+      return { statusBadge: "bg-[#f0f6fe] text-[#7db9fb]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> };
+    default:
+      return { statusBadge: "bg-[#f0f6fe] text-[#7db9fb]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><polyline points="20 6 9 17 4 12"/></svg> };
+  }
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function HomeObservations() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [step, setStep] = useState(1);
+  const [childId, setChildId] = useState("");
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
-  const [recipients, setRecipients] = useState<string[]>([]);
+  const [reviewedById, setReviewedById] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("All Statuses");
   const [filterCategory, setFilterCategory] = useState("All Categories");
   const [detail, setDetail] = useState<any>(null);
-  const [observationsList, setObservationsList] = useState(observations);
-  const [attachments, setAttachments] = useState<{ id: string; name: string; type: "image" | "video" | "document"; size: string }[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  
+  const queryClient = useQueryClient();
 
-  const filteredObservations = observationsList.filter(obs => {
+  // API Queries
+  const { data: childrenData } = useQuery({
+    queryKey: ["child"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/child");
+      return res.data;
+    },
+  });
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ["category"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/category");
+      return res.data;
+    },
+  });
+
+  const { data: usersData } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/user");
+      return res.data;
+    },
+  });
+
+  const children = Array.isArray(childrenData) ? childrenData : childrenData?.data || [];
+  const categoriesList = Array.isArray(categoriesData) ? categoriesData : categoriesData?.data || [];
+  const users = Array.isArray(usersData) ? usersData : usersData?.data || [];
+
+  const uploadFilesMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append("files", file);
+      });
+      formData.append("folder", "uploads");
+      const res = await axiosClient.post("/media/uploads", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    },
+  });
+
+  const createObservationMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await axiosClient.post("/home-observation", payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Observation added successfully");
+      queryClient.invalidateQueries({ queryKey: ["home-observation"] });
+      setIsModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to add observation");
+    }
+  });
+
+  const { data: homeObservationsData, isLoading: isObservationsLoading } = useQuery({
+    queryKey: ["home-observation"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/home-observation");
+      return res.data;
+    },
+  });
+
+  const rawObservations = Array.isArray(homeObservationsData) ? homeObservationsData : homeObservationsData?.data || [];
+  
+  const observationsList = rawObservations.map((obs: any) => {
+    const categoryName = obs.category?.full_category_name || "Category";
+    const theme = getCategoryTheme(categoryName);
+    const statusTheme = getStatusTheme(obs.status);
+    
+    const diffTime = new Date().getTime() - new Date(obs.observation_date).getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    return {
+      ...obs,
+      title: obs.title,
+      category: categoryName,
+      date: new Date(obs.observation_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      daysAgo: diffDays <= 0 ? "Today" : `${diffDays} days ago`,
+      description: obs.observation,
+      attachments: obs.files?.length || 0,
+      status: obs.status ? obs.status.charAt(0).toUpperCase() + obs.status.slice(1).toLowerCase() : "Pending",
+      icon: theme.icon,
+      iconColor: theme.iconColor,
+      iconBg: theme.iconBg,
+      statusBadge: statusTheme.statusBadge,
+      statusIcon: statusTheme.statusIcon,
+    };
+  });
+
+  const filteredObservations = observationsList.filter((obs: any) => {
     if (filterStatus !== "All Statuses" && obs.status !== filterStatus) return false;
     if (filterCategory !== "All Categories" && obs.category !== filterCategory) return false;
     if (search && !obs.title.toLowerCase().includes(search.toLowerCase()) && !obs.description.toLowerCase().includes(search.toLowerCase())) return false;
@@ -297,12 +416,13 @@ export default function HomeObservations() {
   React.useEffect(() => {
     if (isModalOpen) {
       setStep(1);
+      setChildId("");
       setTitle("");
       setDate("");
       setCategory("");
       setDescription("");
-      setRecipients([]);
-      setAttachments([]);
+      setReviewedById("");
+      setUploadedFiles([]);
       setErrors({});
     }
   }, [isModalOpen]);
@@ -313,6 +433,7 @@ export default function HomeObservations() {
 
   const handleNext = () => {
     const newErrors: Record<string, string> = {};
+    if (!childId) newErrors.childId = "Please select a child";
     if (!category) newErrors.category = "Please select a category";
     if (description.length < 20) newErrors.description = "Please provide more detail (at least 20 characters)";
     if (!title.trim()) newErrors.title = "Please provide a title";
@@ -326,38 +447,42 @@ export default function HomeObservations() {
     setStep(2);
   };
 
-  const handleSubmit = () => {
-    if (recipients.length === 0) {
-      setErrors({ recipients: "Select at least one recipient" });
+  const handleSubmit = async () => {
+    if (!reviewedById) {
+      setErrors({ reviewedById: "Select a recipient" });
       return;
     }
     
-    const categoryInfo = CATEGORIES.find(c => c.id === category) || CATEGORIES[0];
-    const newObs = {
-      title,
-      category: categoryInfo.label,
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      daysAgo: "Just now",
-      description,
-      attachments: attachments.length,
-      status: "Submitted",
-      icon: categoryInfo.icon,
-      iconColor: categoryInfo.color,
-      iconBg: categoryInfo.bg,
-      statusBadge: "bg-[#f0f6fe] text-[#7db9fb]",
-      statusIcon: (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-      )
-    };
-    
-    setObservationsList([newObs, ...observationsList]);
-    setIsModalOpen(false);
-  };
+    try {
+      let fileIds: number[] = [];
+      if (uploadedFiles.length > 0) {
+        const uploadRes = await uploadFilesMutation.mutateAsync(uploadedFiles);
+        const filesArray = uploadRes?.files || [];
+        fileIds = filesArray.map((item: any) => Number(item.file?.id)).filter(Boolean);
+      }
 
-  const toggleRecipient = (id: string) => {
-    setRecipients(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
+      const userStr = localStorage.getItem('user');
+      const userObj = userStr ? JSON.parse(userStr) : null;
+      const parentId = userObj?.id ? Number(userObj.id) : 1;
+
+      const payload = {
+        child_id: Number(childId),
+        parent_id: parentId,
+        category_id: Number(category),
+        title,
+        observation: description,
+        observation_date: date,
+        status: "PENDING",
+        reviewedBy_id: Number(reviewedById),
+        reviewedAt: new Date().toISOString(),
+        remarks: "",
+        fileIds: fileIds
+      };
+      
+      await createObservationMutation.mutateAsync(payload);
+    } catch (error) {
+      console.error("Error submitting observation", error);
+    }
   };
 
   const imageInputRef = React.useRef<HTMLInputElement>(null);
@@ -369,22 +494,16 @@ export default function HomeObservations() {
     return kb > 1024 ? (kb / 1024).toFixed(1) + " MB" : Math.round(kb) + " KB";
   };
 
-  const handleFileChange = (type: "image" | "video" | "document", e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const id = `att_${Date.now()}`;
-      setAttachments(prev => [...prev, {
-        id,
-        name: file.name,
-        type,
-        size: formatFileSize(file.size)
-      }]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
     }
     e.target.value = "";
   };
 
-  const removeAttachment = (id: string) => {
-    setAttachments(prev => prev.filter(a => a.id !== id));
+  const removeAttachment = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   // Custom modal footer to match standard designs and multi-step flow
@@ -404,8 +523,8 @@ export default function HomeObservations() {
           <button type="button" onClick={() => setStep(1)} className="px-5 py-2.5 rounded-lg text-gray-700 bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors">
             ← Back
           </button>
-          <button type="button" onClick={handleSubmit} className="px-6 py-2.5 rounded-lg text-white bg-[#7db9fb] hover:opacity-90 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]">
-            Submit Observation
+          <button type="button" onClick={handleSubmit} disabled={createObservationMutation.isPending || uploadFilesMutation.isPending} className="px-6 py-2.5 rounded-lg text-white bg-[#7db9fb] hover:opacity-90 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed">
+            {createObservationMutation.isPending || uploadFilesMutation.isPending ? "Submitting..." : "Submit Observation"}
           </button>
         </>
       )}
@@ -486,8 +605,8 @@ export default function HomeObservations() {
                   className="block w-full sm:w-[140px] pl-3 pr-10 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] appearance-none cursor-pointer transition-colors"
                 >
                   <option>All Statuses</option>
+                  <option>Pending</option>
                   <option>Actioned</option>
-                  <option>Submitted</option>
                   <option>Viewed</option>
                   <option>Acknowledged</option>
                 </select>
@@ -512,7 +631,12 @@ export default function HomeObservations() {
           </div>
 
           {/* List Items */}
-          {filteredObservations.length === 0 ? (
+          {isObservationsLoading ? (
+            <div className="flex flex-col items-center justify-center p-16 text-center gap-4">
+              <div className="w-10 h-10 border-4 border-gray-200 border-t-[#7db9fb] rounded-full animate-spin"></div>
+              <p className="text-sm text-gray-500 font-medium animate-pulse">Loading observations...</p>
+            </div>
+          ) : filteredObservations.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-100">
                 <HomeIcon />
@@ -617,6 +741,18 @@ export default function HomeObservations() {
           {step === 1 && (
             <div className="space-y-5">
               <div>
+                <label className="block text-sm font-bold text-black mb-1.5">Child <span className="text-red-500">*</span></label>
+                <Select
+                  key={`childId-${childId}`}
+                  placeholder="Select Child"
+                  options={children.map((c: any) => ({ value: String(c.id), label: c.full_name }))}
+                  defaultValue={childId}
+                  onChange={(val) => setChildId(val)}
+                />
+                {errors.childId && <p className="mt-1 text-[13px] text-red-500">{errors.childId}</p>}
+              </div>
+
+              <div>
                 <label className="block text-sm font-bold text-black mb-1.5">Observation Title <span className="text-red-500">*</span></label>
                 <InputField
                   type="text"
@@ -646,22 +782,14 @@ export default function HomeObservations() {
 
               <div>
                 <label className="block text-sm font-bold text-black mb-1.5">Category <span className="text-red-500">*</span></label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {CATEGORIES.map(cat => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setCategory(cat.id)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${category === cat.id ? 'border-[#7db9fb] bg-[#7db9fb]/10 shadow-sm' : 'border-gray-200 hover:border-gray-300 bg-gray-50/50'}`}
-                    >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: cat.bg, color: cat.color }}>
-                        {cat.icon}
-                      </div>
-                      <span className="text-sm font-medium text-gray-800">{cat.label}</span>
-                    </button>
-                  ))}
-                </div>
-                {errors.category && <p className="text-red-500 text-xs mt-2">{errors.category}</p>}
+                <Select
+                  key={`category-${category}`}
+                  placeholder="Select Category"
+                  options={categoriesList.map((c: any) => ({ value: String(c.id), label: c.full_category_name || `Category ${c.id}` }))}
+                  defaultValue={category}
+                  onChange={(val) => setCategory(val)}
+                />
+                {errors.category && <p className="mt-1 text-[13px] text-red-500">{errors.category}</p>}
               </div>
 
               <div>
@@ -688,43 +816,24 @@ export default function HomeObservations() {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-[15px] font-semibold text-gray-900">Send To <span className="text-red-500">*</span></label>
-                <p className="text-[13px] text-gray-500 mb-3 mt-0.5">This observation will be visible only to the selected recipients.</p>
-                <div className="space-y-3">
-                  {RECIPIENTS.map(rec => {
-                    const isSelected = recipients.includes(rec.id);
-                    return (
-                      <button
-                        key={rec.id}
-                        type="button"
-                        onClick={() => toggleRecipient(rec.id)}
-                        className={`w-full flex items-center justify-between px-4 py-4 rounded-xl border transition-all text-left ${isSelected ? 'border-[#7db9fb] bg-[#7db9fb]/10 shadow-sm' : 'border-gray-200 hover:border-gray-300 bg-gray-50/50'}`}
-                      >
-                        <div className="flex items-center gap-3.5">
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: rec.bg, color: rec.color }}>
-                            {rec.icon}
-                          </div>
-                          <div>
-                            <div className="text-[15px] font-semibold text-gray-900">{rec.label}</div>
-                            <div className="text-[13px] text-gray-500 mt-0.5">Will receive this observation in their dashboard</div>
-                          </div>
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-[#7db9fb] bg-[#7db9fb]' : 'border-gray-300'}`}>
-                          {isSelected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-                {errors.recipients && <p className="text-red-500 text-xs mt-2">{errors.recipients}</p>}
+                <label className="block text-[15px] font-semibold text-gray-900 mb-1.5">Send To <span className="text-red-500">*</span></label>
+                <Select
+                  key={`reviewedById-${reviewedById}`}
+                  placeholder="Select Recipient"
+                  options={users.map((u: any) => ({ value: String(u.id), label: u.name }))}
+                  defaultValue={reviewedById}
+                  onChange={(val) => setReviewedById(val)}
+                />
+                {errors.reviewedById && <p className="mt-1 text-[13px] text-red-500">{errors.reviewedById}</p>}
+                <p className="text-[13px] text-gray-500 mt-1.5">This observation will be sent to the selected recipient.</p>
               </div>
 
               <div>
                 <label className="block text-[15px] font-semibold text-gray-900 mb-2">Attachments <span className="font-normal text-gray-500">(optional)</span></label>
                 <div className="flex flex-wrap gap-3">
-                  <input type="file" ref={imageInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange("image", e)} />
-                  <input type="file" ref={videoInputRef} className="hidden" accept="video/*" onChange={(e) => handleFileChange("video", e)} />
-                  <input type="file" ref={documentInputRef} className="hidden" accept=".pdf,.doc,.docx,.txt" onChange={(e) => handleFileChange("document", e)} />
+                  <input type="file" ref={imageInputRef} className="hidden" accept="image/*" multiple onChange={handleFileChange} />
+                  <input type="file" ref={videoInputRef} className="hidden" accept="video/*" multiple onChange={handleFileChange} />
+                  <input type="file" ref={documentInputRef} className="hidden" accept=".pdf,.doc,.docx,.txt" multiple onChange={handleFileChange} />
                   
                   <button type="button" onClick={() => imageInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 border border-gray-200 border-dashed rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors">
                     <ImageIcon /> Image
@@ -736,20 +845,18 @@ export default function HomeObservations() {
                     <FileIcon /> Document
                   </button>
                 </div>
-                {attachments.length > 0 && (
+                {uploadedFiles.length > 0 && (
                   <div className="space-y-2 mt-4">
-                    {attachments.map(att => (
-                      <div key={att.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white shadow-sm">
+                    {uploadedFiles.map((file, i) => (
+                      <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white shadow-sm">
                         <div className="w-8 h-8 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400">
-                           {att.type === 'image' && <ImageIcon />}
-                           {att.type === 'video' && <VideoIcon />}
-                           {att.type === 'document' && <FileIcon />}
+                           {file.type.startsWith('image') ? <ImageIcon /> : file.type.startsWith('video') ? <VideoIcon /> : <FileIcon />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-[13px] font-medium text-gray-900 truncate">{att.name}</div>
-                          <div className="text-[11px] text-gray-500">{att.size}</div>
+                          <div className="text-[13px] font-medium text-gray-900 truncate">{file.name}</div>
+                          <div className="text-[11px] text-gray-500">{formatFileSize(file.size)}</div>
                         </div>
-                        <button type="button" onClick={() => removeAttachment(att.id)} className="text-gray-400 hover:text-gray-600 px-2 transition-colors">
+                        <button type="button" onClick={() => removeAttachment(i)} className="text-gray-400 hover:text-gray-600 px-2 transition-colors">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                       </div>
@@ -770,12 +877,16 @@ export default function HomeObservations() {
                     <span className="text-gray-900 font-medium">{date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "—"}</span>
                   </div>
                   <div className="grid grid-cols-[100px_1fr] text-sm">
-                    <span className="text-gray-500">Category</span>
-                    <span className="text-gray-900 font-medium">{category || "—"}</span>
+                    <span className="text-gray-500">Child</span>
+                    <span className="text-gray-900 font-medium">{childId ? children.find((c: any) => String(c.id) === childId)?.full_name || "—" : "—"}</span>
                   </div>
                   <div className="grid grid-cols-[100px_1fr] text-sm">
-                    <span className="text-gray-500">Recipients</span>
-                    <span className="text-gray-900 font-medium">{recipients.length > 0 ? recipients.join(", ") : "—"}</span>
+                    <span className="text-gray-500">Category</span>
+                    <span className="text-gray-900 font-medium">{category ? categoriesList.find((c: any) => String(c.id) === category)?.full_category_name || "—" : "—"}</span>
+                  </div>
+                  <div className="grid grid-cols-[100px_1fr] text-sm">
+                    <span className="text-gray-500">Recipient</span>
+                    <span className="text-gray-900 font-medium">{reviewedById ? users.find((u: any) => String(u.id) === reviewedById)?.name || "—" : "—"}</span>
                   </div>
                 </div>
               </div>
