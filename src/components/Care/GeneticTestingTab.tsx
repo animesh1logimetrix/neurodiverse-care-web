@@ -267,7 +267,7 @@ export default function GeneticTestingTab() {
   const { data: geneticTestsData, isLoading: isTestsLoading } = useQuery({
     queryKey: ["genetic-testing", childId],
     queryFn: async () => {
-      const res = await axiosClient.get(`/genetic-testing?childId=${childId}`);
+      const res = await axiosClient.get("/genetic-testing", { params: { childId } });
       return res.data;
     },
     enabled: !!childId,
@@ -634,7 +634,13 @@ export default function GeneticTestingTab() {
   };
 
   const parsedTests: GeneticTest[] = useMemo(() => {
-    const rawTests = Array.isArray(geneticTestsData) ? geneticTestsData : geneticTestsData?.data || [];
+    let rawTests = Array.isArray(geneticTestsData) ? geneticTestsData : geneticTestsData?.data || [];
+    
+    // Filter by childId to ensure different users have different genetic tests
+    if (childId) {
+      rawTests = rawTests.filter((t: any) => String(t.child_id) === String(childId) || String(t.childId) === String(childId));
+    }
+
     return rawTests.map((t: any) => ({
       id: t.id,
       title: t.test_type,
