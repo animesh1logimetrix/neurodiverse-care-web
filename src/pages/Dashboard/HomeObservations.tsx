@@ -310,6 +310,12 @@ export default function HomeObservations() {
   const [detail, setDetail] = useState<any>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [activeObservationId, setActiveObservationId] = useState<number | null>(null);
+  const [existingFiles, setExistingFiles] = useState<any[]>([]);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [observationToDelete, setObservationToDelete] = useState<number | null>(null);
+  
   const queryClient = useQueryClient();
 
   // API Queries
@@ -370,6 +376,37 @@ export default function HomeObservations() {
     }
   });
 
+  const updateObservationMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: any }) => {
+      const res = await axiosClient.patch(`/home-observation/${id}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Observation updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["home-observation"] });
+      setIsModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update observation");
+    }
+  });
+
+  const deleteObservationMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await axiosClient.delete(`/home-observation/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Observation deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["home-observation"] });
+      setIsDeleteModalOpen(false);
+      setObservationToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete observation");
+    }
+  });
+
   const { data: homeObservationsData, isLoading: isObservationsLoading } = useQuery({
     queryKey: ["home-observation"],
     queryFn: async () => {
@@ -377,6 +414,15 @@ export default function HomeObservations() {
       return res.data;
     },
   });
+
+  const { data: allFilesData } = useQuery({
+    queryKey: ["files"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/file");
+      return res.data;
+    },
+  });
+  const allFiles = Array.isArray(allFilesData) ? allFilesData : allFilesData?.data || [];
 
   const rawObservations = Array.isArray(homeObservationsData) ? homeObservationsData : homeObservationsData?.data || [];
   
@@ -414,7 +460,7 @@ export default function HomeObservations() {
 
   // Reset state when opened
   React.useEffect(() => {
-    if (isModalOpen) {
+    if (isModalOpen && modalMode === 'create') {
       setStep(1);
       setChildId("");
       setTitle("");
@@ -423,9 +469,45 @@ export default function HomeObservations() {
       setDescription("");
       setReviewedById("");
       setUploadedFiles([]);
+      setExistingFiles([]);
       setErrors({});
     }
-  }, [isModalOpen]);
+  }, [isModalOpen, modalMode]);
+
+  const openCreateModal = () => {
+    setModalMode('create');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (obs: any) => {
+    setModalMode('edit');
+    setActiveObservationId(obs.id);
+    setStep(1);
+    
+    // Convert observation date to YYYY-MM-DD
+    const dateObj = new Date(obs.observation_date);
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+
+    setChildId(String(obs.child_id || ""));
+    setTitle(obs.title || "");
+    setDate(`${yyyy}-${mm}-${dd}`);
+    setCategory(String(obs.category_id || ""));
+    setDescription(obs.observation || "");
+    setReviewedById(String(obs.reviewedBy_id || ""));
+
+    setExistingFiles(obs.files || []);
+
+    setUploadedFiles([]);
+    setErrors({});
+    setIsModalOpen(true);
+  };
+
+  const openDeleteModal = (id: number) => {
+    setObservationToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -454,11 +536,12 @@ export default function HomeObservations() {
     }
     
     try {
-      let fileIds: number[] = [];
+      let fileIds: number[] = existingFiles ? existingFiles.map((f: any) => f.id) : [];
       if (uploadedFiles.length > 0) {
         const uploadRes = await uploadFilesMutation.mutateAsync(uploadedFiles);
         const filesArray = uploadRes?.files || [];
-        fileIds = filesArray.map((item: any) => Number(item.file?.id)).filter(Boolean);
+        const newFileIds = filesArray.map((item: any) => Number(item.file?.id)).filter(Boolean);
+        fileIds = [...fileIds, ...newFileIds];
       }
 
       const userStr = localStorage.getItem('user');
@@ -479,7 +562,11 @@ export default function HomeObservations() {
         fileIds: fileIds
       };
       
-      await createObservationMutation.mutateAsync(payload);
+      if (modalMode === 'edit' && activeObservationId !== null) {
+        await updateObservationMutation.mutateAsync({ id: activeObservationId, payload });
+      } else {
+        await createObservationMutation.mutateAsync(payload);
+      }
     } catch (error) {
       console.error("Error submitting observation", error);
     }
@@ -675,11 +762,27 @@ export default function HomeObservations() {
                         <span className="hidden sm:inline text-gray-400">{obs.daysAgo}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 flex-shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium ${obs.statusBadge}`}>
                         {obs.statusIcon}
                         {obs.status}
                       </span>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); openEditModal(obs); }}
+                          className="p-1.5 text-gray-400 hover:text-[#7db9fb] hover:bg-blue-50 rounded-md transition-colors"
+                          title="Edit"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); openDeleteModal(obs.id); }}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                          title="Delete"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        </button>
+                      </div>
                       <div className="text-gray-300 group-hover:text-gray-400 transition-colors hidden sm:block">
                         <ChevronRightIcon />
                       </div>
@@ -845,10 +948,26 @@ export default function HomeObservations() {
                     <FileIcon /> Document
                   </button>
                 </div>
-                {uploadedFiles.length > 0 && (
+                {(existingFiles.length > 0 || uploadedFiles.length > 0) && (
                   <div className="space-y-2 mt-4">
+                    {existingFiles.map((file, i) => (
+                      <div key={`existing-${i}`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <div className="w-8 h-8 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                           <FileIcon />
+                        </div>
+                        <div className="flex-1 min-w-0 flex flex-col">
+                          <a href={file.file_url} target="_blank" rel="noreferrer" className="text-[13px] font-medium text-[#7db9fb] hover:underline truncate">
+                            {file.original_file_name || file.file_name || `File ${file.id}`}
+                          </a>
+                          {file.file_size && <div className="text-[11px] text-gray-500">{formatFileSize(file.file_size)}</div>}
+                        </div>
+                        <button type="button" onClick={() => setExistingFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-gray-400 hover:text-gray-600 px-2 transition-colors">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    ))}
                     {uploadedFiles.map((file, i) => (
-                      <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white shadow-sm">
+                      <div key={`new-${i}`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white shadow-sm">
                         <div className="w-8 h-8 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400">
                            {file.type.startsWith('image') ? <ImageIcon /> : file.type.startsWith('video') ? <VideoIcon /> : <FileIcon />}
                         </div>
@@ -950,16 +1069,20 @@ export default function HomeObservations() {
               <div>
                 <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Attachments</p>
                 <div className="space-y-2">
-                  {Array.from({ length: detail.attachments }).map((_, i) => (
+                  {detail.files?.map((file: any, i: number) => (
                     <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-100">
                       <div className="w-8 h-8 rounded-md bg-white border border-gray-200 flex items-center justify-center text-gray-400">
                          <FileIcon />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-medium text-gray-900 truncate">attachment_{i+1}.pdf</div>
-                        <div className="text-[11px] text-gray-500">120 KB · Document</div>
+                        <div className="text-[13px] font-medium text-gray-900 truncate">
+                          {file.original_file_name || file.file_name || `File ${file.id}`}
+                        </div>
+                        {file.file_size && <div className="text-[11px] text-gray-500">{formatFileSize(file.file_size)}</div>}
                       </div>
-                      <button type="button" className="text-[12px] font-medium text-[#7db9fb] hover:underline px-2">View</button>
+                      <a href={file.file_url} target="_blank" rel="noreferrer" className="text-[12px] font-medium text-[#7db9fb] hover:underline px-2">
+                        View
+                      </a>
                     </div>
                   ))}
                 </div>
@@ -968,6 +1091,61 @@ export default function HomeObservations() {
           </div>
         </CustomModal>
       )}
+      
+      {/* Delete Warning Modal */}
+      <CustomModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setObservationToDelete(null);
+        }}
+        title="Delete Observation"
+        size="sm"
+        padding="p-0"
+        customFooter={
+          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50/80 border-t border-gray-100 rounded-b-2xl">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setObservationToDelete(null);
+              }}
+              disabled={deleteObservationMutation.isPending}
+              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (observationToDelete !== null) {
+                  deleteObservationMutation.mutate(observationToDelete);
+                }
+              }}
+              disabled={deleteObservationMutation.isPending}
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 border border-transparent rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all disabled:opacity-70 min-w-[90px]"
+            >
+              {deleteObservationMutation.isPending ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+        }
+      >
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Are you sure?</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                This action cannot be undone. This will permanently delete the observation and remove its attachments from our servers.
+              </p>
+            </div>
+          </div>
+        </div>
+      </CustomModal>
     </>
   );
 }
