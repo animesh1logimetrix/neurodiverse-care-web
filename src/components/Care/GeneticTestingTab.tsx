@@ -556,7 +556,7 @@ export default function GeneticTestingTab() {
     if (!formData.laboratory) {
       errors.laboratory = "Laboratory is required.";
     } else if (formData.laboratory === "Other" && !otherLaboratory.trim()) {
-      errors.otherLaboratory = "Please specify the laboratory.";
+      errors.otherLaboratory = "Please specify the laboratory."
     }
 
     const parsedProviderId = parseInt(formData.orderingProvider, 10);
@@ -587,7 +587,6 @@ export default function GeneticTestingTab() {
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      toast.error("Please fill in all required fields.");
       return;
     }
 
@@ -834,7 +833,6 @@ export default function GeneticTestingTab() {
                   value={formData.laboratory}
                   onChange={(e) => updateFormField("laboratory", e.target.value)}
                   placeholder="Enter laboratory name"
-                  error={!!formErrors.laboratory}
                 />
                 {formErrors.laboratory && <p className="mt-1 text-xs text-red-500">{formErrors.laboratory}</p>}
               </div>
