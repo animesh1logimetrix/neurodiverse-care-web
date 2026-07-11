@@ -771,62 +771,96 @@ const MedicationsTab = () => {
     <CustomModal
         isOpen={isMedicationModalOpen}
         onClose={closeMedicationModal}
-        title={selectedMedication?.medication_name ?? "Medication Details"}
-        maxWidth="max-w-3xl"
+        title=""
+        maxWidth="max-w-4xl"
         maxBodyHeight="80vh"
         padding="p-0"
+        headerClassName="!py-0 !px-0 !border-0 !hidden"
         customFooter={<></>}
       >
         {selectedMedication && (
-          <div className="flex flex-col">
-            <div className="p-6 pt-6">
-              <div className="mb-4 px-0">
-                <p className="text-sm text-gray-500">{getCategoryLabel(selectedMedication.category)} / {getMedicationStatusLabel(selectedMedication.status ?? "")}</p>
-                <p className="text-sm text-gray-500">{[selectedMedication.dose, selectedMedication.unit].filter(Boolean).join(" ")} · {getFrequencyLabel(selectedMedication.frequency ?? "")}</p>
-                <p className="text-sm text-gray-500">Prescribed by {typeof selectedMedication.prescribedBy === "string" ? selectedMedication.prescribedBy : selectedMedication.prescribedBy?.name ?? "N/A"}</p>
+          <div className="pb-2">
+            
+            {/* Close button */}
+            <div className="flex justify-end mb-2 pt-2 pr-2">
+              <button
+                type="button"
+                onClick={closeMedicationModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                aria-label="Close"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-8 pb-6">
+              {/* ── Header ── */}
+              <h2 className="text-[17px] font-bold text-gray-900 mb-2">{selectedMedication?.medication_name ?? "Medication Details"}</h2>
+              
+              <div className="flex flex-col gap-1 mb-6">
+                <p className="text-[13px] text-gray-500">{getCategoryLabel(selectedMedication.category)} / {getMedicationStatusLabel(selectedMedication.status ?? "")}</p>
+                <p className="text-[13px] text-gray-500">{[selectedMedication.dose, selectedMedication.unit].filter(Boolean).join(" ")} · {getFrequencyLabel(selectedMedication.frequency ?? "")}</p>
+                <p className="text-[13px] text-gray-500">Prescribed by {typeof selectedMedication.prescribedBy === "string" ? selectedMedication.prescribedBy : selectedMedication.prescribedBy?.name ?? "N/A"}</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div className="grid grid-cols-[140px_1fr] gap-y-3">
-                  <span className="text-[12px] text-gray-500">Category</span>
-                  <span className="text-sm text-gray-800">{getCategoryLabel(selectedMedication.category)}</span>
 
-                  <span className="text-[12px] text-gray-500">Dose</span>
-                  <span className="text-sm text-gray-800">{[selectedMedication.dose, selectedMedication.unit].filter(Boolean).join(" ")}</span>
+              {/* Horizontal rule */}
+              <div className="border-t border-gray-200 -mx-8 mb-6" />
 
-                  <span className="text-[12px] text-gray-500">Frequency</span>
-                  <span className="text-sm text-gray-800">{getFrequencyLabel(selectedMedication.frequency ?? "")}</span>
-
-                  <span className="text-[12px] text-gray-500">Start Date</span>
-                  <span className="text-sm text-gray-800">{formatDateValue(selectedMedication.start_date)}</span>
-
-                  <span className="text-[12px] text-gray-500">Review Due</span>
-                  <span className="text-sm text-gray-800">{formatDateValue(selectedMedication.review_due_date)}</span>
-
-                  <span className="text-[12px] text-gray-500">Status</span>
-                  <div>
-                    <span className="bg-[#e5f5e8] text-[#16a34a] px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider">
-                      {getMedicationStatusLabel(selectedMedication.status ?? "")}
-                    </span>
-                  </div>
-
-                  <span className="text-[12px] text-gray-500">Prescribed By</span>
-                  <span className="text-sm text-gray-800">{typeof selectedMedication.prescribedBy === "string" ? selectedMedication.prescribedBy : selectedMedication.prescribedBy?.name ?? "N/A"}</span>
+              {/* ── Two-column body ── */}
+              <div className="flex flex-col md:flex-row gap-0 mb-8">
+                {/* Left Column: Details */}
+                <div className="flex-1 pr-8">
+                  <p className="text-[13px] font-bold text-gray-800 mb-4">Medication Details</p>
+                  
+                  <table className="w-full text-[13px] border-separate" style={{ borderSpacing: '0 8px' }}>
+                    <tbody>
+                      {[
+                        ["Category", getCategoryLabel(selectedMedication.category)],
+                        ["Dose", [selectedMedication.dose, selectedMedication.unit].filter(Boolean).join(" ")],
+                        ["Frequency", getFrequencyLabel(selectedMedication.frequency ?? "")],
+                        ["Start Date", formatDateValue(selectedMedication.start_date)],
+                        ["Review Due", formatDateValue(selectedMedication.review_due_date)],
+                        ["Status", getMedicationStatusLabel(selectedMedication.status ?? "")],
+                        ["Prescribed By", typeof selectedMedication.prescribedBy === "string" ? selectedMedication.prescribedBy : selectedMedication.prescribedBy?.name ?? "N/A"],
+                        ["Last Updated", formatDateValue(selectedMedication.updated_at) + (selectedMedication.updatedBy ? ` by ${selectedMedication.updatedBy}` : '')],
+                      ].map(([label, value]) => (
+                        <tr key={label}>
+                          <td className="text-gray-500 py-0.5 pr-4 align-top w-40 whitespace-nowrap">{label}</td>
+                          <td className="text-gray-700 py-0.5 align-top">{value || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
-                <div className="border-l border-gray-100 pl-8">
-                  <p className="text-sm font-semibold text-gray-700 mb-3">Instructions for Care Team / Parents</p>
-                  <div className="text-sm text-gray-600 leading-snug">
+                {/* Vertical divider */}
+                <div className="w-px bg-gray-200 self-stretch hidden md:block shrink-0" />
+
+                {/* Right Column: Instructions */}
+                <div className="flex-1 md:pl-8 pt-4 md:pt-0">
+                  <p className="text-[13px] font-bold text-gray-800 mb-4">Instructions for Care Team/Parents</p>
+                  
+                  <div className="text-[13px] text-gray-600 leading-relaxed pl-4">
                     {selectedMedication.instructions?.text ? (
-                      <p>{selectedMedication.instructions.text}</p>
+                      selectedMedication.instructions.text.split('\n').map((line: string, i: number) => (
+                        <p key={i} className="mb-2">{line}</p>
+                      ))
                     ) : (
-                      <p className="text-gray-400">No instructions provided.</p>
+                      <p className="text-gray-400 italic">No instructions provided.</p>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="mb-8 pt-6 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Reports & Documents</h3>
+              {/* Horizontal rule */}
+              <div className="border-t border-gray-200 -mx-8 mb-6" />
+
+              {/* Reports & Documents */}
+              <div className="mb-8">
+                <h3 className="text-[13px] font-bold text-gray-800 mb-4">Reports & Documents</h3>
                 <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                   {documents.length > 0 ? (
                     documents.map((doc) => (
@@ -835,21 +869,22 @@ const MedicationsTab = () => {
                         href={doc.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40 hover:bg-orange-50 transition-colors"
+                        className="w-48 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col h-40 hover:bg-orange-50 transition-colors"
                       >
-                        <p className="font-bold text-gray-800 text-sm mb-1 line-clamp-2" title={doc.name}>{doc.name}</p>
-                        <p className="text-xs text-gray-500 mb-0.5">{doc.date}</p>
-                        <p className="text-xs text-gray-500 capitalize">{doc.type}</p>
-                        <p className="text-xs text-gray-400 mt-2">{doc.size}</p>
+                        <div className="mt-auto">
+                          <p className="font-bold text-gray-800 text-[13px] mb-1 line-clamp-2" title={doc.name}>{doc.name}</p>
+                          <p className="text-[12px] text-gray-500 mb-0.5">{doc.date}</p>
+                          <p className="text-[12px] text-gray-500">{doc.size}</p>
+                        </div>
                       </a>
                     ))
                   ) : (
-                    <div className="w-40 shrink-0 border border-gray-200 rounded-xl p-4 flex flex-col justify-center items-center h-40 text-center">
-                      <p className="text-xs text-gray-400">No reports found</p>
+                    <div className="w-48 shrink-0 border border-gray-200 rounded-xl p-4 flex flex-col justify-center items-center h-40 text-center">
+                      <p className="text-[12px] text-gray-400">No reports found</p>
                     </div>
                   )}
 
-                  <label className="w-40 shrink-0 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-40 hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer relative">
+                  <label className="w-48 shrink-0 border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center h-40 hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer relative">
                     <input
                       ref={viewModalUploadInputRef}
                       type="file"
@@ -861,41 +896,46 @@ const MedicationsTab = () => {
                     />
                     {(uploadFilesMutation.isPending || updateMedicationMutation.isPending) ? (
                       <div className="flex flex-col items-center">
-                        <svg className="animate-spin h-6 w-6 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-5 w-5 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span className="text-sm font-medium">Uploading...</span>
+                        <span className="text-[12px] font-medium">Uploading...</span>
                       </div>
                     ) : (
                       <>
-                        <svg className="w-6 h-6 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        <span className="text-sm font-medium">Upload More</span>
+                        <svg className="w-5 h-5 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <span className="text-[13px] font-medium">Upload More</span>
                       </>
                     )}
                   </label>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Medication History</h3>
-                <div className="relative pt-2 pl-1">
-                  <div className="absolute left-[8px] top-4 bottom-4 w-px bg-gray-200" />
+              {/* Horizontal rule */}
+              <div className="border-t border-gray-200 -mx-8 mb-6" />
+
+              {/* Medication History */}
+              <div>
+                <h3 className="text-[13px] font-bold text-gray-800 mb-6">Medication History</h3>
+                <div className="relative pt-2 pl-2">
+                  <div className="absolute left-[12px] top-4 bottom-4 w-px bg-gray-200" />
                   <div className="absolute left-[176px] top-4 bottom-4 w-px bg-gray-200" />
 
                   {historyItems.map((item, index) => (
                     <div key={index} className="flex items-center gap-8 mb-6 relative z-10">
                       <div className={`w-2 h-2 rounded-full ${item.dot} ring-4 ring-white shrink-0`} />
-                      <div className="w-24 text-sm text-[#64748b] shrink-0">{item.date}</div>
+                      <div className="w-24 text-[13px] text-gray-500 shrink-0">{item.date}</div>
                       <div className={`w-2 h-2 rounded-full ${item.dot} ring-4 ring-white shrink-0`} />
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <p className="text-sm text-[#334155]">{item.event}</p>
-                        <p className="text-xs text-[#64748b]">{item.detail}</p>
+                        <p className="text-[13px] text-gray-700">{item.event}</p>
+                        <p className="text-[12px] text-gray-500">{item.detail}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+
             </div>
           </div>
         )}
