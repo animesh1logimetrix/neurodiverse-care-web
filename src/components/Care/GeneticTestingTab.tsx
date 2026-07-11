@@ -1320,15 +1320,15 @@ export default function GeneticTestingTab() {
             <button
               onClick={handleSaveNote}
               disabled={updateTestMutation.isPending}
-              className="px-6 py-2 bg-[#60a5fa] text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 min-w-[150px] flex items-center justify-center gap-2 cursor-pointer"
+              className="px-6 py-2 bg-[#2D8CFF] text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 min-w-[150px] flex items-center justify-center gap-2 cursor-pointer"
             >
               {updateTestMutation.isPending ? "Saving..." : "Save Note"}
             </button>
           </div>
         }
       >
-        <div className="p-6 pb-2">
-          <div className="mb-4">
+        <div className="px-6 py-0">
+          <div className="mb-3">
             <Label>Status</Label>
             <Select
               defaultValue={noteForm.status}
@@ -1344,7 +1344,7 @@ export default function GeneticTestingTab() {
               placeholder="Select status"
             />
           </div>
-          <div className="mb-4">
+          <div className="mb-0">
             <Label>Clinical Note</Label>
             <TextArea
               value={noteForm.text}

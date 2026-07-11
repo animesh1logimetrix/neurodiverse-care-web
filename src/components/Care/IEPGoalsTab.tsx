@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { HorizontaLDots } from "../../icons";
+import CustomModal from "../ui/modal/CustomModal";
+import Input from "../form/input/InputField";
+import Select from "../form/Select";
+import DatePicker from "../form/date-picker";
+import Label from "../form/Label";
+import TextArea from "../form/input/TextArea";
 
 interface IEPGoal {
   id: string;
@@ -61,6 +67,20 @@ const domains = [
 
 const IEPGoalsTab = () => {
   const [activeDomain, setActiveDomain] = useState("All");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    childId: "",
+    domain: "",
+    title: "",
+    description: "",
+    priority: "",
+    therapist: "",
+    status: "",
+    startDate: "",
+    targetDate: "",
+    frequency: "",
+    masteryCriteria: ""
+  });
 
   const filteredGoals = activeDomain === "All" 
     ? mockGoals 
@@ -77,6 +97,7 @@ const IEPGoalsTab = () => {
           </p>
         </div>
         <button 
+          onClick={() => setIsAddModalOpen(true)}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
         >
           + Add Goal
@@ -156,6 +177,167 @@ const IEPGoalsTab = () => {
           </div>
         )}
       </div>
+
+      <CustomModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Add IEP Goal"
+        maxWidth="max-w-3xl"
+        customFooter={
+          <div className="flex justify-center gap-4 px-8 py-5 border-t border-gray-100 w-full">
+            <button
+              onClick={() => setIsAddModalOpen(false)}
+              className="px-8 py-2 text-sm font-bold text-gray-600 bg-[#e2e8f0] rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setIsAddModalOpen(false);
+              }}
+              className="px-8 py-2 text-sm font-bold text-white bg-[#60a5fa] rounded-lg hover:bg-blue-500 transition-colors"
+            >
+              Save Diagnosis
+            </button>
+          </div>
+        }
+      >
+        <div>
+          <h3 className="text-gray-800 font-semibold mb-6">Goal Information</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-6">
+            <div>
+              <Label>Child*</Label>
+              <Select 
+                options={[{value: "1", label: "Arjun Kumar"}]}
+                onChange={(val) => setFormData(prev => ({...prev, childId: val}))}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div>
+              <Label>Domain*</Label>
+              <Select 
+                options={domains.filter(d => d !== "All").map(d => ({value: String(d), label: String(d)}))}
+                onChange={(val) => setFormData(prev => ({...prev, domain: val}))}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div className="md:col-span-2">
+              <Label>Goal Title*</Label>
+              <Input 
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({...prev, title: e.target.value}))}
+                placeholder=""
+              />
+            </div>
+            
+            <div className="md:col-span-2">
+              <Label>Goal Description*</Label>
+              <TextArea 
+                value={formData.description}
+                onChange={(val) => setFormData(prev => ({...prev, description: val}))}
+                placeholder="Describe the observable behavior and context..."
+                rows={3}
+              />
+            </div>
+            
+            <div>
+              <Label>Priority</Label>
+              <Select 
+                options={[
+                  {value: "High", label: "High"},
+                  {value: "Medium", label: "Medium"},
+                  {value: "Low", label: "Low"}
+                ]}
+                onChange={(val) => setFormData(prev => ({...prev, priority: val}))}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div>
+              <Label>Assigned Therapist</Label>
+              <Select 
+                options={[
+                  {value: "Nandita Kumar", label: "Nandita Kumar"},
+                  {value: "Dr. Reena Kapoor", label: "Dr. Reena Kapoor"},
+                  {value: "Priya Lal", label: "Priya Lal"}
+                ]}
+                onChange={(val) => setFormData(prev => ({...prev, therapist: val}))}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div>
+              <Label>Status</Label>
+              <Select 
+                options={[
+                  {value: "Not Started", label: "Not Started"},
+                  {value: "In Progress", label: "In Progress"},
+                  {value: "Mastered", label: "Mastered"}
+                ]}
+                onChange={(val) => setFormData(prev => ({...prev, status: val}))}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div>
+              <Label>Start Date</Label>
+              <DatePicker 
+                value={formData.startDate}
+                onChange={(val) => setFormData(prev => ({...prev, startDate: val}))}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div>
+              <Label>Target Date</Label>
+              <DatePicker 
+                value={formData.targetDate}
+                onChange={(val) => setFormData(prev => ({...prev, targetDate: val}))}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div>
+              <Label>Frequency/Schedule</Label>
+              <Select 
+                options={[
+                  {value: "Daily", label: "Daily"},
+                  {value: "Weekly", label: "Weekly"},
+                  {value: "Monthly", label: "Monthly"}
+                ]}
+                onChange={(val) => setFormData(prev => ({...prev, frequency: val}))}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div className="md:col-span-2">
+              <Label>Mastery Criteria*</Label>
+              <Input 
+                value={formData.masteryCriteria}
+                onChange={(e) => setFormData(prev => ({...prev, masteryCriteria: e.target.value}))}
+                placeholder="Select"
+              />
+            </div>
+            
+            <div className="md:col-span-2 mt-2">
+              <Label>Teaching Targets*</Label>
+              <div className="mt-1 w-full border-2 border-dashed border-gray-200 rounded-lg bg-white p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                <div className="text-gray-400 mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-500 font-medium">No targets added yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CustomModal>
     </div>
   );
 };
