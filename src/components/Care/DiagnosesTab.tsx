@@ -244,6 +244,7 @@ export default function DiagnosesTab() {
     });
     setSelectedIepGoals(item.linkedGoals ? item.linkedGoals.map((g: any) => g.goal_id) : []);
     setExistingFiles(item.reports || []);
+    setUploadedFiles([]);
     setModalMode('edit');
   };
 
@@ -767,10 +768,27 @@ export default function DiagnosesTab() {
               onChange={handleFileSelect} 
               accept="image/jpeg, image/png, application/pdf"
             />
-            {uploadedFiles.length > 0 && (
+            {(existingFiles.length > 0 || uploadedFiles.length > 0) && (
               <div className="mt-4 flex flex-wrap gap-2">
+                {existingFiles.map((file, idx) => (
+                  <div key={`exist-${idx}`} className="text-xs bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md flex items-center gap-2">
+                    <a href={file.file_url} target="_blank" rel="noreferrer" className="hover:underline">
+                      {file.original_file_name || file.file_name}
+                    </a>
+                    <button 
+                      type="button" 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setExistingFiles(prev => prev.filter((_, i) => i !== idx)); 
+                      }} 
+                      className="text-gray-400 hover:text-red-500 font-bold ml-1"
+                    >
+                      X
+                    </button>
+                  </div>
+                ))}
                 {uploadedFiles.map((file, idx) => (
-                  <div key={idx} className="text-xs bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md flex items-center gap-2">
+                  <div key={`new-${idx}`} className="text-xs bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md flex items-center gap-2">
                     {file.name}
                     <button 
                       type="button" 
@@ -778,21 +796,10 @@ export default function DiagnosesTab() {
                         e.stopPropagation(); 
                         setUploadedFiles(prev => prev.filter((_, i) => i !== idx)); 
                       }} 
-                      className="text-gray-400 hover:text-red-500 font-bold"
+                      className="text-gray-400 hover:text-red-500 font-bold ml-1"
                     >
                       X
                     </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {existingFiles.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {existingFiles.map((file, idx) => (
-                  <div key={`exist-${idx}`} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md flex items-center gap-2">
-                    <a href={file.file_url} target="_blank" rel="noreferrer" className="hover:underline">
-                      {file.original_file_name || file.file_name}
-                    </a>
                   </div>
                 ))}
               </div>
@@ -827,7 +834,7 @@ export default function DiagnosesTab() {
         title="Delete Diagnosis"
         showOverlay
         backdropBlur={false}
-        width="max-w-[480px]"
+        maxWidth="max-w-md"
         padding="px-8 py-6"
         showCloseIcon
         customFooter={

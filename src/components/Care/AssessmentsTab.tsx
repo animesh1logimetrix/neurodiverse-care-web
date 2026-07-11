@@ -31,6 +31,9 @@ export default function AssessmentsTab() {
 
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'add' | null>(null);
+  const [activeAssessmentIndex, setActiveAssessmentIndex] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [assessmentToDelete, setAssessmentToDelete] = useState<number | null>(null);
 
   // Queries
   const { data: usersData } = useQuery({
@@ -93,6 +96,37 @@ export default function AssessmentsTab() {
     }
   });
 
+  const updateAssessmentMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: number, payload: any }) => {
+      const res = await axiosClient.patch(`/assessment/${id}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Assessment updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["assessments", childId] });
+      closeModal();
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update assessment");
+    }
+  });
+
+  const deleteAssessmentMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await axiosClient.delete(`/assessment/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Assessment deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["assessments", childId] });
+      setIsDeleteModalOpen(false);
+      setAssessmentToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete assessment");
+    }
+  });
+
   // Form State
   const [formData, setFormData] = useState({
     assesment_name: "",
@@ -108,6 +142,7 @@ export default function AssessmentsTab() {
   const [selectedIepGoals, setSelectedIepGoals] = useState<number[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [existingFiles, setExistingFiles] = useState<any[]>([]);
   
   // Scores state
   const [scores, setScores] = useState<{domain: string, score: string, interpretation: string, percentile: string}[]>([]);
@@ -166,11 +201,12 @@ export default function AssessmentsTab() {
     }
 
     try {
-      let fileIds: number[] = [];
+      let finalFileIds: number[] = existingFiles.map((f: any) => f.id);
       if (uploadedFiles.length > 0) {
         const uploadRes = await uploadFilesMutation.mutateAsync(uploadedFiles);
         const filesArray = uploadRes?.files || [];
-        fileIds = filesArray.map((item: any) => item.file?.id).filter(Boolean);
+        const newIds = filesArray.map((item: any) => item.file?.id).filter(Boolean);
+        finalFileIds = [...finalFileIds, ...newIds];
       }
 
       const payload = {
@@ -184,11 +220,16 @@ export default function AssessmentsTab() {
         status: formData.status,
         clinical_summary: formData.clinical_summary,
         linkedGoals: selectedIepGoals,
-        fileIds: fileIds,
+        fileIds: finalFileIds,
         score: scores,
       };
 
-      await createAssessmentMutation.mutateAsync(payload);
+      if (modalMode === 'edit' && activeAssessmentIndex !== null) {
+        const item = fetchedAssessments[activeAssessmentIndex];
+        await updateAssessmentMutation.mutateAsync({ id: item.id, payload });
+      } else {
+        await createAssessmentMutation.mutateAsync(payload);
+      }
     } catch (error) {
       console.error("Error saving assessment:", error);
     }
@@ -207,13 +248,46 @@ export default function AssessmentsTab() {
     });
     setSelectedIepGoals([]);
     setUploadedFiles([]);
+    setExistingFiles([]);
     setScores([]);
     setFormErrors({});
     setModalMode('add');
   };
 
+  const openEditModal = (index: number) => {
+    const item = fetchedAssessments[index];
+    setActiveAssessmentIndex(index);
+    setFormData({
+      assesment_name: item.assesment_name || "",
+      module: item.module || "",
+      assesment_type: item.assesment_type || "",
+      assesment_date: item.assesment_date ? item.assesment_date.split('T')[0] : "",
+      psychologist_id: item.psychologist_id || "",
+      location: item.location || "",
+      status: item.status || "",
+      clinical_summary: item.clinical_summary || "",
+    });
+    setSelectedIepGoals(item.linkedGoals ? item.linkedGoals.map((g: any) => g.goal_id) : []);
+    setScores(item.score || []);
+    setExistingFiles(item.reports || []);
+    setUploadedFiles([]);
+    setModalMode('edit');
+  };
+
+  const openViewModal = (index: number) => {
+    setActiveAssessmentIndex(index);
+    setModalMode('view');
+  };
+
   const closeModal = () => {
     setModalMode(null);
+    setActiveAssessmentIndex(null);
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setAssessmentToDelete(id);
+    setIsDeleteModalOpen(true);
   };
 
   const handleToggle = (index: number) => {
@@ -281,8 +355,22 @@ export default function AssessmentsTab() {
                       <h3 className="font-bold text-sm text-gray-900">
                         {assessment.assesment_name} {assessment.module ? `(${assessment.module})` : ''}
                       </h3>
-                      <div className="bg-green-50 border-green-200 border px-3 py-1 rounded-sm text-xs font-semibold text-green-700 whitespace-nowrap">
-                        {assessment.status?.replace("_", " ")}
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-50 border-green-200 border px-3 py-1 rounded-sm text-xs font-semibold text-green-700 whitespace-nowrap">
+                          {assessment.status?.replace("_", " ")}
+                        </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); openEditModal(index); }}
+                          className="text-gray-400 hover:text-blue-500 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                        <button 
+                          onClick={(e) => handleDelete(e, assessment.id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
                       </div>
                     </div>
                     
@@ -321,7 +409,10 @@ export default function AssessmentsTab() {
                         </p>
                         
                         <div className="flex items-center gap-4 text-xs font-semibold">
-                          <button className="text-gray-600 hover:text-gray-900">
+                          <button 
+                            className="text-gray-600 hover:text-gray-900"
+                            onClick={(e) => { e.stopPropagation(); openViewModal(index); }}
+                          >
                             View linked IEP goals
                           </button>
                         </div>
@@ -357,11 +448,219 @@ export default function AssessmentsTab() {
         )}
       </div>
 
-      {/* Add Assessment Modal */}
-      <CustomModal
-        isOpen={modalMode === 'add'}
+      {/* View Assessment Modal */}
+      <CustomModal 
+        isOpen={modalMode === 'view' && activeAssessmentIndex !== null} 
         onClose={closeModal}
-        title="Add Assessment"
+        title="Assessment Details (View)"
+        maxWidth="max-w-4xl"
+        maxBodyHeight="80vh"
+        padding="p-0"
+        customFooter={<></>}
+      >
+        {modalMode === 'view' && activeAssessmentIndex !== null && (() => {
+          const item = fetchedAssessments[activeAssessmentIndex];
+          return (
+            <div className="flex flex-col">
+              <div className="p-6 pt-8">
+                {/* Header Card */}
+                <div className="border border-orange-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 flex-shrink-0 text-orange-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-sm text-gray-900">
+                        {item.assesment_name} {item.module ? `(${item.module})` : ''}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                        <span>Date: {item.assesment_date ? new Date(item.assesment_date).toLocaleDateString() : 'N/A'}</span>
+                        <span>By: {item.psychologist?.name || 'Unknown'}</span>
+                        <span className="ml-2">{item.linkedGoals ? item.linkedGoals.length : 0} linked goal(s)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-8">
+                  {/* Left Column - Scores */}
+                  <div className="md:col-span-4 space-y-4">
+                    {item.score && item.score.length > 0 ? (
+                      item.score.map((scoreObj: any, idx: number) => (
+                        <div key={idx} className="border border-gray-200 rounded-md p-4 bg-white">
+                          <p className="text-sm text-gray-600 mb-1">{scoreObj.domain}</p>
+                          <p className="text-xl font-bold text-gray-900 mb-1">{scoreObj.score}</p>
+                          <p className="text-sm text-gray-500">{scoreObj.interpretation}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-400 italic">No scores recorded.</p>
+                    )}
+                  </div>
+
+                  {/* Right Column - Details */}
+                  <div className="md:col-span-8">
+                    <div className="grid grid-cols-2 gap-8">
+                      {/* Clinical Summary */}
+                      <div>
+                        <h4 className="font-bold text-sm text-gray-900 mb-2">Clinical Summary</h4>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                          {item.clinical_summary || "No summary provided."}
+                        </p>
+                      </div>
+
+                      {/* Assessment Information */}
+                      <div>
+                        <h4 className="font-bold text-sm text-gray-900 mb-2">Assessment Information</h4>
+                        <div className="grid grid-cols-[140px_1fr] gap-y-2 text-sm">
+                          <span className="text-gray-500">Type</span>
+                          <span className="text-gray-900">{item.assesment_type?.replace("_", " ")}</span>
+                          <span className="text-gray-500">Module/Subte</span>
+                          <span className="text-gray-900">{item.module || "-"}</span>
+                          <span className="text-gray-500">Assigned Psychologist</span>
+                          <span className="text-gray-900">{item.psychologist?.name}</span>
+                          <span className="text-gray-500">Location</span>
+                          <span className="text-gray-900">{item.location || "-"}</span>
+                          <span className="text-gray-500">Status</span>
+                          <span className="text-gray-900">{item.status?.replace("_", " ")}</span>
+                          <span className="text-gray-500">Last Updated</span>
+                          <span className="text-gray-900">{item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : "-"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Linked IEP Goals */}
+                    <div className="mt-8">
+                      <h4 className="font-bold text-sm text-gray-900 mb-3">Linked IEP Goals ({item.linkedGoals?.length || 0})</h4>
+                      <div className="flex flex-wrap gap-3">
+                        {item.linkedGoals?.map((link: any, idx: number) => (
+                          <div key={idx} className="bg-[#e5fcf0] text-[#16a34a] border border-[#bbf7d0] px-3 py-1.5 rounded-full text-xs font-semibold flex items-center">
+                            {link.goal?.goal_title || `Goal ${link.goal_id}`}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Documents & Reports */}
+                <div className="pt-6 border-t border-gray-100 mb-8">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-4">Report Documents</h3>
+                  <div className="flex flex-col gap-4 mb-4">
+                    {item.reports && item.reports.map((report: any) => (
+                      <a 
+                        key={report.id} 
+                        href={report.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors w-fit pr-10"
+                      >
+                        <div className="w-10 h-10 flex-shrink-0 bg-blue-50 text-blue-500 rounded flex items-center justify-center">
+                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800 text-sm">{report.original_file_name || "Document"}</p>
+                          <p className="text-xs text-gray-500 uppercase mt-0.5">
+                            {report.file_size ? `${(report.file_size / 1024).toFixed(0)} KB` : ''} {report.file_type || "FILE"}
+                          </p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                  
+                  {/* Upload Button */}
+                  <label className="block w-full max-w-xs border border-[#86efac] bg-[#f0fdf4] text-[#16a34a] rounded-full py-2 flex flex-col items-center justify-center hover:bg-[#dcfce7] transition-colors cursor-pointer relative font-semibold text-sm text-center">
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      multiple 
+                      accept="image/jpeg, image/png, application/pdf"
+                      disabled={uploadFilesMutation.isPending || updateAssessmentMutation.isPending}
+                      onChange={async (e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          const newFiles = Array.from(e.target.files);
+                          try {
+                            const uploadRes = await uploadFilesMutation.mutateAsync(newFiles);
+                            const filesArray = uploadRes?.files || [];
+                            const newFileIds = filesArray.map((i: any) => i.file?.id).filter(Boolean);
+                            
+                            const existingFileIds = item.reports?.map((r: any) => r.id) || [];
+                            const allFileIds = [...existingFileIds, ...newFileIds];
+
+                            const payload = {
+                              child_id: Number(childId),
+                              assesment_name: item.assesment_name,
+                              module: item.module,
+                              assesment_type: item.assesment_type,
+                              assesment_date: item.assesment_date,
+                              psychologist_id: Number(item.psychologist_id),
+                              location: item.location,
+                              status: item.status,
+                              clinical_summary: item.clinical_summary,
+                              linkedGoals: item.linkedGoals ? item.linkedGoals.map((g: any) => g.goal_id) : [],
+                              fileIds: allFileIds,
+                              score: item.score,
+                            };
+                            await updateAssessmentMutation.mutateAsync({ id: item.id, payload });
+                          } catch (err) {
+                             console.error("Upload more error:", err);
+                          }
+                        }
+                      }}
+                    />
+                    {(uploadFilesMutation.isPending || updateAssessmentMutation.isPending) ? (
+                      <span>Uploading...</span>
+                    ) : (
+                      <span>Upload More</span>
+                    )}
+                  </label>
+                </div>
+
+                {/* Activity History */}
+                <div className="pt-6 border-t border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-4">Activity</h3>
+                  <div className="relative pt-2 pl-1">
+                    <div className="absolute left-[8px] top-4 bottom-4 w-px bg-gray-200" />
+                    
+                    <div className="flex items-center gap-8 mb-6 relative z-10">
+                      <div className="w-2 h-2 rounded-full bg-[#10b981] ring-4 ring-white shrink-0" />
+                      <div className="w-24 text-sm text-[#64748b] shrink-0">
+                        {item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : "-"}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <p className="text-sm text-[#334155]">Last updated</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-8 relative z-10">
+                      <div className="w-2 h-2 rounded-full bg-[#2563eb] ring-4 ring-white shrink-0" />
+                      <div className="w-24 text-sm text-[#64748b] shrink-0">
+                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "-"}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <p className="text-sm text-[#334155]">Assessment scheduled</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}
+      </CustomModal>
+
+      {/* Add Assessment Modal */}
+
+      <CustomModal
+        isOpen={modalMode === 'add' || modalMode === 'edit'}
+        onClose={closeModal}
+        title={modalMode === 'edit' ? "Edit Assessment" : "Add Assessment"}
         maxWidth="max-w-3xl"
         customFooter={
           <div className="flex justify-center gap-4 px-8 py-5 w-full border-t border-gray-100">
@@ -373,10 +672,10 @@ export default function AssessmentsTab() {
             </button>
             <button
               onClick={handleSave}
-              disabled={createAssessmentMutation.isPending || uploadFilesMutation.isPending}
+              disabled={createAssessmentMutation.isPending || updateAssessmentMutation.isPending || uploadFilesMutation.isPending}
               className="px-6 py-2 bg-[#60a5fa] text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
             >
-              {createAssessmentMutation.isPending ? "Saving..." : "Save Assessment"}
+              {createAssessmentMutation.isPending || updateAssessmentMutation.isPending ? "Saving..." : "Save Assessment"}
             </button>
           </div>
         }
@@ -599,10 +898,27 @@ export default function AssessmentsTab() {
               onChange={handleFileSelect} 
               accept="image/jpeg, image/png, application/pdf"
             />
-            {uploadedFiles.length > 0 && (
+            {(existingFiles.length > 0 || uploadedFiles.length > 0) && (
               <div className="mt-4 flex flex-wrap gap-2">
+                {existingFiles.map((f: any, idx: number) => (
+                  <div key={`existing-${idx}`} className="text-xs bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md flex items-center gap-2">
+                    <a href={f.file_url} target="_blank" rel="noreferrer" className="hover:underline">
+                      {f.original_file_name || f.file_name}
+                    </a>
+                    <button 
+                      type="button" 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setExistingFiles(prev => prev.filter((_, i) => i !== idx)); 
+                      }} 
+                      className="text-gray-400 hover:text-red-500 font-bold ml-1"
+                    >
+                      X
+                    </button>
+                  </div>
+                ))}
                 {uploadedFiles.map((file, idx) => (
-                  <div key={idx} className="text-xs bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md flex items-center gap-2">
+                  <div key={`new-${idx}`} className="text-xs bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md flex items-center gap-2">
                     {file.name}
                     <button 
                       type="button" 
@@ -618,6 +934,56 @@ export default function AssessmentsTab() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      </CustomModal>
+
+      {/* Delete Confirmation Modal */}
+      <CustomModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Assessment"
+        maxWidth="max-w-md"
+        customFooter={
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 text-gray-700 bg-gray-100 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (assessmentToDelete) deleteAssessmentMutation.mutate(assessmentToDelete);
+              }}
+              disabled={deleteAssessmentMutation.isPending}
+              className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[80px]"
+            >
+              {deleteAssessmentMutation.isPending ? (
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                "Delete"
+              )}
+            </button>
+          </div>
+        }
+      >
+        <div>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-red-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-gray-900 font-semibold mb-1">Are you sure?</h4>
+              <p className="text-sm text-gray-500">
+                Are you sure you want to delete this assessment? This action cannot be undone and will permanently remove this record.
+              </p>
+            </div>
           </div>
         </div>
       </CustomModal>
