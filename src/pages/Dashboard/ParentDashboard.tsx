@@ -188,11 +188,11 @@ export default function ParentDashboard() {
           </div>
 
           {/* Right — Next session */}
-          <div className="text-right flex-shrink-0">
+          {/* <div className="text-right flex-shrink-0">
             <p className="text-[14px] text-gray-400 font-medium">Next session</p>
             <p className="text-[18px] font-bold text-gray-900 mt-1">Tomorrow, 10:00 AM</p>
             <p className="text-[14px] text-gray-400 mt-0.5">with Priya Sharma</p>
-          </div>
+          </div> */}
         </div>
 
         {/* ── Main 2-column grid ─────────────────────────────────────────── */}
