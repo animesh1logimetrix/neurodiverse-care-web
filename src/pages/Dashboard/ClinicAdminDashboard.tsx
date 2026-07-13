@@ -39,19 +39,28 @@ function TargetIcon({ className }: { className?: string }) {
 
 export default function ClinicAdminDashboard() {
 
-  // ── Chart 1: Sessions This Week (Line) ────────────────────────────────────
+  // ── Chart 1: Sessions This Week (Area) ────────────────────────────────────
   const sessionsWeekOptions: ApexOptions = {
     chart: {
-      type: "line",
+      type: "area",
       toolbar: { show: false },
       fontFamily: "Outfit, sans-serif",
       sparkline: { enabled: false },
       parentHeightOffset: 0
     },
-    colors: ["#3b82f6"],
+    colors: ["#60a5fa"],
     stroke: {
       curve: "smooth",
       width: 2.5,
+    },
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.35,
+        opacityTo: 0.05,
+        stops: [0, 100]
+      }
     },
     markers: {
       size: 0,
@@ -59,8 +68,11 @@ export default function ClinicAdminDashboard() {
     },
     dataLabels: { enabled: false },
     grid: {
-      borderColor: "#f8fafc",
+      show: true,
+      borderColor: "#f1f5f9",
       strokeDashArray: 3,
+      xaxis: { lines: { show: true } },
+      yaxis: { lines: { show: false } },
       padding: { top: -15, bottom: -5, left: 10, right: 10 }
     },
     xaxis: {
@@ -142,19 +154,14 @@ export default function ClinicAdminDashboard() {
       fontFamily: "Outfit, sans-serif",
       parentHeightOffset: 0
     },
-    colors: ["#f472b6", "#818cf8"],
+    colors: ["#f472b6", "#a78bfa"],
     stroke: {
       curve: "smooth",
-      width: 2.5,
+      width: 0,
     },
     fill: {
-      type: "gradient",
-      gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.25,
-        opacityTo: 0.01,
-        stops: [0, 100]
-      }
+      type: "solid",
+      opacity: 0.6
     },
     dataLabels: { enabled: false },
     grid: {
@@ -394,125 +401,125 @@ export default function ClinicAdminDashboard() {
     <>
       <PageMeta title="Clinic Dashboard | NeuroDiverse" description="Clinic administrator analytics dashboard for NeuroDiverse" />
 
-      <div className="min-h-screen bg-[#f8fafc] -mx-4 md:-mx-6 -my-4 md:-my-6 p-[20px]" style={{ fontFamily: "Outfit, sans-serif" }}>
+      <div className="min-h-screen bg-[#f8fafc] -mx-4 md:-mx-6 -my-4 md:-my-6 p-[32px]" style={{ fontFamily: "Outfit, sans-serif" }}>
 
         {/* ── Page Header ───────────────────────────────────────────────── */}
-        <div className="mb-4">
-          <h1 className="text-[18px] font-bold text-gray-900 leading-tight">Clinic Dashboard</h1>
-          <p className="text-[11px] text-gray-500 mt-0.5">Bright Minds Developmental Clinic</p>
+        <div className="mb-6">
+          <h1 className="text-[20px] font-bold text-gray-900 leading-tight">Clinic Dashboard</h1>
+          <p className="text-[12px] text-gray-500 mt-1">Bright Minds Developmental Clinic</p>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════
             MAIN RESPONSIVE GRID (Page Shell with Left/Right columns + full-width bottom table)
         ══════════════════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-12 gap-4 items-start">
+        <div className="grid grid-cols-12 gap-8 items-start">
 
           {/* ────────────────────────────────────────────────────────────────
               LEFT COLUMN (4 columns wide on desktop / lg screens)
           ──────────────────────────────────────────────────────────────── */}
-          <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
+          <div className="col-span-12 lg:col-span-4 flex flex-col gap-8">
 
-            {/* 1. Clinic Summary — parent white card wrapping 2×2 compact metrics */}
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-4 h-[155px]">
-              <div className="grid grid-cols-2 gap-2 h-full">
-                {statCards.map((card) => (
+            {/* 1. Clinic Summary — Master white card wrapping 4 distinct inner cards */}
+            <div className="bg-white border border-slate-100 rounded-[28px] shadow-[0_2px_12px_rgba(0,0,0,0.02)] p-4 h-[300px]">
+              <div className="grid grid-cols-2 gap-4 h-full">
+                {statCards.map((card, idx) => (
                   <div
                     key={card.label}
-                    className="bg-slate-50/60 border border-slate-100 rounded-lg p-2.5 flex flex-col justify-between"
+                    className={`rounded-[20px] px-4 py-3 flex flex-col justify-center ${
+                      idx === 0 ? "bg-[#f3f9ff]" : "bg-[#f8f9fa]"
+                    }`}
                   >
-                    <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider leading-none">{card.label}</span>
-                    <div>
-                      <p className="text-[26px] font-bold text-gray-800 leading-none tracking-tight">{card.value}</p>
-                      <p className="text-[9px] text-gray-400 mt-1 font-medium leading-none">{card.sub}</p>
-                    </div>
+                    <span className="text-[13px] font-semibold text-slate-700 leading-tight pr-2">{card.label}</span>
+                    <p className="text-[32px] font-extrabold text-slate-900 leading-none mt-2 tracking-tight">{card.value}</p>
+                    <p className="text-[11px] text-slate-500 mt-1.5 font-medium leading-snug" dangerouslySetInnerHTML={{ __html: card.sub.replace(", ", ",<br/>") }}></p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* 2. Sessions This Week — height calibrated so Summary(155) + gap(16) + Sessions(204) = 375px = Neuro Progress */}
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3 h-[204px] flex flex-col">
-              <div className="mb-1">
-                <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Sessions This Week</h3>
-                <span className="text-[10px] text-gray-400">Weekly breakdown</span>
+            {/* 2. Sessions This Week */}
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 h-[298px] flex flex-col">
+              <div className="mb-2">
+                <h3 className="text-[15px] font-bold text-gray-800 leading-tight">Sessions This Week</h3>
               </div>
-              <div className="flex-1 w-full min-h-0">
-                <Chart options={sessionsWeekOptions} series={sessionsWeekSeries} type="line" height="100%" />
+              <div className="flex-1 w-full min-h-0 -ml-2 mt-2">
+                <Chart options={sessionsWeekOptions} series={sessionsWeekSeries} type="area" height="100%" />
               </div>
             </div>
 
-            {/* 3. Diagnosis Distribution — h-[230px] matches Goal Achievement */}
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[230px] flex flex-col">
-              <div className="mb-1">
-                <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Diagnosis Distribution</h3>
-                <p className="text-[10px] text-gray-400">Across all children</p>
+            {/* 3. Diagnosis Distribution */}
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 min-h-[340px] flex flex-col">
+              <div className="mb-2">
+                <h3 className="text-[15px] font-bold text-gray-800 leading-tight">Diagnosis Distribution</h3>
+                <p className="text-[12px] text-gray-400 mt-1">Across all children</p>
               </div>
-              <div className="flex items-center justify-between gap-4 flex-1">
+              <div className="flex items-center justify-between gap-6 flex-1 mt-2">
                 {/* Donut chart on left */}
-                <div className="w-[120px] h-[120px] flex-shrink-0 flex items-center justify-center">
+                <div className="w-[150px] h-[150px] flex-shrink-0 flex items-center justify-center">
                   <Chart options={diagnosisDonutOptions} series={diagnosisDonutSeries} type="donut" width="100%" height="100%" />
                 </div>
                 {/* Legend list on right */}
-                <div className="flex-1 flex flex-col justify-center gap-2">
+                <div className="flex-1 flex flex-col justify-center gap-4">
                   {diagnosisLegend.map((item) => (
-                    <div key={item.label} className="flex items-center justify-between text-[10px] font-medium text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ backgroundColor: item.bg }} />
-                        <span>{item.label}</span>
-                      </div>
-                      <span className="text-gray-700 font-bold">{item.count}</span>
+                    <div key={item.label} className="flex items-center justify-between text-[12px]">
+                      <span className="text-gray-600 font-medium w-6 text-center">{item.count}</span>
+                      <span 
+                        className="px-3 py-1.5 font-bold text-white rounded w-[84px] text-center tracking-wide" 
+                        style={{ backgroundColor: item.bg, fontSize: "11px" }}
+                      >
+                        {item.label}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* 4. Alerts & Flags — h-[230px] matches Session By Therapy */}
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[230px] flex flex-col">
-              <div className="mb-2">
-                <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Alerts & Flags</h3>
+            {/* 4. Alerts & Flags */}
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 min-h-[340px] flex flex-col">
+              <div className="mb-3">
+                <h3 className="text-[15px] font-bold text-gray-800 leading-tight">Alerts & Flags</h3>
               </div>
-              <div className="flex flex-col flex-1 gap-2">
+              <div className="flex flex-col flex-1 gap-3">
                 {alerts.map((item) => (
-                  <div key={item.id} className="flex-1 bg-white rounded-lg border border-slate-100 px-2.5 flex items-center justify-between shadow-sm">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-6 h-6 rounded bg-amber-50 flex items-center justify-center flex-shrink-0 text-amber-500 border border-amber-100/30">
-                        <AlertTriangleIcon className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-bold text-gray-800 leading-none">{item.title}</p>
-                        <p className="text-[9px] text-gray-400 mt-1 leading-none truncate">{item.desc}</p>
-                      </div>
+                  <div key={item.id} className="flex-1 bg-white rounded-xl border border-slate-100 px-4 py-3 flex items-start gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                    <div className="mt-0.5 w-7 h-7 rounded flex items-center justify-center flex-shrink-0 text-orange-500">
+                      <AlertTriangleIcon className="w-5 h-5 stroke-[2.5]" />
                     </div>
-                    <span className="text-[9px] text-gray-400 flex-shrink-0 ml-2 font-medium">{item.time}</span>
+                    <div className="min-w-0 flex flex-col justify-center">
+                      <p className="text-[13px] text-gray-600 leading-snug">
+                        <span className="font-bold text-gray-800 text-[13px]">{item.title}</span> — {item.desc.toLowerCase()}
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-1 font-medium">{item.time}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* 5. Outcomes Trend — h-[220px] matches Goal Progress By Child */}
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[220px] flex flex-col">
-              <div className="flex items-center justify-between mb-1">
+            {/* 5. Outcomes Trend */}
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 min-h-[340px] flex flex-col">
+              <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Outcomes Trend</h3>
-                  <span className="text-[10px] text-gray-400">Satisfaction metrics</span>
+                  <h3 className="text-[15px] font-bold text-gray-800 leading-tight">Outcomes Trend</h3>
+                  <span className="text-[11px] text-gray-400 mt-1 block">Satisfaction metrics</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#eab308]" />
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 text-[12px] font-semibold text-gray-500">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#eab308]" />
                     <span>Goal</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]" />
+                  <div className="flex items-center gap-2 text-[12px] font-semibold text-gray-500">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
                     <span>Session</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
+                  <div className="flex items-center gap-2 text-[12px] font-semibold text-gray-500">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
                     <span>Parent</span>
                   </div>
                 </div>
               </div>
-              <div className="flex-1 w-full min-h-0">
+              <div className="flex-1 w-full min-h-0 mt-3">
                 <Chart options={outcomesTrendOptions} series={outcomesTrendSeries} type="line" height="100%" />
               </div>
             </div>
@@ -522,25 +529,25 @@ export default function ClinicAdminDashboard() {
           {/* ────────────────────────────────────────────────────────────────
               RIGHT COLUMN (8 columns wide on desktop / lg screens)
           ──────────────────────────────────────────────────────────────── */}
-          <div className="col-span-12 lg:col-span-8 flex flex-col gap-4">
+          <div className="col-span-12 lg:col-span-8 flex flex-col gap-8">
 
             {/* 1. Large Neuro Progress Overview Card */}
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] flex flex-col justify-between h-[375px] overflow-hidden">
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between h-[630px] overflow-hidden p-8 pb-6">
               {/* Top Section: Images */}
-              <div className="flex justify-between items-stretch gap-3 p-3 pb-0 h-[180px]">
-                {/* Large Brain Image centered (68% width) */}
-                <div className="w-[68%] flex items-center justify-center">
+              <div className="flex justify-between items-center gap-8 flex-1">
+                {/* Large Brain Image centered */}
+                <div className="flex-1 flex items-center justify-center">
                   <img
                     src="/images/brain_main.png"
                     alt="Brain Anatomy"
-                    className="max-h-[160px] object-contain"
+                    className="max-h-[280px] object-contain drop-shadow-md"
                   />
                 </div>
 
-                {/* Staked Anatomical Cross-sections (32% width, max-w 70px) */}
-                <div className="w-[32%] flex flex-col gap-1.5 justify-center max-w-[70px] flex-shrink-0">
+                {/* Staked Anatomical Cross-sections */}
+                <div className="w-[100px] flex flex-col gap-4 justify-center flex-shrink-0">
                   {["/images/brain_cross3.png", "/images/brain_cross1.png", "/images/brain_cross2.png"].map((src, idx) => (
-                    <div key={idx} className="rounded-lg overflow-hidden border border-slate-100 bg-gray-50 h-[46px] shadow-sm flex items-center justify-center">
+                    <div key={idx} className="rounded-xl overflow-hidden border border-slate-100 bg-gray-50 h-[72px] shadow-sm flex items-center justify-center">
                       <img src={src} alt={`Anatomical cross section ${idx + 1}`} className="w-full h-full object-cover" />
                     </div>
                   ))}
@@ -548,95 +555,95 @@ export default function ClinicAdminDashboard() {
               </div>
 
               {/* Bottom Section: Info and metric cards */}
-              <div className="p-3 pt-2 border-t border-slate-50 flex flex-col justify-end flex-1">
-                <div className="mb-2">
-                  <h2 className="text-[14px] font-bold text-gray-900 leading-tight">Neuro Progress Overview</h2>
-                  <p className="text-[10px] text-gray-400 mt-0.5">Overall Platform Health</p>
+              <div className="pt-6 mt-4 border-t border-slate-50 flex flex-col justify-end">
+                <div className="mb-4">
+                  <h2 className="text-[18px] font-bold text-gray-900 leading-tight">Neuro Progress Overview</h2>
+                  <p className="text-[13px] text-gray-500 mt-1">Overall Platform Health</p>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-4">
                   {[
                     { label: "Total Children Under Monitoring", value: "2,486" },
                     { label: "Average Development Progress", value: "72.8%" },
                     { label: "Goals Achieved This Month", value: "1,842" },
                     { label: "Active Therapy Plans", value: "1,126" }
                   ].map((item) => (
-                    <div key={item.label} className="border border-slate-100 rounded-lg p-2 bg-white flex flex-col justify-between shadow-sm">
-                      <p className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider leading-tight">{item.label}</p>
-                      <p className="text-[18px] font-bold text-gray-800 mt-1 leading-none">{item.value}</p>
+                    <div key={item.label} className="border border-slate-200 rounded-xl p-4 bg-white flex flex-col justify-between shadow-sm min-h-[85px]">
+                      <p className="text-[12px] text-gray-500 font-medium leading-tight mb-2">{item.label}</p>
+                      <p className="text-[26px] font-bold text-gray-800 leading-none">{item.value}</p>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* 2. Goal Achievement (approx. 230px height, Area Chart) */}
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[230px] flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-1">
+            {/* 2. Goal Achievement */}
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 min-h-[340px] flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Goal Achievement</h3>
-                  <span className="text-[10px] text-gray-400 font-medium">Achieved vs active</span>
+                  <h3 className="text-[15px] font-bold text-gray-800 leading-tight">Goal Achievement</h3>
+                  <span className="text-[11px] text-gray-400 font-medium mt-1 block">Achieved vs active</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#f472b6]" />
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                    <span className="w-2 h-2 rounded-full bg-[#f472b6]" />
                     <span>Achieved</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#818cf8]" />
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                    <span className="w-2 h-2 rounded-full bg-[#818cf8]" />
                     <span>Active</span>
                   </div>
                 </div>
               </div>
-              <div className="h-[160px] w-full">
+              <div className="flex-1 w-full min-h-0 mt-2">
                 <Chart options={goalAchievementOptions} series={goalAchievementSeries} type="area" height="100%" />
               </div>
             </div>
 
-            {/* 3. Session By Therapy (approx. 230px height, Grouped Bar Chart) */}
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[230px] flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-1">
+            {/* 3. Session By Therapy */}
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 min-h-[340px] flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Session By Therapy</h3>
-                  <p className="text-[10px] text-gray-400">Monthly breakdown</p>
+                  <h3 className="text-[15px] font-bold text-gray-800 leading-tight">Session By Therapy</h3>
+                  <p className="text-[11px] text-gray-400 mt-1">Monthly breakdown</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#22d3ee]" />
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                    <span className="w-2 h-2 rounded-full bg-[#22d3ee]" />
                     <span>OT</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]" />
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                    <span className="w-2 h-2 rounded-full bg-[#3b82f6]" />
                     <span>Speech</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1]" />
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                    <span className="w-2 h-2 rounded-full bg-[#6366f1]" />
                     <span>ABA</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#ec4899]" />
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                    <span className="w-2 h-2 rounded-full bg-[#ec4899]" />
                     <span>Psych</span>
                   </div>
                 </div>
               </div>
-              <div className="h-[160px] w-full">
+              <div className="flex-1 w-full min-h-0 mt-2">
                 <Chart options={therapyBarOptions} series={therapyBarSeries} type="bar" height="100%" />
               </div>
             </div>
 
-            {/* 4. Goal Progress By Child (approx. 220px height, Horizontal progress bars) */}
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 h-[220px] flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-1">
+            {/* 4. Goal Progress By Child */}
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 min-h-[340px] flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Goal Progress By Child</h3>
-                  <p className="text-[10px] text-gray-400">Achieved vs active goals</p>
+                  <h3 className="text-[15px] font-bold text-gray-800 leading-tight">Goal Progress By Child</h3>
+                  <p className="text-[11px] text-gray-400 mt-1">Achieved vs active goals</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1]" />
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                    <span className="w-2 h-2 rounded-full bg-[#6366f1]" />
                     <span>Achieved</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-gray-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#22d3ee]" />
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                    <span className="w-2 h-2 rounded-full bg-[#22d3ee]" />
                     <span>Active</span>
                   </div>
                 </div>
@@ -646,11 +653,11 @@ export default function ClinicAdminDashboard() {
                   const total = row.achieved + row.active;
                   const pct = total > 0 ? (row.achieved / total) * 100 : 0;
                   return (
-                    <div key={row.name} className="flex items-center gap-3 text-[10px] leading-none">
-                      <span className="w-[84px] font-semibold text-gray-600 truncate">{row.name}</span>
-                      <div className="flex-1 h-[6px] bg-slate-50 border border-slate-100 rounded-full overflow-hidden flex items-center">
-                        <div className="bg-[#6366f1] h-full" style={{ width: `${pct}%` }} />
-                        <div className="bg-[#22d3ee] h-full" style={{ width: `${100 - pct}%` }} />
+                    <div key={row.name} className="flex items-center gap-4 text-[12px] leading-none py-1.5">
+                      <span className="w-[100px] font-bold text-gray-600 truncate">{row.name}</span>
+                      <div className="flex-1 h-[8px] bg-slate-100 rounded-full overflow-hidden flex items-center shadow-inner">
+                        <div className="bg-[#6366f1] h-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                        <div className="bg-[#22d3ee] h-full transition-all duration-500" style={{ width: `${100 - pct}%` }} />
                       </div>
                       <span className="w-[30px] text-right font-bold text-gray-700">{row.achieved}</span>
                     </div>
@@ -665,20 +672,20 @@ export default function ClinicAdminDashboard() {
               STAFF CASELOAD TABLE (Full Width, spanning the bottom under both columns)
           ──────────────────────────────────────────────────────────────── */}
           <div className="col-span-12">
-            <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] p-3.5 overflow-hidden">
-              <div className="mb-3">
-                <h3 className="text-[13px] font-bold text-gray-800 leading-tight">Staff Caseload</h3>
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-8 overflow-hidden">
+              <div className="mb-4">
+                <h3 className="text-[18px] font-bold text-gray-800 leading-tight">Staff Caseload</h3>
               </div>
-              <div className="overflow-x-auto rounded-lg border border-slate-100">
+              <div className="overflow-x-auto rounded-xl border border-slate-100 shadow-sm">
                 <Table className="w-full border-collapse" style={{ minWidth: "500px" }}>
                   <TableHeader>
-                    <TableRow className="bg-[#e0f2fe]/40 border-b border-slate-105">
+                    <TableRow className="bg-[#e0f2fe] border-b border-slate-200">
                       {["Staff", "Specialization", "Children", "Sessions/Wk", "Load"].map((col, i) => (
                         <TableCell
                           key={col}
                           isHeader
-                          className="py-2.5 px-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider"
-                          style={{ textAlign: i === 0 ? "left" : i === 4 ? "right" : "left" }}
+                          className="py-4 px-6 text-[14px] font-bold text-gray-800"
+                          style={{ textAlign: i === 0 ? "left" : "center" }}
                         >
                           {col}
                         </TableCell>
@@ -687,12 +694,12 @@ export default function ClinicAdminDashboard() {
                   </TableHeader>
                   <TableBody>
                     {staffCaseload.map((row, idx) => (
-                      <TableRow key={idx} className="hover:bg-slate-50/55 border-b border-slate-50 last:border-b-0 transition-colors">
-                        <TableCell className="px-3.5 py-2.5 text-[11px] font-semibold text-slate-700">{row.staff}</TableCell>
-                        <TableCell className="px-3.5 py-2.5 text-[11px] text-slate-500">{row.spec}</TableCell>
-                        <TableCell className="px-3.5 py-2.5 text-[11px] text-slate-500">{row.children}</TableCell>
-                        <TableCell className="px-3.5 py-2.5 text-[11px] text-slate-500">{row.sessions}</TableCell>
-                        <TableCell className="px-3.5 py-2.5 text-[11px] text-right font-bold text-slate-700">{row.load}</TableCell>
+                      <TableRow key={idx} className="hover:bg-slate-50/70 border-b border-slate-100 last:border-b-0 transition-colors">
+                        <TableCell className="px-6 py-4 text-[14px] font-semibold text-slate-700 text-left">{row.staff}</TableCell>
+                        <TableCell className="px-6 py-4 text-[14px] text-slate-500 text-center">{row.spec}</TableCell>
+                        <TableCell className="px-6 py-4 text-[14px] text-slate-500 text-center font-medium">{row.children}</TableCell>
+                        <TableCell className="px-6 py-4 text-[14px] text-slate-500 text-center font-medium">{row.sessions}</TableCell>
+                        <TableCell className="px-6 py-4 text-[14px] text-slate-600 text-center font-bold">{row.load}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
