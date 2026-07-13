@@ -44,6 +44,12 @@ export default function ResetPassword() {
       return;
     }
 
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+       setError("Password must be at least 8 chars with an uppercase, lowercase, number, and special character.");
+       return;
+    }
+
     if (!token) {
       setError("Invalid or missing reset token.");
       return;
