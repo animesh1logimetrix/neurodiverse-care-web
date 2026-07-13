@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import axiosClient from "../../api/axiosClient";
 import PageMeta from "../../components/common/PageMeta";
 import { PencilIcon, UserIcon, ArrowUpIcon } from "../../icons";
+import { CustomModal } from "../../components/ui/modal/CustomModal";
+import DatePicker from "../../components/form/date-picker";
 import OverviewTab from "../../components/Care/OverviewTab";
 import DiagnosesTab from "../../components/Care/DiagnosesTab";
 import MedicationsTab from "../../components/Care/MedicationsTab";
@@ -15,6 +18,28 @@ import SessionNotesTab from "../../components/Care/SessionNotesTab";
 export default function ChildDetails() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("Overview");
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [childForm, setChildForm] = useState({
+    fullName: "",
+    age: "",
+    gender: "",
+    address: "",
+    diagnoses: "",
+    bloodGroup: "",
+    motherName: "",
+    fatherName: "",
+    allergies: "",
+    school: "",
+    notes: "",
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+  const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
 
   const { data: child, isLoading } = useQuery({
     queryKey: ["child", id],
@@ -24,6 +49,244 @@ export default function ChildDetails() {
     },
     enabled: !!id,
   });
+
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "uploads");
+      const res = await axiosClient.post("/media/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        },
+      });
+      return res.data;
+    },
+  });
+
+  const updateChildPhotoMutation = useMutation({
+    mutationFn: async ({ childId, payload }: { childId: string, payload: any }) => {
+      const res = await axiosClient.patch(`/child/${childId}`, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Photo updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["child", id] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update child photo");
+    },
+  });
+
+  const updateChildDetailsMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await axiosClient.patch(`/child/${id}`, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Child details updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["child", id] });
+      setIsEditModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update child details");
+    },
+  });
+
+  const handleChildFormChange = (field: string, value: string) => {
+    setChildForm((prev) => ({ ...prev, [field]: value }));
+    setFormErrors((prev) => ({ ...prev, [field]: "" }));
+    setSubmitMessage(null);
+    setSubmitStatus(null);
+  };
+
+  const validateChildForm = () => {
+    const errors: Record<string, string> = {};
+    if (!childForm.fullName.trim()) errors.fullName = "Full name is required.";
+    if (!childForm.age.trim()) errors.age = "Date of birth is required.";
+    if (!childForm.gender) errors.gender = "Gender is required.";
+    if (!childForm.address.trim()) errors.address = "Address is required.";
+    if (!childForm.diagnoses) errors.diagnoses = "Diagnoses is required.";
+    if (!childForm.bloodGroup) errors.bloodGroup = "Blood group is required.";
+    if (!childForm.motherName.trim()) errors.motherName = "Mother's name is required.";
+    if (!childForm.fatherName.trim()) errors.fatherName = "Father's name is required.";
+    if (!childForm.school.trim()) errors.school = "School is required.";
+    return errors;
+  };
+
+  const handleEditChildSubmit = async (_formData?: Record<string, any>) => {
+    const errors = validateChildForm();
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setSubmitMessage(null);
+      setSubmitStatus("error");
+      return false;
+    }
+
+    let calculatedAge = 0;
+    if (childForm.age) {
+      const dobDate = new Date(childForm.age);
+      const today = new Date();
+      calculatedAge = today.getFullYear() - dobDate.getFullYear();
+      const m = today.getMonth() - dobDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+        calculatedAge--;
+      }
+    }
+
+    const mapGender = (g: string) => {
+      if (g === "Male") return "MALE";
+      if (g === "Female") return "FEMALE";
+      if (g === "Other") return "OTHER";
+      return g;
+    };
+
+    const mapBloodGroup = (bg: string) => {
+      const mapping: Record<string, string> = {
+        "A+": "A_POSITIVE",
+        "A-": "A_NEGATIVE",
+        "B+": "B_POSITIVE",
+        "B-": "B_NEGATIVE",
+        "AB+": "AB_POSITIVE",
+        "AB-": "AB_NEGATIVE",
+        "O+": "O_POSITIVE",
+        "O-": "O_NEGATIVE",
+      };
+      return mapping[bg] || bg;
+    };
+
+    const payload = {
+      full_name: childForm.fullName,
+      age: Math.max(0, calculatedAge),
+      gender: mapGender(childForm.gender),
+      address: childForm.address,
+      diagnosis: childForm.diagnoses,
+      blood_group: mapBloodGroup(childForm.bloodGroup),
+      mother_name: childForm.motherName,
+      father_name: childForm.fatherName,
+      allergies: childForm.allergies,
+      school: childForm.school,
+      notes: childForm.notes,
+      dob: childForm.age ? new Date(childForm.age).toISOString() : "", 
+      referred_by: child?.referred_by || "", 
+    };
+
+    try {
+      await updateChildDetailsMutation.mutateAsync(payload);
+      return undefined;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const openEditModal = () => {
+    if (child) {
+      // Reverse map gender
+      const reverseGender = (g: string) => {
+        if (!g) return "";
+        const lg = g.toLowerCase();
+        if (lg === "male") return "Male";
+        if (lg === "female") return "Female";
+        if (lg === "other") return "Other";
+        return g;
+      };
+
+      // Reverse map blood group
+      const reverseBloodGroup = (bg: string) => {
+        if (!bg) return "";
+        const mapping: Record<string, string> = {
+          "A_POSITIVE": "A+",
+          "A_NEGATIVE": "A-",
+          "B_POSITIVE": "B+",
+          "B_NEGATIVE": "B-",
+          "AB_POSITIVE": "AB+",
+          "AB_NEGATIVE": "AB-",
+          "O_POSITIVE": "O+",
+          "O_NEGATIVE": "O-",
+        };
+        return mapping[bg] || bg;
+      };
+
+      setChildForm({
+        fullName: child.full_name || "",
+        age: child.dob ? new Date(child.dob).toISOString().split('T')[0] : "",
+        gender: reverseGender(child.gender),
+        address: child.address || "",
+        diagnoses: child.diagnosis || "",
+        bloodGroup: reverseBloodGroup(child.blood_group),
+        motherName: child.mother_name || "",
+        fatherName: child.father_name || "",
+        allergies: child.allergies || "",
+        school: child.school || "",
+        notes: child.notes || "",
+      });
+      setFormErrors({});
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Please upload a valid image file (JPEG, PNG, GIF, WEBP)");
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    setUploadProgress(0);
+    try {
+      const uploadRes = await uploadPhotoMutation.mutateAsync(file);
+      
+      let fileId = null;
+      if (uploadRes?.file?.id) {
+        fileId = uploadRes.file.id;
+      } else if (uploadRes?.data?.file?.id) {
+        fileId = uploadRes.data.file.id;
+      } else if (Array.isArray(uploadRes) && uploadRes[0]?.id) {
+        fileId = uploadRes[0].id;
+      } else if (uploadRes?.fileIds?.[0]) {
+        fileId = uploadRes.fileIds[0];
+      } else if (Array.isArray(uploadRes?.data) && uploadRes.data[0]?.id) {
+        fileId = uploadRes.data[0].id;
+      } else if (uploadRes?.data?.id) {
+        fileId = uploadRes.data.id;
+      } else if (uploadRes?.id) {
+        fileId = uploadRes.id;
+      }
+
+      if (!fileId) {
+         throw new Error("Could not extract file ID from upload response");
+      }
+
+      if (!child) throw new Error("Child data not loaded");
+      
+      const payload = {
+        fileIds: [fileId]
+      };
+      
+      await updateChildPhotoMutation.mutateAsync({ childId: id as string, payload });
+      
+    } catch (error) {
+       console.error("Upload error:", error);
+       toast.error("Failed to upload and update photo");
+    } finally {
+       setIsUploadingPhoto(false);
+       if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+       }
+    }
+  };
 
   const documents = [
     { name: "Prescription J", date: "18:2023", size: "p120 0" },
@@ -97,17 +360,29 @@ export default function ChildDetails() {
               6 children 3 need attention
             </p> */}
           </div>
-          <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
+          {/* <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
             + Add Child
-          </button>
+          </button> */}
         </div>
       </div>
 
       {/* Main Profile Section */}
       <div className="flex flex-col md:flex-row gap-8 mb-8 items-start">
         {/* Avatar (Left) */}
-        <div className="w-52 h-52 rounded-[28px] bg-[#fdf3e7] overflow-hidden shrink-0 flex items-center justify-center shadow-sm border border-[#ffedd5]">
+        <div className="w-52 h-52 rounded-[28px] bg-[#fdf3e7] overflow-hidden shrink-0 flex items-center justify-center shadow-sm border border-[#ffedd5] relative">
           {/* Photo */}
+          {isUploadingPhoto && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+              <span className="text-3xl font-bold text-brand-600 mb-1">{uploadProgress}%</span>
+              <span className="text-sm font-medium text-gray-600">Uploading...</span>
+              <div className="w-24 h-1.5 bg-orange-100 rounded-full mt-3 overflow-hidden">
+                <div 
+                  className="h-full bg-brand-600 transition-all duration-300 ease-out" 
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
           {child?.profile_picture?.[0]?.file_url ? (
             <img src={child.profile_picture[0].file_url} alt={child.full_name} className="w-full h-full object-cover" />
           ) : (
@@ -178,14 +453,28 @@ export default function ChildDetails() {
 
             {/* Actions (Right) */}
             <div className="flex flex-col shrink-0 min-w-56 w-56 border border-[#fed7aa] rounded-xl bg-white">
-              <button className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors border-b border-gray-100 rounded-t-xl">
+              <button 
+                onClick={openEditModal}
+                className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors border-b border-gray-100 rounded-t-xl"
+              >
                 <PencilIcon className="w-4 h-4 fill-current text-gray-400" />
                 Edit Child Details
               </button>
-              <button className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors border-b border-gray-100">
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingPhoto}
+                className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors border-b border-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <ArrowUpIcon className="w-4 h-4 fill-current text-gray-400" />
-                Upload Photo
+                {isUploadingPhoto ? "Uploading..." : "Upload Photo"}
               </button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={handlePhotoUpload} 
+              />
               {/* <button className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors rounded-b-xl">
                 <UserIcon className="w-4 h-4 fill-current text-gray-400" />
                 View Profile
@@ -247,6 +536,249 @@ export default function ChildDetails() {
 
       {/* Session Notes Content */}
       {activeTab === "Session Notes" && <SessionNotesTab />}
+
+      {/* Edit Child Details Modal */}
+      <CustomModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Child Details"
+        size="lg"
+        footerAlign="center"
+        asteriskColor="black"
+        overlayBlur={false}
+        submitText="Save Changes"
+        maxBodyHeight="70vh"
+        modalClassName="max-h-[90vh]"
+        onSubmit={handleEditChildSubmit}
+        customFooter={
+          <div className="flex items-center justify-center gap-3 px-8 py-5 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(false)}
+              className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer min-w-[120px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={updateChildDetailsMutation.isPending}
+              className="px-6 py-2.5 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors text-sm cursor-pointer min-w-[120px] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {updateChildDetailsMutation.isPending ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        }
+      >
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5 mb-5">
+            {/* Full Name */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                Full Name <span className="text-black">*</span>
+              </label>
+              <input
+                type="text"
+                value={childForm.fullName}
+                onChange={(e) => handleChildFormChange("fullName", e.target.value)}
+                placeholder="Enter full name"
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+              />
+              {formErrors.fullName && <p className="mt-1 text-xs text-red-600">{formErrors.fullName}</p>}
+            </div>
+
+            {/* Age */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                DOB <span className="text-black">*</span>
+              </label>
+              <div>
+              <DatePicker
+                id="edit-child-dob"
+                placeholder="Select date"
+                defaultDate={childForm.age || undefined}
+                maxDate="today"
+                onChange={([dates], currentDateString) =>
+                  handleChildFormChange("age", currentDateString || "")
+                }
+              />
+              {formErrors.age && <p className="mt-1 text-xs text-red-600">{formErrors.age}</p>}
+            </div>
+            </div>
+
+            {/* Gender */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                Gender<span className="text-black">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={childForm.gender}
+                  onChange={(e) => handleChildFormChange("gender", e.target.value)}
+                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+                >
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                {formErrors.gender && <p className="mt-1 text-xs text-red-600">{formErrors.gender}</p>}
+                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                Address <span className="text-black">*</span>
+              </label>
+              <input
+                type="text"
+                value={childForm.address}
+                onChange={(e) => handleChildFormChange("address", e.target.value)}
+                placeholder="Enter address"
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+              />
+              {formErrors.address && <p className="mt-1 text-xs text-red-600">{formErrors.address}</p>}
+            </div>
+
+            {/* Diagnoses */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                Diagnoses<span className="text-black">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={childForm.diagnoses}
+                  onChange={(e) => handleChildFormChange("diagnoses", e.target.value)}
+                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+                >
+                  <option value="">Select diagnoses</option>
+                  <option value="ADHD">ADHD</option>
+                  <option value="ASD">ASD</option>
+                  <option value="Sensory Processing Disorder">Sensory Processing Disorder</option>
+                  <option value="Speech Impairment">Speech Impairment</option>
+                </select>
+                {formErrors.diagnoses && <p className="mt-1 text-xs text-red-600">{formErrors.diagnoses}</p>}
+                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            {/* Blood Group */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                Blood Group<span className="text-black">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={childForm.bloodGroup}
+                  onChange={(e) => handleChildFormChange("bloodGroup", e.target.value)}
+                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+                >
+                  <option value="">Select blood group</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+                {formErrors.bloodGroup && <p className="mt-1 text-xs text-red-600">{formErrors.bloodGroup}</p>}
+                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            {/* Mother's Name */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                Mother's Name<span className="text-black">*</span>
+              </label>
+              <input
+                type="text"
+                value={childForm.motherName}
+                onChange={(e) => handleChildFormChange("motherName", e.target.value)}
+                placeholder="Enter mother's name"
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+              />
+              {formErrors.motherName && <p className="mt-1 text-xs text-red-600">{formErrors.motherName}</p>}
+            </div>
+
+            {/* Father's Name */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                Father's Name<span className="text-black">*</span>
+              </label>
+              <input
+                type="text"
+                value={childForm.fatherName}
+                onChange={(e) => handleChildFormChange("fatherName", e.target.value)}
+                placeholder="Enter father's name"
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+              />
+              {formErrors.fatherName && <p className="mt-1 text-xs text-red-600">{formErrors.fatherName}</p>}
+            </div>
+
+            {/* Allergies */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                Allergies
+              </label>
+              <input
+                type="text"
+                value={childForm.allergies}
+                onChange={(e) => handleChildFormChange("allergies", e.target.value)}
+                placeholder="Enter allergies"
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+              />
+            </div>
+
+            {/* School */}
+            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+              <label className="block text-xs font-bold text-black">
+                School<span className="text-black">*</span>
+              </label>
+              <input
+                type="text"
+                value={childForm.school}
+                onChange={(e) => handleChildFormChange("school", e.target.value)}
+                placeholder="Enter school"
+                className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+              />
+              {formErrors.school && <p className="mt-1 text-xs text-red-600">{formErrors.school}</p>}
+            </div>
+          </div>
+
+          {/* Notes (Full Width) */}
+          <div className="flex flex-col gap-1.5 mb-5">
+            <label className="block text-xs font-bold text-black">
+              Notes
+            </label>
+            <input
+              type="text"
+              value={childForm.notes}
+              onChange={(e) => handleChildFormChange("notes", e.target.value)}
+              placeholder="Enter notes"
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+            />
+          </div>
+          {submitMessage && isEditModalOpen && (
+            <div className={`mb-4 rounded-lg px-4 py-3 text-sm ${submitStatus === "success" ? "bg-emerald-50 border border-emerald-100 text-emerald-800" : "bg-red-50 border border-red-100 text-red-800"}`}>
+              {submitMessage}
+            </div>
+          )}
+      </CustomModal>
     </>
   );
 }
