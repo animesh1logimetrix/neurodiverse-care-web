@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import axiosClient from "../../api/axiosClient";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../../components/form/Label";
@@ -152,7 +152,6 @@ export default function NeuroCareAuth() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Toaster position="top-center" />
       {/* Left Panel */}
       <div className={`hidden lg:flex w-[45%] flex-col justify-between bg-[#0a7a66] px-12 ${activeTab === 'signin' ? 'py-12' : 'py-16'} text-white overflow-y-auto`}>
         <div>

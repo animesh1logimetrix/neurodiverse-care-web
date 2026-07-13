@@ -691,11 +691,11 @@ export default function HomeObservations() {
                   onChange={(e) => setFilterStatus(e.target.value)}
                   className="block w-full sm:w-[140px] pl-3 pr-10 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] appearance-none cursor-pointer transition-colors"
                 >
-                  <option>All Statuses</option>
-                  <option>Pending</option>
-                  <option>Actioned</option>
-                  <option>Viewed</option>
-                  <option>Acknowledged</option>
+                  <option value="All Statuses">All Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Viewed">Viewed</option>
+                  <option value="Acknowledged">Acknowledged</option>
+                  <option value="Actioned">Actioned</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                   <ChevronDownIcon />
@@ -707,8 +707,8 @@ export default function HomeObservations() {
                   onChange={(e) => setFilterCategory(e.target.value)}
                   className="block w-full sm:w-[160px] pl-3 pr-10 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] appearance-none cursor-pointer transition-colors"
                 >
-                  <option>All Categories</option>
-                  {CATEGORIES.map(c => <option key={c.id} value={c.label}>{c.label}</option>)}
+                  <option value="All Categories">All Categories</option>
+                  {categoriesList.map((c: any) => <option key={c.id} value={c.full_category_name}>{c.full_category_name}</option>)}
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                   <ChevronDownIcon />
@@ -1051,16 +1051,18 @@ export default function HomeObservations() {
               <p className="text-[14px] text-gray-800 leading-relaxed">{detail.description}</p>
             </div>
 
-            {/* Recipients (mock dynamic) */}
+            {/* Recipients (dynamic) */}
             <div className="mb-6">
               <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Shared With</p>
               <div className="flex items-center gap-2 flex-wrap">
-                {RECIPIENTS.slice(0, 2).map(rec => (
-                   <div key={rec.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50">
-                     <span className="text-gray-500 w-4 h-4">{rec.icon}</span>
-                     <span className="text-[12px] font-medium text-gray-700">{rec.label}</span>
+                {detail.reviewedBy ? (
+                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50">
+                     <span className="text-gray-500 w-4 h-4"><UserIcon /></span>
+                     <span className="text-[12px] font-medium text-gray-700">{detail.reviewedBy.name}</span>
                    </div>
-                ))}
+                ) : (
+                   <div className="text-[12px] text-gray-500">Not shared yet</div>
+                )}
               </div>
             </div>
 
