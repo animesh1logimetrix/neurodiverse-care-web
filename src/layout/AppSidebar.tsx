@@ -391,7 +391,7 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex ${
+        className={`pt-6 pb-8 flex ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-center"
         }`}
       >
@@ -401,7 +401,7 @@ const AppSidebar: React.FC = () => {
               <img
                 src="/images/logo/theraverse-logo.jpeg"
                 alt="Logo"
-                className="w-full max-w-[180px] h-24 object-contain mb-1 rounded-md"
+                className="w-full max-w-[240px] h-36 object-contain mb-1 rounded-md"
               />
               <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight text-center">NeuroCare</h1>
               <p className="text-sm text-gray-500 font-medium text-center">{role}</p>
