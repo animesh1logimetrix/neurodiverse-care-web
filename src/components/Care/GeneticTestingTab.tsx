@@ -1224,26 +1224,29 @@ export default function GeneticTestingTab() {
 
                 {/* Report Documents */}
                 <p className="text-[13px] font-bold text-gray-800 mb-3">Report Documents</p>
-                <div className="space-y-4 mb-4">
+                <div className="flex flex-col gap-4 mb-4">
                   {selectedTest.reports && selectedTest.reports.length > 0 ? (
                     selectedTest.reports.map((doc: any, idx: number) => {
-                      const isExcel = doc.original_file_name?.toLowerCase().endsWith('.xls') || doc.original_file_name?.toLowerCase().endsWith('.xlsx');
                       return (
-                        <a key={idx} href={doc.file_url} target="_blank" rel="noreferrer" className="flex items-start gap-3 group">
-                          {isExcel ? (
-                            <svg className="w-5 h-5 text-green-600 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM8.5 16.5l-1.3-1.6-1.5 1.6H3.6l2.3-2.5-2.2-2.5h2l1.2 1.6 1.3-1.6h2.1l-2.3 2.5 2.4 2.5H8.5zM19 16.5h-5v-1.5h5v1.5zm0-4h-5v-1.5h5v1.5zm0-4h-5v-1.5h5v1.5z"/>
+                        <a 
+                          key={idx} 
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors w-fit pr-10"
+                        >
+                          <div className="w-10 h-10 flex-shrink-0 bg-blue-50 text-blue-500 rounded flex items-center justify-center">
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                             </svg>
-                          ) : (
-                            <svg className="w-5 h-5 text-red-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1.5h1.5V13H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/>
-                            </svg>
-                          )}
-                          <div className="-mt-0.5">
-                            <p className="text-[13px] font-medium text-gray-700 group-hover:text-blue-600 transition-colors truncate max-w-[200px]">
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-800 text-sm">
                               {doc.original_file_name || doc.file_name || `Document ${idx+1}`}
                             </p>
-                            <p className="text-[11px] text-gray-500 uppercase mt-0.5">{isExcel ? 'XLSX' : 'PDF'}</p>
+                            <p className="text-xs text-gray-500 uppercase mt-0.5">
+                              {doc.file_size ? `${(doc.file_size / 1024).toFixed(0)} KB ` : ''}{doc.file_type || (doc.original_file_name?.split('.').pop()) || "FILE"}
+                            </p>
                           </div>
                         </a>
                       );
@@ -1309,8 +1312,9 @@ export default function GeneticTestingTab() {
         onClose={() => setIsNoteModalOpen(false)}
         title="Add Clinical Note"
         maxWidth="max-w-[500px]"
+        padding="px-8 py-4"
         customFooter={
-          <div className="flex justify-center gap-4 px-8 py-5 w-full border-t border-gray-100">
+          <div className="flex justify-center gap-4 px-8 py-3 w-full border-t border-gray-100">
             <button
               onClick={() => setIsNoteModalOpen(false)}
               className="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
@@ -1327,32 +1331,30 @@ export default function GeneticTestingTab() {
           </div>
         }
       >
-        <div className="px-6 py-0">
-          <div className="mb-3">
-            <Label>Status</Label>
-            <Select
-              defaultValue={noteForm.status}
-              options={[
-                { value: "AWAITING_REPORT", label: "Awaiting Report" },
-                { value: "NEEDS_REVIEW", label: "Needs Review" },
-                { value: "REVIEWED", label: "Reviewed" },
-                { value: "NORMAL", label: "Normal" },
-                { value: "POSITIVE", label: "Positive" },
-                { value: "NEGATIVE", label: "Negative" },
-              ]}
-              onChange={(val) => setNoteForm(prev => ({ ...prev, status: val as GeneticTestStatus }))}
-              placeholder="Select status"
-            />
-          </div>
-          <div className="mb-0">
-            <Label>Clinical Note</Label>
-            <TextArea
-              value={noteForm.text}
-              onChange={(val) => setNoteForm(prev => ({ ...prev, text: val }))}
-              placeholder="Enter clinical note or interpretation..."
-              rows={4}
-            />
-          </div>
+        <div className="mb-2">
+          <Label>Status</Label>
+          <Select
+            defaultValue={noteForm.status}
+            options={[
+              { value: "AWAITING_REPORT", label: "Awaiting Report" },
+              { value: "NEEDS_REVIEW", label: "Needs Review" },
+              { value: "REVIEWED", label: "Reviewed" },
+              { value: "NORMAL", label: "Normal" },
+              { value: "POSITIVE", label: "Positive" },
+              { value: "NEGATIVE", label: "Negative" },
+            ]}
+            onChange={(val) => setNoteForm(prev => ({ ...prev, status: val as GeneticTestStatus }))}
+            placeholder="Select status"
+          />
+        </div>
+        <div className="mb-0">
+          <Label>Clinical Note</Label>
+          <TextArea
+            value={noteForm.text}
+            onChange={(val) => setNoteForm(prev => ({ ...prev, text: val }))}
+            placeholder="Enter clinical note or interpretation..."
+            rows={3}
+          />
         </div>
       </CustomModal>
 
