@@ -99,6 +99,8 @@ export interface CustomModalProps {
   bodyFooter?: ReactNode;
   /** Content rendered at the top of the body, above auto-generated fields */
   bodyHeader?: ReactNode;
+  /** Content rendered on the right side of the header */
+  headerRightContent?: ReactNode;
   /** Completely replaces the default Cancel / Submit footer */
   customFooter?: ReactNode;
 
@@ -208,6 +210,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   infoAlert,
   bodyHeader,
   bodyFooter,
+  headerRightContent,
   customFooter,
   padding = "px-8 py-6",
   initialValues,
@@ -302,28 +305,35 @@ export const CustomModal: React.FC<CustomModalProps> = ({
           <p className="text-xs text-gray-500 font-normal">{subtitle}</p>
         )}
       </div>
-      {!hideCloseButton && showCloseIcon && (
-        <button
-          type="button"
-          onClick={onClose}
-          className="ml-4 mt-0.5 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer shrink-0"
-          aria-label="Close modal"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+      <div className="flex items-center">
+        {headerRightContent && (
+          <div className="mr-4">
+            {headerRightContent}
+          </div>
+        )}
+        {!hideCloseButton && showCloseIcon && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer shrink-0"
+            aria-label="Close modal"
           >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-      )}
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
+      </div>
     </div>
   );
 

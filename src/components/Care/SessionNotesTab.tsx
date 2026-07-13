@@ -67,7 +67,7 @@ const domains = [
 
 const SessionNotesTab = () => {
   const [activeDomain, setActiveDomain] = useState("All");
-  const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null);
+  const [modalMode, setModalMode] = useState<'add' | 'edit' | 'view' | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<number | null>(null);
@@ -241,6 +241,11 @@ const SessionNotesTab = () => {
     setModalMode('edit');
   };
 
+  const openViewModal = (id: string) => {
+    setActiveSessionId(Number(id));
+    setModalMode('view');
+  };
+
   const closeModal = () => {
     setModalMode(null);
     setActiveSessionId(null);
@@ -371,6 +376,13 @@ const SessionNotesTab = () => {
                   </h3>
                   <div className="flex items-center gap-2">
                     <button 
+                      onClick={() => openViewModal(note.id)}
+                      className="p-1.5 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-md transition-colors"
+                      title="View"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                    <button 
                       onClick={() => openEditModal(note.id)}
                       className="p-1.5 text-gray-400 hover:text-[#60a5fa] hover:bg-blue-50 rounded-md transition-colors"
                       title="Edit"
@@ -408,7 +420,7 @@ const SessionNotesTab = () => {
 
       {/* Add Session Note Modal */}
       <CustomModal
-        isOpen={modalMode !== null}
+        isOpen={modalMode === 'add' || modalMode === 'edit'}
         onClose={closeModal}
         title={modalMode === 'add' ? "Log Session Note (Create)" : "Edit Session Note"}
         maxWidth="max-w-3xl"
@@ -611,6 +623,165 @@ const SessionNotesTab = () => {
             </div>
           </div>
         </div>
+      </CustomModal>
+
+      {/* View Session Note Modal */}
+      <CustomModal
+        isOpen={modalMode === 'view'}
+        onClose={closeModal}
+        title="Session Note Details"
+        maxWidth="max-w-4xl"
+        headerRightContent={
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => {
+                if (activeSessionId) {
+                  openEditModal(String(activeSessionId));
+                }
+              }}
+              className="px-4 py-1 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 transition-colors"
+            >
+              Edit Note
+            </button>
+            <button className="px-4 py-1 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 transition-colors">
+              Share with Team
+            </button>
+            <button className="px-4 py-1 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 transition-colors">
+              Download PDF
+            </button>
+          </div>
+        }
+        customFooter={<div className="hidden"></div>}
+      >
+        {activeSessionId && (() => {
+          const session = sessions.find((s: any) => s.id === activeSessionId);
+          const therapistName = session?.therapist?.name || "Unknown Therapist";
+          const role = session?.therapist?.role?.name || "Therapist";
+          const typeObj = domains.find(d => d.value === session?.session_type);
+          const type = typeObj ? typeObj.label : session?.session_type || "Session";
+          const duration = session?.duration ? `${session.duration} min` : "60 min";
+          
+          let initials = "NA";
+          if (therapistName !== "Unknown Therapist") {
+            const parts = therapistName.split(' ').filter(Boolean);
+            if (parts.length > 1) {
+               initials = (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+            } else if (parts.length === 1) {
+               initials = parts[0].substring(0, 2).toUpperCase();
+            }
+          }
+
+          return (
+            <div className="pt-2 pb-6">
+              <div className="bg-blue-50/80 border border-blue-100 text-blue-700 p-3.5 rounded-lg text-sm mb-8 flex items-start gap-3 shadow-sm">
+                <svg className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="leading-relaxed">
+                  <strong>Notice:</strong> Buttons like Shared With Team, Download PDF & Sections like Data Summary, Next Steps, Parent Report, and Timeline are currently displaying static placeholder data to match the intended UI design. These fields are not yet captured in the form.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-[1.5fr_2fr_2.5fr] gap-8 mb-10">
+                {/* Left Column */}
+                <div className="flex gap-4">
+                  <div className="text-orange-400 font-bold text-xl mt-1">{initials}</div>
+                  <div>
+                    <div className="font-bold text-gray-800 text-sm">{therapistName}</div>
+                    <div className="font-bold text-gray-600 text-[13px] mt-1">{role}</div>
+                    <div className="font-bold text-gray-600 text-[13px] mt-0.5">{type} {duration}</div>
+                  </div>
+                </div>
+
+                {/* Middle Column */}
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-bold text-gray-800 text-sm mb-2">Pre-Session Notes</h4>
+                    <p className="text-[13px] text-gray-500 leading-relaxed">
+                      {session?.pre_session_notes || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-800 text-sm mb-2">Post-Session Notes</h4>
+                    <p className="text-[13px] text-gray-500 leading-relaxed">
+                      {session?.post_session_notes || "N/A"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="font-bold text-gray-800 text-sm mb-3">Data Summary</h4>
+                    <div className="grid grid-cols-[2fr_1fr_1fr] gap-2 text-[13px] text-gray-700 font-bold mb-2">
+                      <div>Goal</div>
+                      <div className="text-center">Metric</div>
+                      <div className="text-right">Score</div>
+                    </div>
+                    <div className="grid grid-cols-[2fr_1fr_1fr] gap-2 text-[13px] text-gray-500 mb-2">
+                      <div>G-02-Name Response</div>
+                      <div className="text-center">Trials</div>
+                      <div className="text-right">4/5 (80%)</div>
+                    </div>
+                    <div className="grid grid-cols-[2fr_1fr_1fr] gap-2 text-[13px] text-gray-500">
+                      <div>G-06-Emotional Regulation</div>
+                      <div className="text-center">Independent ID</div>
+                      <div className="text-right">2/3 (67%)</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold text-gray-800 text-sm mb-2">Next Steps</h4>
+                    <p className="text-[13px] text-gray-500 leading-relaxed">
+                      Introduce "worried" and "frustrated" cards next session. Increase name response trials to 8/session.
+                    </p>
+                  </div>
+
+                  <div className="border border-orange-200/60 rounded-lg p-3 bg-white shadow-sm">
+                    <h4 className="font-bold text-gray-800 text-[13px] mb-1">Parent Report</h4>
+                    <p className="text-[13px] text-gray-500">
+                      Parent reported improved sleep this week, No meltdowns in 4 days.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom: Timeline */}
+              <div>
+                <h4 className="font-bold text-gray-800 text-sm mb-5">Session Timeline</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-12 text-[13px]">
+                    <div className="flex items-center gap-3 w-48">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></div>
+                      <span className="text-gray-600 font-medium">Note Created</span>
+                    </div>
+                    <span className="text-gray-500">Apr 29, 2026-10:15 AM By Rohit Sharma</span>
+                  </div>
+                  <div className="flex items-center gap-12 text-[13px]">
+                    <div className="flex items-center gap-3 w-48">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#ef4444]"></div>
+                      <span className="text-gray-600 font-medium">Shared with Care Team</span>
+                    </div>
+                    <span className="text-gray-500">Apr 29, 2026-10:20 AM By Rohit Sharma</span>
+                  </div>
+                  <div className="flex items-center gap-12 text-[13px]">
+                    <div className="flex items-center gap-3 w-48">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]"></div>
+                      <span className="text-gray-600 font-medium">Reviewed by Dr. Reena Kapoor</span>
+                    </div>
+                    <span className="text-gray-500">Apr 29, 2026-2:30 PM</span>
+                  </div>
+                  <div className="flex items-center gap-12 text-[13px]">
+                    <div className="flex items-center gap-3 w-48">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#a855f7]"></div>
+                      <span className="text-gray-600 font-medium">Parent Notified</span>
+                    </div>
+                    <span className="text-gray-500">Apr 29, 2026-3:00 PM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </CustomModal>
     </div>
   );
