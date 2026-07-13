@@ -282,7 +282,7 @@ export default function NeuroCareAuth() {
                     </span>
                   </div>
                   <div className="mt-2 text-right">
-                    <Link to="#" className="text-sm text-brand-600 hover:text-brand-700 font-medium">
+                    <Link to="/forgot-password" className="text-sm text-brand-600 hover:text-brand-700 font-medium">
                       Forgot password?
                     </Link>
                   </div>
