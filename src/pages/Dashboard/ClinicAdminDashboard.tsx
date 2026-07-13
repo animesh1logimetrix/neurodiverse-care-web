@@ -420,12 +420,12 @@ export default function ClinicAdminDashboard() {
           <div className="col-span-12 lg:col-span-4 flex flex-col gap-8">
 
             {/* 1. Clinic Summary — Master white card wrapping 4 distinct inner cards */}
-            <div className="bg-white border border-slate-100 rounded-[28px] shadow-[0_2px_12px_rgba(0,0,0,0.02)] p-4 h-[300px]">
-              <div className="grid grid-cols-2 gap-4 h-full">
+            <div className="bg-white border border-slate-100 rounded-[28px] shadow-[0_2px_12px_rgba(0,0,0,0.02)] p-4 h-auto lg:h-[300px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
                 {statCards.map((card, idx) => (
                   <div
                     key={card.label}
-                    className={`rounded-[20px] px-4 py-3 flex flex-col justify-center ${
+                    className={`rounded-[20px] px-4 py-4 lg:py-3 flex flex-col justify-center ${
                       idx === 0 ? "bg-[#f3f9ff]" : "bg-[#f8f9fa]"
                     }`}
                   >
@@ -438,11 +438,11 @@ export default function ClinicAdminDashboard() {
             </div>
 
             {/* 2. Sessions This Week */}
-            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 h-[298px] flex flex-col">
+            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 h-auto lg:h-[298px] flex flex-col">
               <div className="mb-2">
                 <h3 className="text-[15px] font-bold text-gray-800 leading-tight">Sessions This Week</h3>
               </div>
-              <div className="flex-1 w-full min-h-0 -ml-2 mt-2">
+              <div className="flex-1 w-full min-h-[220px] lg:min-h-0 -ml-2 mt-2">
                 <Chart options={sessionsWeekOptions} series={sessionsWeekSeries} type="area" height="100%" />
               </div>
             </div>
@@ -532,48 +532,54 @@ export default function ClinicAdminDashboard() {
           <div className="col-span-12 lg:col-span-8 flex flex-col gap-8">
 
             {/* 1. Large Neuro Progress Overview Card */}
-            <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between h-[630px] overflow-hidden p-8 pb-6">
-              {/* Top Section: Images */}
-              <div className="flex justify-between items-center gap-8 flex-1">
-                {/* Large Brain Image centered */}
-                <div className="flex-1 flex items-center justify-center">
+            <div className="bg-white border border-slate-100 rounded-[28px] shadow-[0_2px_12px_rgba(0,0,0,0.02)] h-auto lg:h-[630px] p-6 lg:p-8 flex flex-col lg:flex-row gap-8">
+              
+              {/* Left Side: Main Brain + Metrics */}
+              <div className="flex-1 flex flex-col justify-between h-full min-w-0">
+                
+                {/* Big Brain Image */}
+                <div className="flex-1 flex items-center justify-center min-h-[240px] lg:min-h-0 relative">
                   <img
                     src="/images/brain_main.png"
                     alt="Brain Anatomy"
-                    className="max-h-[280px] object-contain drop-shadow-md"
+                    className="max-h-[240px] lg:max-h-[320px] max-w-full object-contain drop-shadow-xl"
                   />
                 </div>
 
-                {/* Staked Anatomical Cross-sections */}
-                <div className="w-[100px] flex flex-col gap-4 justify-center flex-shrink-0">
-                  {["/images/brain_cross3.png", "/images/brain_cross1.png", "/images/brain_cross2.png"].map((src, idx) => (
-                    <div key={idx} className="rounded-xl overflow-hidden border border-slate-100 bg-gray-50 h-[72px] shadow-sm flex items-center justify-center">
-                      <img src={src} alt={`Anatomical cross section ${idx + 1}`} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
+                {/* Bottom Section: Info and metric cards */}
+                <div className="mt-8 flex-shrink-0">
+                  <div className="mb-5 text-center lg:text-left">
+                    <h2 className="text-[20px] lg:text-[24px] font-bold text-slate-700 leading-tight">Neuro Progress Overview</h2>
+                    <p className="text-[14px] text-slate-500 mt-1">Overall Platform Health</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      { label: "Total Children Under Monitoring", value: "2,486" },
+                      { label: "Average Development Progress", value: "72.8%" },
+                      { label: "Goals Achieved This Month", value: "1,842" },
+                      { label: "Active Therapy Plans", value: "1,126" }
+                    ].map((item) => (
+                      <div key={item.label} className="border border-slate-300 rounded-[16px] px-5 py-4 bg-white flex flex-col justify-center">
+                        <p className="text-[12px] text-slate-500 font-medium leading-tight mb-2">{item.label}</p>
+                        <p className="text-[22px] font-bold text-slate-700 leading-none">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Bottom Section: Info and metric cards */}
-              <div className="pt-6 mt-4 border-t border-slate-50 flex flex-col justify-end">
-                <div className="mb-4">
-                  <h2 className="text-[18px] font-bold text-gray-900 leading-tight">Neuro Progress Overview</h2>
-                  <p className="text-[13px] text-gray-500 mt-1">Overall Platform Health</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { label: "Total Children Under Monitoring", value: "2,486" },
-                    { label: "Average Development Progress", value: "72.8%" },
-                    { label: "Goals Achieved This Month", value: "1,842" },
-                    { label: "Active Therapy Plans", value: "1,126" }
-                  ].map((item) => (
-                    <div key={item.label} className="border border-slate-200 rounded-xl p-4 bg-white flex flex-col justify-between shadow-sm min-h-[85px]">
-                      <p className="text-[12px] text-gray-500 font-medium leading-tight mb-2">{item.label}</p>
-                      <p className="text-[26px] font-bold text-gray-800 leading-none">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
+              {/* Right Side: Staked Anatomical Cross-sections */}
+              <div className="w-full lg:w-[150px] flex flex-row lg:flex-col justify-center lg:justify-between items-center lg:h-full flex-shrink-0 gap-4 lg:gap-0 py-2">
+                {["/images/brain_cross3.png", "/images/brain_cross1.png", "/images/brain_cross2.png"].map((src, idx) => (
+                  <img 
+                    key={idx} 
+                    src={src} 
+                    alt={`Anatomical cross section ${idx + 1}`} 
+                    className="w-[80px] lg:w-[140px] max-h-[80px] lg:max-h-[160px] object-contain drop-shadow-md" 
+                  />
+                ))}
               </div>
+
             </div>
 
             {/* 2. Goal Achievement */}
@@ -653,13 +659,21 @@ export default function ClinicAdminDashboard() {
                   const total = row.achieved + row.active;
                   const pct = total > 0 ? (row.achieved / total) * 100 : 0;
                   return (
-                    <div key={row.name} className="flex items-center gap-4 text-[12px] leading-none py-1.5">
-                      <span className="w-[100px] font-bold text-gray-600 truncate">{row.name}</span>
-                      <div className="flex-1 h-[8px] bg-slate-100 rounded-full overflow-hidden flex items-center shadow-inner">
-                        <div className="bg-[#6366f1] h-full transition-all duration-500" style={{ width: `${pct}%` }} />
-                        <div className="bg-[#22d3ee] h-full transition-all duration-500" style={{ width: `${100 - pct}%` }} />
+                    <div 
+                      key={row.name} 
+                      className="relative flex items-center gap-4 text-[12px] leading-none py-1.5 px-2 -mx-2 rounded-lg hover:bg-slate-50/80 group cursor-pointer transition-colors"
+                    >
+                      <span className="w-[100px] font-bold text-gray-600 truncate group-hover:text-gray-900 transition-colors">{row.name}</span>
+                      <div className="flex-1 h-[8px] bg-slate-100 rounded-full overflow-hidden flex items-center shadow-inner group-hover:h-[10px] transition-all duration-300">
+                        <div className="bg-[#6366f1] h-full transition-all duration-500 group-hover:brightness-110" style={{ width: `${pct}%` }} />
+                        <div className="bg-[#22d3ee] h-full transition-all duration-500 group-hover:brightness-110" style={{ width: `${100 - pct}%` }} />
                       </div>
-                      <span className="w-[30px] text-right font-bold text-gray-700">{row.achieved}</span>
+                      <span className="w-[30px] text-right font-bold text-gray-700 group-hover:text-gray-900 transition-colors">{row.achieved}</span>
+                      
+                      {/* Custom Tooltip */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 bg-white border border-slate-100 text-slate-700 text-[11px] font-medium py-1.5 px-3 rounded shadow-[0_2px_8px_rgba(0,0,0,0.08)] whitespace-nowrap">
+                        <span className="font-bold text-[#6366f1]">{row.achieved}</span> Achieved <span className="mx-1 text-slate-300">|</span> <span className="font-bold text-[#22d3ee]">{row.active}</span> Active
+                      </div>
                     </div>
                   );
                 })}
@@ -695,7 +709,7 @@ export default function ClinicAdminDashboard() {
                   <TableBody>
                     {staffCaseload.map((row, idx) => (
                       <TableRow key={idx} className="hover:bg-slate-50/70 border-b border-slate-100 last:border-b-0 transition-colors">
-                        <TableCell className="px-6 py-4 text-[14px] font-semibold text-slate-700 text-left">{row.staff}</TableCell>
+                        <TableCell className="px-6 py-4 text-[14px] font-semibold text-slate-700 text-center">{row.staff}</TableCell>
                         <TableCell className="px-6 py-4 text-[14px] text-slate-500 text-center">{row.spec}</TableCell>
                         <TableCell className="px-6 py-4 text-[14px] text-slate-500 text-center font-medium">{row.children}</TableCell>
                         <TableCell className="px-6 py-4 text-[14px] text-slate-500 text-center font-medium">{row.sessions}</TableCell>
