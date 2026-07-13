@@ -54,16 +54,23 @@ const mockNotes: SessionNote[] = [
 ];
 
 const domains = [
-  "All",
-  "ABA",
-  "Speech",
-  "OT",
-  "Psychology",
+  { value: "All", label: "All" },
+  { value: "CONSULTATION", label: "Consultation" },
+  { value: "ABA", label: "ABA" },
+  { value: "SPEECH", label: "Speech" },
+  { value: "OCCUPATIONAL", label: "Occupational" },
+  { value: "PHYSIOTHERAPY", label: "Physiotherapy" },
+  { value: "PSYCHOLOGY", label: "Psychology" },
+  { value: "ASSESSMENT", label: "Assessment" },
+  { value: "FOLLOW_UP", label: "Follow Up" }
 ];
 
 const SessionNotesTab = () => {
   const [activeDomain, setActiveDomain] = useState("All");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   // Form State
@@ -107,6 +114,54 @@ const SessionNotesTab = () => {
   const children = Array.isArray(childrenData) ? childrenData : childrenData?.data || [];
   const users = Array.isArray(usersData) ? usersData : usersData?.data || [];
 
+  const { data: sessionData, isLoading: isSessionsLoading } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/session");
+      return res.data;
+    },
+  });
+
+  const sessions = Array.isArray(sessionData) ? sessionData : sessionData?.data || [];
+
+  const sessionNotesList = sessions.map((session: any) => {
+    const therapistName = session.therapist?.name || "Unknown Therapist";
+    let initials = "NA";
+    if (therapistName !== "Unknown Therapist") {
+      const parts = therapistName.split(' ').filter(Boolean);
+      if (parts.length > 1) {
+         initials = (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+      } else if (parts.length === 1) {
+         initials = parts[0].substring(0, 2).toUpperCase();
+      }
+    }
+
+    const dateStr = session.sessionDate 
+      ? new Date(session.sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : "No Date";
+
+    const timeStr = session.startTime 
+      ? new Date(session.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+      : "";
+
+    const datetimeStr = timeStr ? `${dateStr} at ${timeStr}` : dateStr;
+
+    const typeObj = domains.find(d => d.value === session.session_type);
+    const friendlyType = typeObj ? typeObj.label : session.session_type || "Unknown";
+
+    return {
+      id: String(session.id),
+      initials,
+      therapist: therapistName,
+      role: session.therapist?.role?.name || "Therapist",
+      type: session.session_type,
+      displayType: friendlyType,
+      duration: `${session.duration || 0} min`,
+      datetime: datetimeStr,
+      goals: session.session_notes ? session.session_notes.split(',').map((g: string) => g.trim()).filter(Boolean) : [],
+    };
+  });
+
   const createSessionMutation = useMutation({
     mutationFn: async (payload: any) => {
       const res = await axiosClient.post("/session", payload);
@@ -115,18 +170,81 @@ const SessionNotesTab = () => {
     onSuccess: () => {
       toast.success("Session note added successfully");
       queryClient.invalidateQueries({ queryKey: ["session"] });
-      setIsModalOpen(false);
-      setFormData({
-        childId: "", therapistId: "", sessionType: "", date: "",
-        startTime: "", duration: "", location: "", status: "",
-        relatedGoals: "", preSessionNotes: "", postSessionNotes: ""
-      });
-      setFormErrors({});
+      closeModal();
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Failed to add session note");
     }
   });
+
+  const updateSessionMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: number, payload: any }) => {
+      const res = await axiosClient.patch(`/session/${id}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Session note updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+      closeModal();
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update session note");
+    }
+  });
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await axiosClient.delete(`/session/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Session note deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+      setIsDeleteModalOpen(false);
+      setSessionToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete session note");
+    }
+  });
+
+  const openAddModal = () => {
+    setFormData({
+      childId: "", therapistId: "", sessionType: "", date: "",
+      startTime: "", duration: "", location: "", status: "",
+      relatedGoals: "", preSessionNotes: "", postSessionNotes: ""
+    });
+    setFormErrors({});
+    setModalMode('add');
+    setActiveSessionId(null);
+  };
+
+  const openEditModal = (id: string) => {
+    const session = sessions.find((s: any) => String(s.id) === id);
+    if (!session) return;
+    
+    setFormData({
+      childId: String(session.child_id || ""),
+      therapistId: String(session.therapist_id || ""),
+      sessionType: session.session_type || "",
+      date: session.sessionDate || "",
+      startTime: session.startTime ? new Date(session.startTime).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : "",
+      duration: String(session.duration || ""),
+      location: session.location || "",
+      status: session.status || "COMPLETED",
+      relatedGoals: session.session_notes || "",
+      preSessionNotes: session.pre_session_notes || "",
+      postSessionNotes: session.post_session_notes || ""
+    });
+    setFormErrors({});
+    setActiveSessionId(Number(id));
+    setModalMode('edit');
+  };
+
+  const closeModal = () => {
+    setModalMode(null);
+    setActiveSessionId(null);
+  };
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -147,12 +265,26 @@ const SessionNotesTab = () => {
       return;
     }
 
+    let startDateTime = formData.startTime;
+    if (formData.date && formData.startTime) {
+      try {
+        const dateObj = new Date(formData.date);
+        const [hours, minutes] = formData.startTime.split(':');
+        if (hours && minutes) {
+          dateObj.setHours(Number(hours), Number(minutes), 0, 0);
+          startDateTime = dateObj.toISOString();
+        }
+      } catch (e) {
+        console.error("Error parsing date/time", e);
+      }
+    }
+
     const payload = {
       child_id: Number(formData.childId),
       therapist_id: Number(formData.therapistId),
       session_type: formData.sessionType,
       sessionDate: formData.date,
-      startTime: formData.startTime,
+      startTime: startDateTime,
       duration: Number(formData.duration),
       status: "COMPLETED",
       location: formData.location,
@@ -161,12 +293,16 @@ const SessionNotesTab = () => {
       session_notes: formData.relatedGoals
     };
     
-    createSessionMutation.mutate(payload);
+    if (modalMode === 'edit' && activeSessionId) {
+      updateSessionMutation.mutate({ id: activeSessionId, payload });
+    } else {
+      createSessionMutation.mutate(payload);
+    }
   };
 
   const filteredNotes = activeDomain === "All" 
-    ? mockNotes 
-    : mockNotes.filter(note => note.type === activeDomain);
+    ? sessionNotesList 
+    : sessionNotesList.filter((note: any) => note.type === activeDomain);
 
   return (
     <div className="space-y-6">
@@ -175,11 +311,11 @@ const SessionNotesTab = () => {
         <div>
           <h2 className="text-xl font-bold text-gray-800">Session Notes</h2>
           <p className="text-sm text-gray-500 mt-1">
-            6 notes this month
+            {sessionNotesList.length} notes available
           </p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={openAddModal}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
         >
           + Add Note
@@ -190,75 +326,106 @@ const SessionNotesTab = () => {
       <div className="flex items-center gap-4 border-b border-gray-100 overflow-x-auto pb-1 custom-scrollbar">
         {domains.map((domain) => (
           <button
-            key={domain}
-            onClick={() => setActiveDomain(domain)}
+            key={domain.value}
+            onClick={() => setActiveDomain(domain.value)}
             className={`whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors ${
-              activeDomain === domain
+              activeDomain === domain.value
                 ? "text-orange-500 border-b-2 border-orange-500 bg-orange-50/50 rounded-t-lg"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-t-lg"
             }`}
           >
-            {domain}
+            {domain.label}
           </button>
         ))}
       </div>
 
       {/* Notes List */}
       <div className="space-y-4">
-        {filteredNotes.map((note) => (
-          <div key={note.id} className="bg-white rounded-xl shadow-sm border border-orange-200/60 p-5 flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-bold text-sm shrink-0">
-              {note.initials}
-            </div>
-            
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-sm font-bold text-gray-900">
-                  {note.therapist} <span className="font-normal text-gray-600">{note.role} {note.type} - {note.duration}</span>
-                </h3>
+        {isSessionsLoading ? (
+          <div className="py-12 flex flex-col items-center justify-center text-gray-500">
+            <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-sm font-medium">Loading sessions...</p>
+          </div>
+        ) : filteredNotes.length === 0 ? (
+          <div className="py-12 flex flex-col items-center justify-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <svg className="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p className="text-gray-600 font-medium">No notes found for this category</p>
+            <p className="text-sm mt-1">Click "Add Note" to create a new session record.</p>
+          </div>
+        ) : (
+          filteredNotes.map((note: any) => (
+            <div key={note.id} className="bg-white rounded-xl shadow-sm border border-orange-200/60 p-5 flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-bold text-sm shrink-0">
+                {note.initials}
               </div>
               
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-xs text-gray-500">{note.datetime}</span>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-sm font-bold text-gray-900">
+                    {note.therapist} <span className="font-normal text-gray-600">{note.role} {note.displayType} - {note.duration}</span>
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => openEditModal(note.id)}
+                      className="p-1.5 text-gray-400 hover:text-[#60a5fa] hover:bg-blue-50 rounded-md transition-colors"
+                      title="Edit"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    </button>
+                    <button 
+                      onClick={() => { setSessionToDelete(Number(note.id)); setIsDeleteModalOpen(true); }}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                      title="Delete"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>
+                  </div>
+                </div>
                 
-                <div className="flex items-center gap-2">
-                  {note.goals.map((goal, idx) => (
-                    <span key={idx} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
-                      {goal}
-                    </span>
-                  ))}
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-xs text-gray-500">{note.datetime}</span>
+                  
+                  {note.goals.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      {note.goals.map((goal: string, idx: number) => (
+                        <span key={idx} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
+                          {goal}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-        {filteredNotes.length === 0 && (
-          <div className="py-12 flex flex-col items-center justify-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-            <p className="text-gray-600 font-medium">No notes found for this category</p>
-          </div>
+          ))
         )}
       </div>
 
       {/* Add Session Note Modal */}
       <CustomModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Log Session Note (Create)"
+        isOpen={modalMode !== null}
+        onClose={closeModal}
+        title={modalMode === 'add' ? "Log Session Note (Create)" : "Edit Session Note"}
         maxWidth="max-w-3xl"
         customFooter={
           <div className="flex justify-center gap-4 px-8 py-5 border-t border-gray-100 w-full">
             <button
-              onClick={() => setIsModalOpen(false)}
+              onClick={closeModal}
               className="px-8 py-2 text-sm font-bold text-gray-600 bg-[#e2e8f0] rounded-lg hover:bg-gray-300 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              disabled={createSessionMutation.isPending}
+              disabled={createSessionMutation.isPending || updateSessionMutation.isPending}
               className="px-8 py-2 text-sm font-bold text-white bg-[#60a5fa] rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
             >
-              {createSessionMutation.isPending ? "Saving..." : "Save Session Note"}
+              {createSessionMutation.isPending || updateSessionMutation.isPending ? "Saving..." : "Save Session Note"}
             </button>
           </div>
         }
@@ -272,7 +439,7 @@ const SessionNotesTab = () => {
               <Select 
                 key={`childId-${formData.childId}`}
                 defaultValue={formData.childId}
-                options={children.map((c: any) => ({ value: String(c.id), label: c.child_name || c.name || `Child ${c.id}` }))}
+                options={children.map((c: any) => ({ value: String(c.id), label: c.full_name || c.child_name || c.name || `Child ${c.id}` }))}
                 onChange={(val) => updateForm('childId', val)}
                 placeholder="Select"
               />
@@ -386,6 +553,61 @@ const SessionNotesTab = () => {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[80px]"
                 placeholder="Write"
               />
+            </div>
+          </div>
+        </div>
+      </CustomModal>
+
+      {/* Delete Warning Modal */}
+      <CustomModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSessionToDelete(null);
+        }}
+        title="Delete Session Note"
+        size="sm"
+        padding="p-0"
+        customFooter={
+          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50/80 border-t border-gray-100 rounded-b-2xl">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setSessionToDelete(null);
+              }}
+              disabled={deleteSessionMutation.isPending}
+              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (sessionToDelete !== null) {
+                  deleteSessionMutation.mutate(sessionToDelete);
+                }
+              }}
+              disabled={deleteSessionMutation.isPending}
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 border border-transparent rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all disabled:opacity-70 min-w-[90px]"
+            >
+              {deleteSessionMutation.isPending ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+        }
+      >
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Are you sure?</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                This action cannot be undone. This will permanently delete the session note.
+              </p>
             </div>
           </div>
         </div>
