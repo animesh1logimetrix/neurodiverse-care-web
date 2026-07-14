@@ -95,23 +95,10 @@ const getNavItems = (role: string): NavItem[] => {
         icon: <GridIcon />,
         path: "/dashboard"
       },
-     {
-      name: "Administration",
-      icon: <GroupIcon />,
-      subItems: [
-        { name: "Staff & Parents", path: "/administration/staff-parents", pro: false },
-        { name: "Role Management", path: "/administration/role-management", pro: false },
-        { name: "Modules", path: "/administration/modules", pro: false },
-        { name: "Permissions", path: "/administration/permission", pro: false },
-      ]
-    },
-     {
-        name: "Masters",
-        icon: <DocsIcon />,
-        subItems: [
-          { name: "Category Master", path: "/masters/category-master", pro: false },
-          { name: "Content & CMS", path: "/masters/content-cms", pro: false },
-        ]
+      {
+        name: "Staff & Parents",
+        icon: <GroupIcon />,
+        path: "/administration/staff-parents"
       },
       {
         name: "Care",

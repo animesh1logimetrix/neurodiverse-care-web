@@ -106,7 +106,7 @@ const AppointmentCard: React.FC<{
               <div className="py-1">
                 <DropdownItem 
                   onClick={(e) => {
-                    e?.stopPropagation();
+                    e.stopPropagation();
                     setIsMenuOpen(false);
                     onEdit(data);
                   }}
@@ -118,7 +118,7 @@ const AppointmentCard: React.FC<{
                 
                 <DropdownItem 
                   onClick={(e) => {
-                    e?.stopPropagation();
+                    e.stopPropagation();
                     setIsMenuOpen(false);
                     onChangeStatus(data);
                   }}
@@ -130,7 +130,7 @@ const AppointmentCard: React.FC<{
                 
                 <DropdownItem
                   onClick={(e) => {
-                    e?.stopPropagation();
+                    e.stopPropagation();
                     setIsMenuOpen(false);
                     onDelete(data.id);
                   }}
@@ -411,18 +411,18 @@ export default function Appointment() {
 
   return (
     <>
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
-        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
-      </div>
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Appointments</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {todayAppointments.length} today – {upcomingAppointments.length} upcoming
-          </p>
-        </div>
+      <div
+        className="min-h-screen bg-[#f8fafc] -mx-4 md:-mx-6 -my-4 md:-my-6 p-[32px]"
+        style={{ fontFamily: "Outfit, sans-serif" }}
+      >
+        {/* Page Header */}
+        <div className="mb-[32px] flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h1 className="text-[36px] font-bold text-gray-900 leading-tight">Appointments</h1>
+            <p className="text-[18px] text-gray-400 mt-1">
+              {todayAppointments.length} today – {upcomingAppointments.length} upcoming
+            </p>
+          </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-12 w-full md:w-auto justify-between md:justify-end">
           <div className="flex items-center gap-8 text-sm font-medium">
@@ -450,7 +450,7 @@ export default function Appointment() {
           >
             <PlusIcon className="w-4 h-4 fill-current" /> Book Appointment
           </button>
-      </div>
+        </div>
       </div>
 
         {/* Content */}
@@ -581,7 +581,9 @@ export default function Appointment() {
             </label>
             <input 
               type="datetime-local" 
-              className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-theme-xs focus:outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 bg-transparent dark:text-white/90"
+              className={`h-11 w-full rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs focus:outline-none focus:ring-3 bg-transparent dark:text-white/90 ${
+                bookErrors.scheduleAt ? "border-red-500 focus:border-red-500 focus:ring-red-500/10" : "border-gray-300 focus:border-brand-300 focus:ring-brand-500/10"
+              }`}
               value={bookForm.scheduleAt}
               onChange={(e) => handleBookFormChange("scheduleAt", e.target.value)}
             />
@@ -702,6 +704,7 @@ export default function Appointment() {
           />
         </div>
       </CustomModal>
+    </div>
     </>
   );
 }
