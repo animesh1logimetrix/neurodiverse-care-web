@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+import axiosClient from "../../api/axiosClient";
 import PageMeta from "../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
 import { Dropdown } from "../../components/ui/dropdown/Dropdown";
@@ -8,40 +10,13 @@ import { HorizontaLDots, PlusIcon } from "../../icons";
 
 interface Module {
   id: number;
-  name: string;
+  Name: string;
   description: string;
+  icon?: string;
 }
 
-const initialModules: Module[] = [
-  {
-    id: 1,
-    name: "Super Admin",
-    description: "Full platform access across all organizations and modules",
-  },
-  {
-    id: 2,
-    name: "Org Admin",
-    description: "Full clinical control within their organization; manages staff and compliance",
-  },
-  {
-    id: 3,
-    name: "Therapist / Clinician",
-    description: "Manages caseload, conducts sessions, writes notes and reports",
-  },
-  {
-    id: 4,
-    name: "Psychologist",
-    description: "Conducts psychometric assessments and confirms diagnoses",
-  },
-  {
-    id: 5,
-    name: "School Staff",
-    description: "Tracks IEP goals for shared students; consent-scoped view only",
-  },
-];
-
 export default function ManageModules() {
-  const [modules, setModules] = useState<Module[]>(initialModules);
+  const [modules, setModules] = useState<Module[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuModuleId, setOpenMenuModuleId] = useState<number | null>(null);
 
@@ -53,8 +28,27 @@ export default function ManageModules() {
   // Form state
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchModules = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axiosClient.get("/module");
+      setModules(Array.isArray(response.data) ? response.data : response.data.data || []);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to fetch modules");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchModules();
+  }, []);
 
   const getModuleColor = (name: string) => {
+    if (!name) return "text-gray-900 dark:text-white font-semibold";
     if (name.toLowerCase().includes("super admin")) return "text-[#10b981] font-semibold";
     if (name.toLowerCase().includes("org admin")) return "text-[#f59e0b] font-semibold";
     if (name.toLowerCase().includes("therapist") || name.toLowerCase().includes("clinician")) return "text-[#3b82f6] font-semibold";
@@ -67,13 +61,15 @@ export default function ManageModules() {
     setSelectedModule(null);
     setFormName("");
     setFormDescription("");
+    setFormErrors({});
     setIsAddEditOpen(true);
   };
 
   const handleOpenEditModal = (mod: Module) => {
     setSelectedModule(mod);
-    setFormName(mod.name);
+    setFormName(mod.Name);
     setFormDescription(mod.description);
+    setFormErrors({});
     setIsAddEditOpen(true);
     setOpenMenuModuleId(null);
   };
@@ -84,40 +80,66 @@ export default function ManageModules() {
     setOpenMenuModuleId(null);
   };
 
-  const handleSaveModule = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedModule) {
-      // Edit
-      setModules((prev) =>
-        prev.map((m) =>
-          m.id === selectedModule.id
-            ? { ...m, name: formName, description: formDescription }
-            : m
-        )
-      );
-    } else {
-      // Add
-      const newModule: Module = {
-        id: Date.now(),
-        name: formName,
-        description: formDescription,
-      };
-      setModules((prev) => [...prev, newModule]);
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formName.trim()) {
+      errors.formName = "Module Name is required.";
     }
-    setIsAddEditOpen(false);
+    if (!formDescription.trim()) {
+      errors.formDescription = "Description is required.";
+    }
+    return errors;
   };
 
-  const handleDeleteConfirm = () => {
+  const handleSaveModule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    try {
+      if (selectedModule) {
+        // Edit
+        await axiosClient.patch(`/module/${selectedModule.id}`, {
+          Name: formName,
+          description: formDescription,
+          icon: selectedModule.icon || "",
+        });
+        toast.success("Module updated successfully");
+      } else {
+        // Add
+        await axiosClient.post("/module", {
+          Name: formName,
+          description: formDescription,
+          icon: "",
+        });
+        toast.success("Module created successfully");
+      }
+      setIsAddEditOpen(false);
+      fetchModules();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to save module");
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
     if (selectedModule) {
-      setModules((prev) => prev.filter((m) => m.id !== selectedModule.id));
-      setIsDeleteOpen(false);
-      setSelectedModule(null);
+      try {
+        await axiosClient.delete(`/module/${selectedModule.id}`);
+        toast.success("Module deleted successfully");
+        setIsDeleteOpen(false);
+        setSelectedModule(null);
+        fetchModules();
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to delete module");
+      }
     }
   };
 
   const filteredModules = modules.filter((m) =>
-    m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.description.toLowerCase().includes(searchQuery.toLowerCase())
+    (m.Name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (m.description || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -212,7 +234,7 @@ export default function ManageModules() {
                   <TableRow key={mod.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.01]">
                     {/* Name */}
                     <TableCell className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={getModuleColor(mod.name)}>{mod.name}</span>
+                      <span className={getModuleColor(mod.Name)}>{mod.Name}</span>
                     </TableCell>
 
                     {/* Description */}
@@ -293,12 +315,15 @@ export default function ManageModules() {
             </label>
             <input
               type="text"
-              required
               placeholder="Enter module name"
               value={formName}
-              onChange={(e) => setFormName(e.target.value)}
+              onChange={(e) => {
+                setFormName(e.target.value);
+                setFormErrors((prev) => ({ ...prev, formName: "" }));
+              }}
               className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
             />
+            {formErrors.formName && <p className="text-xs text-red-500 mt-0.5">{formErrors.formName}</p>}
           </div>
 
           {/* Description */}
@@ -307,13 +332,16 @@ export default function ManageModules() {
               Description <span className="text-black">*</span>
             </label>
             <textarea
-              required
               placeholder="Enter description"
               value={formDescription}
-              onChange={(e) => setFormDescription(e.target.value)}
+              onChange={(e) => {
+                setFormDescription(e.target.value);
+                setFormErrors((prev) => ({ ...prev, formDescription: "" }));
+              }}
               rows={4}
               className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all resize-none"
             />
+            {formErrors.formDescription && <p className="text-xs text-red-500 mt-0.5">{formErrors.formDescription}</p>}
           </div>
         </form>
       </CustomModal>
@@ -325,7 +353,7 @@ export default function ManageModules() {
         title="Delete Module"
         showOverlay
         backdropBlur={false}
-        width="max-w-[480px]"
+        maxWidth="max-w-md"
         padding="px-8 py-6"
         showCloseIcon
         customFooter={
@@ -347,9 +375,21 @@ export default function ManageModules() {
           </div>
         }
       >
-        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-          Are you sure you want to delete this module? This action cannot be undone.
-        </p>
+        <div className="p-2 -mx-4">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Confirm Deletion</h3>
+              <p className="text-sm text-gray-600">
+                Are you sure you want to delete this module? This action cannot be undone.
+              </p>
+            </div>
+          </div>
+        </div>
       </CustomModal>
     </>
   );
