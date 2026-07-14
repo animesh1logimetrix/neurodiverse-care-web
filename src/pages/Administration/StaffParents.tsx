@@ -1,11 +1,17 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axiosClient from "../../api/axiosClient";
+import toast from "react-hot-toast";
 import PageMeta from "../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
 import { Dropdown } from "../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
-import { CustomModal, FieldConfig } from "../../components/ui/modal/CustomModal";
+import { CustomModal } from "../../components/ui/modal/CustomModal";
 import { HorizontaLDots, PlusIcon } from "../../icons";
+import InputField from "../../components/form/input/InputField";
+import Select from "../../components/form/Select";
+import Label from "../../components/form/Label";
 
 interface User {
   id: number;
@@ -162,77 +168,110 @@ const initialUsers: User[] = [
 ];
 
 export default function StaffParents() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const queryClient = useQueryClient();
+
+  // Fetch invitations
+  const { data: invitationsData, isLoading: isInvitationsLoading } = useQuery({
+    queryKey: ["invitations"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/invitation");
+      return res.data;
+    },
+  });
+
+  const users: User[] = Array.isArray(invitationsData) 
+    ? invitationsData.map((inv: any) => ({
+        id: inv.id,
+        name: inv.child?.full_name ? `Parent of ${inv.child.full_name}` : (inv.invitedBy?.name || "Invited User"),
+        email: inv.email,
+        role: "Parent",
+        status: inv.status === "PENDING" ? "Pending" : "Active",
+        lastActive: "Never",
+        createdAt: inv.createdAt ? new Date(inv.createdAt).toISOString().split("T")[0] : "",
+      }))
+    : [];
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [openMenuUserId, setOpenMenuUserId] = useState<number | null>(null);
 
-  // Invite/Edit Modal state
+  // Invite Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteChildId, setInviteChildId] = useState("");
+  const [inviteErrors, setInviteErrors] = useState<Record<string, string>>({});
 
   // Count variables for subtitle
   const totalUsers = users.length;
   const pendingInvitations = users.filter((u) => u.status === "Pending").length;
 
-  const handleInviteOrEditSubmit = (formData: Record<string, any>) => {
-    if (editingUser) {
-      // Edit logic
-      setUsers((prevUsers) =>
-        prevUsers.map((u) =>
-          u.id === editingUser.id
-            ? {
-                ...u,
-                name: formData.name || u.name,
-                email: formData.email || u.email,
-                role: formData.role || u.role,
-                status: formData.status || u.status,
-              }
-            : u
-        )
-      );
-      setEditingUser(null);
-    } else {
-      // Add/Invite logic
-      const newUser: User = {
-        id: Date.now(),
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-        status: formData.status || "Pending",
-        lastActive: "Never",
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setUsers((prevUsers) => [newUser, ...prevUsers]);
+  const { data: childrenData } = useQuery({
+    queryKey: ["child"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/child");
+      return res.data;
+    },
+  });
+  const children = Array.isArray(childrenData) ? childrenData : childrenData?.data || [];
+
+  const inviteMutation = useMutation({
+    mutationFn: async (payload: { email: string; childId: number }) => {
+      const res = await axiosClient.post("/invitation", payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Invitation sent successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to send invitation");
+    },
+  });
+
+  const validateInviteForm = () => {
+    const errors: Record<string, string> = {};
+    if (!inviteEmail.trim()) {
+      errors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail)) {
+      errors.email = "Invalid email address.";
     }
-    setIsModalOpen(false);
+    if (!inviteChildId) {
+      errors.childId = "Please select a child.";
+    }
+    return errors;
+  };
+
+  const handleInviteSubmit = async () => {
+    const errors = validateInviteForm();
+    if (Object.keys(errors).length > 0) {
+      setInviteErrors(errors);
+      return;
+    }
+    
+    try {
+      await inviteMutation.mutateAsync({
+        email: inviteEmail,
+        childId: Number(inviteChildId),
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      handleCloseInviteModal();
+    } catch (error) {
+      console.error("Invitation error:", error);
+    }
   };
 
   const handleOpenInviteModal = () => {
-    setEditingUser(null);
+    setInviteEmail("");
+    setInviteChildId("");
+    setInviteErrors({});
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = (user: User) => {
-    setEditingUser(user);
-    setIsModalOpen(true);
-    setOpenMenuUserId(null);
-  };
-
-  const handleOpenDeleteModal = (user: User) => {
-    setSelectedUser(user);
-    setIsDeleteModalOpen(true);
-    setOpenMenuUserId(null);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (selectedUser) {
-      setUsers((prevUsers) => prevUsers.filter((u) => u.id !== selectedUser.id));
-      setIsDeleteModalOpen(false);
-      setSelectedUser(null);
-    }
+  const handleCloseInviteModal = () => {
+    setIsModalOpen(false);
+    setInviteEmail("");
+    setInviteChildId("");
+    setInviteErrors({});
   };
 
   // Helper to filter users list
@@ -251,56 +290,6 @@ export default function StaffParents() {
     return true;
   });
 
-  // Modal configuration fields
-  const fieldsConfig: FieldConfig[] = [
-    {
-      name: "name",
-      label: "Full Name",
-      type: "text",
-      required: true,
-      placeholder: "Enter full name",
-      colSpan: 2,
-    },
-    {
-      name: "email",
-      label: "Email Address",
-      type: "email",
-      required: true,
-      placeholder: "Enter email address",
-      colSpan: 1,
-    },
-    {
-      name: "role",
-      label: "Role",
-      type: "select",
-      required: true,
-      placeholder: "Select user role",
-      options: [
-        { label: "Super Admin", value: "Super Admin" },
-        { label: "Clinic Admin", value: "Clinic Admin" },
-        { label: "Therapist", value: "Therapist" },
-        { label: "Psychologist", value: "Psychologist" },
-        { label: "School Staff", value: "School Staff" },
-        { label: "Parent", value: "Parent" },
-      ],
-      colSpan: 1,
-    },
-    {
-      name: "status",
-      label: "Status",
-      type: "select",
-      required: true,
-      placeholder: "Select status",
-      options: [
-        { label: "Active", value: "Active" },
-        { label: "Pending", value: "Pending" },
-        { label: "Inactive", value: "Inactive" },
-      ],
-      colSpan: 1,
-      // Only show Status field when editing an existing user
-      condition: () => !!editingUser,
-    },
-  ];
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -475,19 +464,38 @@ export default function StaffParents() {
                 >
                   Created At
                 </TableCell>
-                <TableCell
+                {/* <TableCell
                   isHeader
                   className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
                 >
                   Action
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             </TableHeader>
             <TableBody className="bg-white divide-y divide-gray-100 dark:bg-transparent dark:divide-gray-800">
-              {filteredUsers.length === 0 ? (
+              {isInvitationsLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                    No users found matching the query.
+                  <TableCell colSpan={6} className="p-0">
+                    <div className="flex flex-col items-center justify-center p-16 text-center gap-4">
+                      <div className="w-10 h-10 border-4 border-gray-200 border-t-brand-500 rounded-full animate-spin dark:border-gray-700 dark:border-t-brand-400"></div>
+                      <p className="text-sm text-gray-500 font-medium animate-pulse dark:text-gray-400">Loading invitations...</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="p-0">
+                    <div className="flex flex-col items-center justify-center p-12 text-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-gray-800/50 dark:border-gray-700">
+                        <svg className="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">No users found</p>
+                        <p className="text-sm text-gray-500 mt-1 dark:text-gray-400">Try adjusting your search or send a new invitation.</p>
+                      </div>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -543,7 +551,7 @@ export default function StaffParents() {
                     </TableCell>
 
                     {/* Interactive Dropdown Actions */}
-                    <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    {/* <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <div className="relative inline-block text-left">
                         <button
                           onClick={() => setOpenMenuUserId(openMenuUserId === user.id ? null : user.id)}
@@ -557,11 +565,11 @@ export default function StaffParents() {
                           className="w-36 right-0 mt-1 shadow-theme-md"
                         >
                           <div className="py-1">
-                            <DropdownItem onClick={() => handleOpenEditModal(user)}>
+                            <DropdownItem onClick={() => {}}>
                               Edit User
                             </DropdownItem>
                             <DropdownItem
-                              onClick={() => handleOpenDeleteModal(user)}
+                              onClick={() => {}}
                               className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20"
                             >
                               Delete
@@ -569,7 +577,7 @@ export default function StaffParents() {
                           </div>
                         </Dropdown>
                       </div>
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 ))
               )}
@@ -581,64 +589,57 @@ export default function StaffParents() {
       {/* Invite User Modal */}
       <CustomModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingUser ? "Edit User Details" : "Invite User"}
-        submitText={editingUser ? "Save Changes" : "Send Invitation"}
-        fields={fieldsConfig}
-        onSubmit={handleInviteOrEditSubmit}
-        initialValues={editingUser ? {
-          name: editingUser.name,
-          email: editingUser.email,
-          role: editingUser.role,
-          status: editingUser.status,
-        } : undefined}
-        infoAlert={!editingUser
-          ? "An invitation email will be sent with a secure setup link.Access is granted only after email verification."
-          : undefined
-        }
-        size="lg"
-        footerAlign="center"
-        asteriskColor="black"
-        overlayBlur={false}
-      />
-
-      <CustomModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setSelectedUser(null);
-        }}
-        title="Delete User"
-        showOverlay
-        backdropBlur={false}
-        width="max-w-[480px]"
-        padding="px-8 py-6"
-        showCloseIcon
+        onClose={handleCloseInviteModal}
+        title="Invite User"
+        isLoading={inviteMutation.isPending}
         customFooter={
-          <div className="flex justify-end items-center gap-3 px-8 py-5 border-t border-gray-100 w-full">
+          <div className="flex justify-center items-center gap-3 px-8 py-5 border-t border-gray-100 w-full">
             <button
               type="button"
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setSelectedUser(null);
-              }}
-              className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer"
+              onClick={handleCloseInviteModal}
+              disabled={inviteMutation.isPending}
+              className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="button"
-              onClick={handleDeleteConfirm}
-              className="px-6 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors text-sm cursor-pointer"
+              onClick={handleInviteSubmit}
+              disabled={inviteMutation.isPending}
+              className="px-6 py-2.5 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors text-sm cursor-pointer disabled:opacity-50 min-w-[120px]"
             >
-              Delete
+              {inviteMutation.isPending ? "Submitting..." : "Send Invitation"}
             </button>
           </div>
         }
+        infoAlert="An invitation email will be sent with a secure setup link. Access is granted only after email verification."
+        size="md"
+        asteriskColor="black"
+        overlayBlur={false}
       >
-        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-          Are you sure you want to delete this user? This action cannot be undone.
-        </p>
+        <div className="grid grid-cols-1 gap-5 mb-2">
+          <div>
+            <Label>Email Address *</Label>
+            <InputField
+              type="email"
+              placeholder="Enter email address"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+            {inviteErrors.email && <p className="mt-1 text-xs text-red-600">{inviteErrors.email}</p>}
+          </div>
+          <div>
+            <Label>Select Child *</Label>
+            <Select
+              key={`childId-${inviteChildId}`}
+              placeholder="Select Child"
+              options={children.map((c: any) => ({ label: c.full_name || `Child ${c.id}`, value: String(c.id) }))}
+              defaultValue={inviteChildId}
+              onChange={(val) => setInviteChildId(val)}
+            />
+            {inviteErrors.childId && <p className="mt-1 text-xs text-red-600">{inviteErrors.childId}</p>}
+          </div>
+        </div>
       </CustomModal>
     </>
   );

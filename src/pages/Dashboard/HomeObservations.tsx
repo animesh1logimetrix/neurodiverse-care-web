@@ -862,9 +862,8 @@ export default function HomeObservations() {
                   placeholder="e.g., Increased aggression during transitions"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  error={!!errors.title}
-                  hint={errors.title}
                 />
+                {errors.title && <p className="mt-1 text-[13px] text-red-500">{errors.title}</p>}
               </div>
 
               <div>
@@ -902,7 +901,7 @@ export default function HomeObservations() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className={`block w-full px-4 py-3 rounded-xl border ${errors.description ? 'border-red-300 ring-1 ring-red-500/20 focus:border-red-500' : 'border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700'} focus:outline-none text-sm resize-none text-gray-900 bg-transparent`}
+                  className="block w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 focus:outline-none text-sm resize-none text-gray-900 bg-transparent"
                 />
                 <div className="flex justify-between items-center mt-1.5">
                   {errors.description ? (
