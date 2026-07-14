@@ -407,8 +407,8 @@ export default function StaffParents() {
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
           {[
             { label: "All Roles", value: "all" },
-            { label: "Super Admin", value: "Super Admin" },
-            { label: "Clinic Admin", value: "Clinic Admin" },
+            // { label: "Super Admin", value: "Super Admin" },
+            // { label: "Clinic Admin", value: "Clinic Admin" },
             { label: "Therapist", value: "Therapist" },
             { label: "Psychologist", value: "Psychologist" },
             { label: "School Staff", value: "School Staff" },
@@ -464,12 +464,12 @@ export default function StaffParents() {
                 >
                   Created At
                 </TableCell>
-                {/* <TableCell
+                <TableCell
                   isHeader
                   className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
                 >
                   Action
-                </TableCell> */}
+                </TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="bg-white divide-y divide-gray-100 dark:bg-transparent dark:divide-gray-800">
@@ -551,7 +551,7 @@ export default function StaffParents() {
                     </TableCell>
 
                     {/* Interactive Dropdown Actions */}
-                    {/* <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <div className="relative inline-block text-left">
                         <button
                           onClick={() => setOpenMenuUserId(openMenuUserId === user.id ? null : user.id)}
@@ -562,22 +562,19 @@ export default function StaffParents() {
                         <Dropdown
                           isOpen={openMenuUserId === user.id}
                           onClose={() => setOpenMenuUserId(null)}
-                          className="w-36 right-0 mt-1 shadow-theme-md"
+                          className="w-40 right-0 mt-1 shadow-theme-md"
                         >
                           <div className="py-1">
-                            <DropdownItem onClick={() => {}}>
-                              Edit User
-                            </DropdownItem>
                             <DropdownItem
                               onClick={() => {}}
                               className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20"
                             >
-                              Delete
+                              Revoke Access
                             </DropdownItem>
                           </div>
                         </Dropdown>
                       </div>
-                    </TableCell> */}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

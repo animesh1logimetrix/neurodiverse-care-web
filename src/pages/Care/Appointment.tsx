@@ -114,7 +114,7 @@ const AppointmentCard: React.FC<{
                   Edit
                 </DropdownItem>
 
-                <div className="border-t border-gray-100 my-1"></div>
+                {/* <div className="border-t border-gray-100 my-1"></div>
                 
                 <DropdownItem 
                   onClick={(e) => {
@@ -126,7 +126,7 @@ const AppointmentCard: React.FC<{
                   Change Status
                 </DropdownItem>
 
-                <div className="border-t border-gray-100 my-1"></div>
+                <div className="border-t border-gray-100 my-1"></div> */}
                 
                 <DropdownItem
                   onClick={(e) => {
@@ -361,7 +361,7 @@ export default function Appointment() {
     title: apt.session_type,
     patientName: apt.child?.full_name || "Unknown Child",
     therapistName: apt.therapist?.name || apt.therapist?.firstName || "Unknown Therapist",
-    location: "Clinic",
+    location: apt.location || "",
     note: apt.reason || "",
     status: apt.status || "PENDING",
   }));

@@ -160,7 +160,6 @@ const stats = [
   { label: "Total Submitted", value: "5", icon: <HomeIcon />, color: "#7db9fb", bg: "#f0f6fe" },
   { label: "Pending Review", value: "1", icon: <ClockIcon />, color: "#f79009", bg: "#fffaeb" },
   { label: "Actioned", value: "2", icon: <CheckCircleIcon />, color: "#12b76a", bg: "#ecfdf3" },
-  { label: "This Month", value: "0", icon: <CalendarIcon />, color: "#7a5af8", bg: "#f4f3ff" },
 ];
 
 const observations = [
@@ -650,7 +649,7 @@ export default function HomeObservations() {
         </div>
 
         {/* ── Stat Cards ──────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[24px] mb-[24px]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-[24px] mb-[24px]">
           {stats.map((stat, idx) => (
             <div key={idx} className="bg-white rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(15,23,42,0.04)] p-[20px] flex flex-row items-center gap-[16px]">
               <div 

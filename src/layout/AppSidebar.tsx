@@ -96,7 +96,7 @@ const getNavItems = (role: string): NavItem[] => {
         path: "/dashboard"
       },
       {
-        name: "Staff & Parents",
+        name: "Invite User",
         icon: <GroupIcon />,
         path: "/administration/staff-parents"
       },
@@ -159,7 +159,7 @@ const getNavItems = (role: string): NavItem[] => {
       name: "Administration",
       icon: <GroupIcon />,
       subItems: [
-        { name: "Staff & Parents", path: "/administration/staff-parents", pro: false },
+        { name: "Invite User", path: "/administration/staff-parents", pro: false },
         { name: "Role Management", path: "/administration/role-management", pro: false },
         { name: "Modules", path: "/administration/modules", pro: false },
         { name: "Permissions", path: "/administration/permission", pro: false },
