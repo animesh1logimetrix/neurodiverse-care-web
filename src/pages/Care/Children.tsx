@@ -7,6 +7,7 @@ import PageMeta from "../../components/common/PageMeta";
 import { PlusIcon, UserIcon, CheckLineIcon, AlertIcon, TimeIcon } from "../../icons";
 import { CustomModal } from "../../components/ui/modal/CustomModal";
 import DatePicker from "../../components/form/date-picker";
+import Select from "../../components/form/Select";
 import { useAuth } from "../../context/AuthContext";
 
 // Mock Data for the Cards
@@ -29,7 +30,7 @@ const childrenData = Array.from({ length: 6 }, (_, i) => ({ ...baseChild, id: i 
 
 export default function Children() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("All");
+  const [activeTab, setActiveTab] = useState("All Categories");
   const [isModalOpen, setIsModalOpen] = useState(false);
   // const [children, setChildren] = useState(childrenData);
   const [childForm, setChildForm] = useState({
@@ -64,7 +65,7 @@ export default function Children() {
     id: child.id,
     name: child.full_name,
     ageLoc: `${child.age} yrs ${child.address}`,
-    mrn: `NC-2025-${String(child.id).padStart(5, '0')}`,
+    mrn: child.child_code || 'NA',
     status: "Active",
     pendingAction: child.notes !== "NA" && child.notes ? child.notes : "No pending action",
     tags: child.diagnoses && Array.isArray(child.diagnoses) && child.diagnoses.length > 0
@@ -141,11 +142,11 @@ export default function Children() {
 
   const tabs = ["All", "ASD", "ADHD", "Speech", "Alerts"];
 
-  // Filter children based on selected tab
+  // Filter children based on selected category
   const filteredChildren = children.filter((child) => {
-    if (activeTab === "All") return true;
+    if (activeTab === "All Categories") return true;
     if (activeTab === "Alerts") return child.pendingAction.length > 0;
-    // Match tab keyword against any tag label (case-insensitive)
+    // Match category keyword against any tag label (case-insensitive)
     return child.tags.some((tag) =>
       tag.label.toLowerCase().includes(activeTab.toLowerCase())
     );
@@ -309,33 +310,36 @@ export default function Children() {
           )}
         </div>
 
-      {/* Category Tabs */}
+      {/* Category Dropdown Filter & Alerts */}
       <div className="flex items-center gap-6 border-b border-gray-200 mb-4 pb-0">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-3 text-sm font-semibold transition-all relative ${
-              activeTab === tab
-                ? "text-gray-900"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+        <div className="relative w-full sm:w-[220px] mb-3">
+          <select
+            value={activeTab === "Alerts" ? "All Categories" : activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="block w-full h-[48px] px-4 pr-10 bg-white border border-gray-200 rounded-xl text-gray-700 text-left font-medium text-[14px] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500/10 focus:border-brand-300 transition-colors"
           >
-            {/* The Figma shows "All" with a green background inside the tab, 
-                let's mimic the exact visual of the green background badge. */}
-            <span className={`px-3 py-1 rounded-md ${
-              activeTab === tab 
-              ? "bg-[#e5f5e8] text-[#16a34a]" 
-              : "bg-transparent text-gray-600"
-            }`}>
-              {tab}
-            </span>
-            {/* If underline is needed in Figma, uncomment below:
-            {activeTab === tab && (
-              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-green-500 rounded-t-md" />
-            )} */}
-          </button>
-        ))}
+            <option value="All Categories">All Categories</option>
+            <option value="ASD">ASD</option>
+            <option value="ADHD">ADHD</option>
+            <option value="Speech">Speech</option>
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setActiveTab("Alerts")}
+          className={`mb-3 h-[48px] px-6 border rounded-xl text-[14px] font-medium transition-all flex items-center justify-center ${
+            activeTab === "Alerts" 
+              ? "bg-[#e5f5e8] border-[#16a34a] text-[#16a34a]" 
+              : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          Alerts
+        </button>
       </div>
 
       {/* Summary Statistics */}
