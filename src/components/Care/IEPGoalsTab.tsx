@@ -25,6 +25,8 @@ interface IEPGoal {
   target_date: string;
   completed_date: string;
   progress: number;
+  frequency_schedule?: string;
+  frequency?: string;
   code?: string;
   // Nested objects from API
   domain?: { id: number; name: string; full_category_name?: string; short_name?: string };
@@ -120,6 +122,17 @@ const defaultFormData = (childId: string | undefined) => ({
   progress: 0,
   frequency_schedule: "",
 });
+
+const formatDate = (dateString?: string) => {
+  if (!dateString) return "-";
+  const d = new Date(dateString);
+  return isNaN(d.getTime()) ? dateString : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+};
+
+const formatFrequency = (val?: string) => {
+  if (!val) return "-";
+  return val.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+};
 
 const IEPGoalsTab = () => {
   const { id: childId } = useParams();
@@ -219,6 +232,7 @@ const IEPGoalsTab = () => {
     if (data.start_date) payload.start_date = data.start_date;
     if (data.target_date) payload.target_date = data.target_date;
     if (data.completed_date) payload.completed_date = data.completed_date;
+    if (data.frequency_schedule) payload.frequency_schedule = data.frequency_schedule;
 
     console.log("IEP Goal Payload", payload);
     return payload;
@@ -711,7 +725,7 @@ const IEPGoalsTab = () => {
                         setGoalToDelete(goal.id);
                         setIsDeleteModalOpen(true);
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       Delete
                     </button>
@@ -746,7 +760,7 @@ const IEPGoalsTab = () => {
               </div>
               <div className="flex items-center gap-1.5 break-words">
                 <span className="uppercase tracking-wider text-[10px] md:normal-case md:text-xs font-bold md:font-medium">Target Date:</span>{" "}
-                <span className="font-bold text-gray-800">{goal.target_date || "-"}</span>
+                <span className="font-bold text-gray-800">{formatDate(goal.target_date)}</span>
               </div>
             </div>
           </div>
@@ -950,7 +964,7 @@ const IEPGoalsTab = () => {
               </p>
               <div className="flex flex-wrap items-center gap-8 text-[12px] text-gray-500">
                 <span>Therapist: <span className="text-gray-600">{selectedViewGoal.therapistName}</span></span>
-                <span>Freq: <span className="text-gray-600">{selectedViewGoal.frequency_schedule || "-"}</span></span>
+                <span>Priority: <span className="text-gray-600">{selectedViewGoal.priority || "Medium"}</span></span>
                 <span>Start: <span className="text-gray-600">{selectedViewGoal.start_date || "-"}</span></span>
                 <span>Target: <span className="text-gray-600">{selectedViewGoal.target_date || "-"}</span></span>
                 <span>Status: <span className="text-gray-600">{selectedViewGoal.status}</span></span>
@@ -1028,8 +1042,8 @@ const IEPGoalsTab = () => {
                     <span className="text-gray-600">{selectedViewGoal.therapistName}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-[135px] shrink-0">Frequency/Schedule</span>
-                    <span className="text-gray-600">{selectedViewGoal.frequency_schedule || "-"}</span>
+                    <span className="text-gray-500 w-[135px] shrink-0">Priority</span>
+                    <span className="text-gray-600">{selectedViewGoal.priority || "Medium"}</span>
                   </div>
                   <div className="flex">
                     <span className="text-gray-500 w-[135px] shrink-0">Start Date</span>
