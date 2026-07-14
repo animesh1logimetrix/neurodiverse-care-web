@@ -672,8 +672,9 @@ const MedicationsTab = () => {
           </div>
         ) : (
           /* Medications Table */
-          <div className="w-full overflow-visible">
-            <table className="w-full table-fixed border-collapse">
+          <div className="w-full overflow-x-auto custom-scrollbar">
+            {/* Desktop & Tablet Table */}
+            <table className="hidden md:table w-full min-w-[900px] table-fixed border-collapse">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
                   {[
@@ -745,7 +746,7 @@ const MedicationsTab = () => {
                           >
                             <HorizontaLDots className="h-4 w-4" />
                           </button>
-                          <Dropdown isOpen={openMenuMedicationId === medicationMenuKey} onClose={() => setOpenMenuMedicationId(null)} className="right-0 top-full mt-1 w-32 shadow-theme-md">
+                          <Dropdown isOpen={openMenuMedicationId === medicationMenuKey} onClose={() => setOpenMenuMedicationId(null)} className="right-0 top-full mt-1 w-32 shadow-theme-md z-50">
                             <div className="py-1">
                               <DropdownItem onClick={() => openMedicationModal(med)}>
                                 {isLoadingMedicationDetails ? "Loading..." : "View"}
@@ -763,6 +764,82 @@ const MedicationsTab = () => {
                 })}
               </tbody>
             </table>
+
+            {/* Mobile Cards */}
+            <div className="flex flex-col gap-4 md:hidden pb-1">
+              {medications.map((med: any, medicationIndex: number) => {
+                const medicationMenuKey = `mobile-${med.id}-${medicationIndex}`;
+                const categoryLabel = getCategoryLabel(med.category);
+                const doseLabel = [med.dose, med.unit].filter(Boolean).join(" ");
+                const prescribedByLabel = typeof med.prescribedBy === "string"
+                  ? med.prescribedBy
+                  : med.prescribedBy?.name ?? "";
+
+                return (
+                  <div key={medicationMenuKey} className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm relative">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Medication</p>
+                        <h3 className="text-sm font-bold text-gray-900 break-words leading-tight">{med.medication_name}</h3>
+                      </div>
+                      <div className="flex items-start gap-2 shrink-0">
+                        <span className={`inline-block rounded-md px-2 py-1 text-[10px] font-bold whitespace-nowrap mt-0.5 ${med.status === "ACTIVE" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-600"}`}>
+                          {getMedicationStatusLabel(med.status ?? "")}
+                        </span>
+                        <div className="relative inline-flex">
+                          <button
+                            type="button"
+                            onClick={() => setOpenMenuMedicationId(openMenuMedicationId === medicationMenuKey ? null : medicationMenuKey)}
+                            className="dropdown-toggle flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                            title="Medication actions"
+                          >
+                            <HorizontaLDots className="h-4 w-4" />
+                          </button>
+                          <Dropdown isOpen={openMenuMedicationId === medicationMenuKey} onClose={() => setOpenMenuMedicationId(null)} className="right-0 top-full mt-1 w-32 shadow-theme-md z-50">
+                            <div className="py-1">
+                              <DropdownItem onClick={() => openMedicationModal(med)}>
+                                {isLoadingMedicationDetails ? "Loading..." : "View"}
+                              </DropdownItem>
+                              <DropdownItem onClick={() => handleOpenEditMedicationModal(med)}>Edit</DropdownItem>
+                              <DropdownItem onClick={() => handleOpenDeleteModal(med)} className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20">
+                                Delete
+                              </DropdownItem>
+                            </div>
+                          </Dropdown>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-4 mt-2">
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Category</p>
+                        <p className="text-sm text-gray-700 break-words font-medium">{categoryLabel || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Dose</p>
+                        <p className="text-sm text-gray-700 break-words font-medium">{doseLabel || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Frequency</p>
+                        <p className="text-sm text-gray-700 break-words font-medium">{getFrequencyLabel(med.frequency ?? "") || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Prescribed By</p>
+                        <p className="text-sm text-gray-700 break-words font-medium">{prescribedByLabel || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Start</p>
+                        <p className="text-sm text-gray-700 break-words font-medium">{formatDateValue(med.start_date) || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Review Due</p>
+                        <p className="text-sm text-gray-700 break-words font-medium">{formatDateValue(med.review_due_date) || "-"}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

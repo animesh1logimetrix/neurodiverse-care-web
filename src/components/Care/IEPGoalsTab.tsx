@@ -619,7 +619,7 @@ const IEPGoalsTab = () => {
   return (
     <div className="space-y-6">
       {/* Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-800">IEP Goals</h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -630,7 +630,7 @@ const IEPGoalsTab = () => {
         </div>
         <button
           onClick={openAddModal}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+          className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
         >
           + Add Goal
         </button>
@@ -667,32 +667,27 @@ const IEPGoalsTab = () => {
         {filteredGoals.map((goal) => (
           <div
             key={goal.id}
-            className="bg-white rounded-xl shadow-sm border border-orange-200/60 p-5"
+            className="bg-white rounded-xl shadow-sm border border-orange-200/60 p-4 md:p-5"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="text-green-600">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+            <div className="flex items-start justify-between mb-3 gap-4">
+              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="text-green-600 shrink-0">
+                    <TargetIcon className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-bold text-gray-800 break-words">
+                    {goal.code || `G-${goal.id}`}
+                  </span>
                 </div>
-                <span className="text-sm font-bold text-gray-800">
-                  {goal.code || `G-${goal.id}`}
-                </span>
-                <h3 className="font-bold text-gray-800 text-sm">{goal.domainName}</h3>
-                <span className="text-sm font-semibold text-gray-800">{goal.status}</span>
+                <h3 className="font-bold text-gray-800 text-sm break-words">{goal.domainName}</h3>
+                <span className="text-sm font-semibold text-gray-800 w-fit inline-block px-2 py-0.5 bg-gray-100 rounded-md md:bg-transparent md:px-0 md:py-0">{goal.status}</span>
               </div>
-              <div className="relative">
+              <div className="relative shrink-0">
                 <button
                   onClick={() =>
                     setOpenMenuId(openMenuId === String(goal.id) ? null : String(goal.id))
                   }
-                  className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                  className="text-gray-400 hover:text-gray-600 focus:outline-none flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-gray-100"
                 >
                   <HorizontaLDots className="w-5 h-5" />
                 </button>
@@ -725,7 +720,7 @@ const IEPGoalsTab = () => {
               </div>
             </div>
 
-            <p className="text-sm font-medium text-gray-800 mb-6 max-w-4xl">
+            <p className="text-sm font-medium text-gray-800 mb-6 max-w-4xl break-words">
               {goal.goal_description}
             </p>
 
@@ -736,21 +731,21 @@ const IEPGoalsTab = () => {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-green-600 h-2 rounded-full"
+                  className="bg-green-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${goal.progress}%` }}
                 ></div>
               </div>
             </div>
 
-            <div className="flex items-center gap-8 text-xs font-medium text-gray-500">
-              <div className="flex items-center gap-1.5">
-                Therapist: {goal.therapistName}
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-8 text-xs font-medium text-gray-500 mt-5 md:mt-4">
+              <div className="flex items-center gap-1.5 break-words">
+                <span className="uppercase tracking-wider text-[10px] md:normal-case md:text-xs font-bold md:font-medium">Therapist:</span> {goal.therapistName}
               </div>
-              <div className="flex items-center gap-1.5">
-                Priority: {goal.priority || "Medium"}
+              <div className="flex items-center gap-1.5 break-words">
+                <span className="uppercase tracking-wider text-[10px] md:normal-case md:text-xs font-bold md:font-medium">Priority:</span> {goal.priority || "Medium"}
               </div>
-              <div className="flex items-center gap-1.5">
-                Target Date:{" "}
+              <div className="flex items-center gap-1.5 break-words">
+                <span className="uppercase tracking-wider text-[10px] md:normal-case md:text-xs font-bold md:font-medium">Target Date:</span>{" "}
                 <span className="font-bold text-gray-800">{goal.target_date || "-"}</span>
               </div>
             </div>

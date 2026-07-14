@@ -105,6 +105,7 @@ const getNavItems = (role: string): NavItem[] => {
         icon: <GroupIcon />,
         subItems: [
           { name: "Children", path: "/care/children", pro: false },
+          { name: "Appointment", path: "/care/appointment", pro: false },
         ]
       },
       {
@@ -177,6 +178,7 @@ const getNavItems = (role: string): NavItem[] => {
       icon: <GroupIcon />,
       subItems: [
         { name: "Children", path: "/care/children", pro: false },
+        { name: "Appointment", path: "/care/appointment", pro: false },
       ]
     },
     {

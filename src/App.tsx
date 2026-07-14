@@ -34,6 +34,7 @@ import ParentDashboard from "./pages/Dashboard/ParentDashboard";
 import ClinicAdminDashboard from "./pages/Dashboard/ClinicAdminDashboard";
 import Children from "./pages/Care/Children";
 import ChildDetails from "./pages/Care/ChildDetails";
+import Appointment from "./pages/Care/Appointment";
 import Dashboard from "./pages/Dashboard";
 import HomeObservations from "./pages/Dashboard/HomeObservations";
 
@@ -87,6 +88,9 @@ export default function App() {
               <Route element={<ProtectedRoute moduleRequired="Children" />}>
                 <Route path="/care/children" element={<Children />} />
                 <Route path="/care/children/:id" element={<ChildDetails />} />
+              </Route>
+              <Route element={<ProtectedRoute moduleRequired="Appointment" />}>
+                <Route path="/care/appointment" element={<Appointment />} />
               </Route>
 
               {/* Others Pages (No specific backend module needed, just login) */}
