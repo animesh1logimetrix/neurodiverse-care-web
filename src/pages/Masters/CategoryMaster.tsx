@@ -609,12 +609,9 @@ export default function CategoryMaster() {
       />
 
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-400 dark:text-gray-500 mb-2">
-        NeuroDiverse{" "}
-        <span className="mx-1 text-gray-300">&lt;</span>
-        <span className="text-gray-600 dark:text-gray-300 font-medium">
-          Administration
-        </span>
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
+        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
       </div>
 
       {/* Page header */}
