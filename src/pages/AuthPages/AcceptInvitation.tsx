@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosClient from "../../api/axiosClient";
 import { useAuth } from "../../context/AuthContext";
@@ -12,65 +13,77 @@ export default function AcceptInvitation() {
   const token = searchParams.get("token");
   const email = searchParams.get("email");
   const [status, setStatus] = useState("Verifying invitation...");
+  const hasProcessed = useRef(false);
+
+  const acceptInviteMutation = useMutation({
+    mutationFn: async (tokenData: { token: string }) => {
+      const response = await axiosClient.post("/invitation/accept", { token: tokenData.token });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Invitation accepted successfully!");
+      navigate("/dashboard");
+    },
+    onError: (error: any) => {
+      console.error("Invitation process error:", error);
+      toast.error(error.response?.data?.message || "Failed to process invitation.");
+      navigate(isAuthenticated ? "/dashboard" : "/signin");
+    }
+  });
+
+  const checkEmailMutation = useMutation({
+    mutationFn: async (emailData: { email: string }) => {
+      const response = await axiosClient.post("/user/check-email", { email: emailData.email });
+      return response;
+    },
+    onSuccess: (checkRes) => {
+      if (checkRes.data && checkRes.data.exists === false) {
+          navigate(`/signin?tab=signup&token=${token}&email=${encodeURIComponent(email!)}`);
+      } else {
+          navigate(`/signin?tab=signin&token=${token}&email=${encodeURIComponent(email!)}`);
+      }
+    },
+    onError: (error: any) => {
+      if (error.response && error.response.status === 404) {
+         navigate(`/signin?tab=signup&token=${token}&email=${encodeURIComponent(email!)}`);
+      } else {
+         navigate(`/signin?tab=signup&token=${token}&email=${encodeURIComponent(email!)}`);
+      }
+    }
+  });
 
   useEffect(() => {
+    if (hasProcessed.current) return;
+
     if (!token) {
+      hasProcessed.current = true;
       toast.error("Invalid or missing invitation token.");
       navigate("/signin");
       return;
     }
 
     if (!email) {
-      // If email is somehow missing, just redirect to signin with token
+      hasProcessed.current = true;
       navigate(`/signin?token=${token}`);
       return;
     }
 
-    const checkAndProcessInvitation = async () => {
-      try {
-        if (isAuthenticated) {
-          // User is logged in. 
-          if (user?.email && user.email.toLowerCase() !== email.toLowerCase()) {
-            toast.error(`This invite is for ${email}. Please log out and sign in with the correct account.`);
-            navigate("/dashboard");
-            return;
-          }
-          
-          setStatus("Accepting invitation...");
-          await axiosClient.post("/invitation/accept", { token });
-          toast.success("Invitation accepted successfully!");
-          navigate("/dashboard");
-        } else {
-          // User is not logged in, check if email exists in system
-          setStatus("Checking user details...");
-          
-          try {
-             // Assuming the backend returns 201/200 if check is successful.
-             // Some backends return 404 or a boolean. We try to handle both.
-             const checkRes = await axiosClient.post("/user/check-email", { email });
-             
-             if (checkRes.data && checkRes.data.exists === false) {
-                 navigate(`/signin?tab=signup&token=${token}&email=${encodeURIComponent(email)}`);
-             } else {
-                 navigate(`/signin?tab=signin&token=${token}&email=${encodeURIComponent(email)}`);
-             }
-          } catch (error: any) {
-             if (error.response && error.response.status === 404) {
-                navigate(`/signin?tab=signup&token=${token}&email=${encodeURIComponent(email)}`);
-             } else {
-                // Default to signup if check fails
-                navigate(`/signin?tab=signup&token=${token}&email=${encodeURIComponent(email)}`);
-             }
-          }
-        }
-      } catch (error: any) {
-        console.error("Invitation process error:", error);
-        toast.error(error.response?.data?.message || "Failed to process invitation.");
-        navigate(isAuthenticated ? "/dashboard" : "/signin");
-      }
-    };
+    hasProcessed.current = true;
 
-    checkAndProcessInvitation();
+    if (isAuthenticated) {
+      if (user?.email && user.email.toLowerCase() !== email.toLowerCase()) {
+        toast.error(`This invite is for ${email}. Please log out and sign in with the correct account.`);
+        navigate("/dashboard");
+        return;
+      }
+      
+      setStatus("Accepting invitation...");
+      acceptInviteMutation.mutate({ token });
+    } else {
+      setStatus("Checking user details...");
+      checkEmailMutation.mutate({ email });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, email, isAuthenticated, user, navigate]);
 
   return (
