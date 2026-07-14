@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosClient from "../../api/axiosClient";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
@@ -11,25 +12,52 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function NeuroCareAuth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
-  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
+  
+  const inviteToken = searchParams.get("token");
+  const inviteEmail = searchParams.get("email");
+  const tabParam = searchParams.get("tab") as "signin" | "signup" | null;
+
+  const [activeTab, setActiveTab] = useState<"signin" | "signup">(tabParam || "signin");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [selectedRole, setSelectedRole] = useState("Parent / Guardian");
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(inviteEmail || "");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
   const [signupName, setSignupName] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
+  const [signupEmail, setSignupEmail] = useState(inviteEmail || "");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupError, setSignupError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [dynamicRoles, setDynamicRoles] = useState<any[]>([]);
+
+  const acceptInviteMutation = useMutation({
+    mutationFn: async (data: { token: string, accessToken: string }) => {
+      const response = await axiosClient.post(
+        "/invitation/accept",
+        { token: data.token },
+        { headers: { Authorization: `Bearer ${data.accessToken}` } }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Invitation accepted successfully!");
+      setTimeout(() => toast.dismiss(), 2000);
+      navigate("/dashboard");
+    },
+    onError: (error: any) => {
+      console.error("Failed to accept invitation:", error);
+      toast.error(error.response?.data?.message || "Logged in, but failed to accept invitation.");
+      navigate("/dashboard");
+    }
+  });
 
   useEffect(() => {
     if (activeTab === "signup" && dynamicRoles.length === 0) {
@@ -37,9 +65,16 @@ export default function NeuroCareAuth() {
         .then((res) => {
           if (res.data && res.data.roles) {
              setDynamicRoles(res.data.roles);
-             const parentRole = res.data.roles.find((r: any) => r.name === "Parent/Guardian");
-             if (parentRole) {
-               setSelectedRoleId(parentRole.id);
+             if (inviteToken) {
+               const therapistRole = res.data.roles.find((r: any) => r.name.toLowerCase().includes("therapist"));
+               if (therapistRole) {
+                 setSelectedRoleId(therapistRole.id);
+               }
+             } else {
+               const parentRole = res.data.roles.find((r: any) => r.name === "Parent/Guardian");
+               if (parentRole) {
+                 setSelectedRoleId(parentRole.id);
+               }
              }
           }
         })
@@ -47,7 +82,7 @@ export default function NeuroCareAuth() {
           console.error("Error fetching roles:", err);
         });
     }
-  }, [activeTab]);
+  }, [activeTab, inviteToken]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -66,9 +101,14 @@ export default function NeuroCareAuth() {
 
       if (userData && tokens?.accessToken) {
          login(userData, tokens);
-         const toastId = toast.success("Logged in successfully!");
-         setTimeout(() => toast.dismiss(toastId), 2000);
-         navigate("/dashboard");
+         
+         if (inviteToken) {
+           acceptInviteMutation.mutate({ token: inviteToken, accessToken: tokens.accessToken });
+         } else {
+           toast.success("Logged in successfully!");
+           setTimeout(() => toast.dismiss(), 2000);
+           navigate("/dashboard");
+         }
       }
     } catch (error: any) {
       console.error("Login error:", error);
@@ -129,7 +169,27 @@ export default function NeuroCareAuth() {
       const response = await axiosClient.post("/user/register", payload);
       if (response.data?.status === "Ok" || response.status === 201 || response.status === 200) {
         toast.success(response.data?.message || "User registered successfully");
-        setActiveTab("signin");
+        
+        if (inviteToken) {
+          try {
+            // Auto login to get token to accept the invite
+            const loginRes = await axiosClient.post("/user/login", { email: signupEmail, password: signupPassword });
+            const userData = loginRes.data.user;
+            const tokens = loginRes.data.backendTokens;
+            
+            if (userData && tokens?.accessToken) {
+               login(userData, tokens);
+               acceptInviteMutation.mutate({ token: inviteToken, accessToken: tokens.accessToken });
+            } else {
+               setActiveTab("signin");
+            }
+          } catch (loginErr) {
+            console.error("Auto login failed", loginErr);
+            setActiveTab("signin");
+          }
+        } else {
+          setActiveTab("signin");
+        }
       }
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -257,6 +317,7 @@ export default function NeuroCareAuth() {
                     placeholder="you@neurocare.in" 
                     value={email} 
                     onChange={(e: any) => setEmail(e.target.value)} 
+                    disabled={!!inviteToken}
                   />
                 </div>
 
@@ -330,13 +391,13 @@ export default function NeuroCareAuth() {
                       <button
                         key={`dyn-${role.id}`}
                         type="button"
-                        onClick={() => isParent && setSelectedRoleId(role.id)}
-                        disabled={!isParent}
+                        onClick={() => isParent && !inviteToken && setSelectedRoleId(role.id)}
+                        disabled={!isParent || !!inviteToken}
                         className={`flex items-center gap-2 px-3 py-2.5 text-sm rounded-full border transition-all ${
                           selectedRoleId === role.id
                             ? "border-[#0a7a66] bg-[#0a7a66]/5 text-[#0a7a66] font-medium"
                             : "border-gray-200 text-gray-400 opacity-60"
-                        } ${!isParent ? "cursor-not-allowed opacity-50" : ""}`}
+                        } ${(!isParent || !!inviteToken) ? "cursor-not-allowed opacity-50" : ""}`}
                       >
                         <span>{icon}</span>
                         <span className="truncate">{role.name}</span>
@@ -383,7 +444,13 @@ export default function NeuroCareAuth() {
 
                 <div>
                   <Label>Email</Label>
-                  <Input className="!rounded-full" placeholder="you@email.com" value={signupEmail} onChange={(e: any) => setSignupEmail(e.target.value)} />
+                  <Input 
+                    className="!rounded-full" 
+                    placeholder="you@email.com" 
+                    value={signupEmail} 
+                    onChange={(e: any) => setSignupEmail(e.target.value)} 
+                    disabled={!!inviteToken}
+                  />
                 </div>
 
                 {/* <div>

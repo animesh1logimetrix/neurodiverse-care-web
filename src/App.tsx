@@ -5,6 +5,7 @@ import SignUp from "./pages/AuthPages/SignUp";
 import NeuroCareAuth from "./pages/AuthPages/NeuroCareAuth";
 import ForgotPassword from "./pages/AuthPages/ForgotPassword";
 import ResetPassword from "./pages/AuthPages/ResetPassword";
+import AcceptInvitation from "./pages/AuthPages/AcceptInvitation";
 import NotFound from "./pages/OtherPage/NotFound";
 import UserProfiles from "./pages/UserProfiles";
 import Videos from "./pages/UiElements/Videos";
@@ -113,6 +114,7 @@ export default function App() {
           <Route path="/signin" element={<NeuroCareAuth />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/accept-invitation" element={<AcceptInvitation />} />
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />
