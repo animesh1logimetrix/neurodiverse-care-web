@@ -115,6 +115,38 @@ const getNavItems = (role: string): NavItem[] => {
     ];
   }
 
+  const isTherapist = role === "Therapist";
+  
+  if (isTherapist) {
+    return [
+      {
+        name: "Dashboard",
+        icon: <GridIcon />,
+        path: "/dashboard"
+      },
+      {
+        name: "Masters",
+        icon: <DocsIcon />,
+        subItems: [
+          { name: "Category Master", path: "/masters/category-master", pro: false },
+          { name: "Content & CMS", path: "/masters/content-cms", pro: false },
+        ]
+      },
+      {
+        name: "Care",
+        icon: <GroupIcon />,
+        subItems: [
+          { name: "Children", path: "/care/children", pro: false },
+        ]
+      },
+      {
+        name: "Home Observations",
+        icon: <HomeIcon />,
+        path: "/dashboard/home-observations"
+      }
+    ];
+  }
+
   // Otherwise Clinic Admin / Default
   return [
     {

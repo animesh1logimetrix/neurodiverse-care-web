@@ -19,6 +19,10 @@ export default function Dashboard() {
     return <ParentDashboard />;
   }
 
+  if (roleName === "Therapist") {
+    return <ClinicAdminDashboard />;
+  }
+
   // Default to ClinicAdminDashboard for other roles
   return <ClinicAdminDashboard />;
 }

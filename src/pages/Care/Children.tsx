@@ -7,6 +7,7 @@ import PageMeta from "../../components/common/PageMeta";
 import { PlusIcon, UserIcon, CheckLineIcon, AlertIcon, TimeIcon } from "../../icons";
 import { CustomModal } from "../../components/ui/modal/CustomModal";
 import DatePicker from "../../components/form/date-picker";
+import { useAuth } from "../../context/AuthContext";
 
 // Mock Data for the Cards
 const baseChild = {
@@ -27,6 +28,7 @@ const childrenData = Array.from({ length: 6 }, (_, i) => ({ ...baseChild, id: i 
 // Dynamic Data Mapping
 
 export default function Children() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
   // const [children, setChildren] = useState(childrenData);
@@ -280,13 +282,15 @@ export default function Children() {
               {filteredChildren.length} children {needAttention} need attention
             </p>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
-          >
-            <PlusIcon className="w-4 h-4 fill-current" />
-            Add Child
-          </button>
+          {user?.role?.name?.toLowerCase() === 'parent/guardian' && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+            >
+              <PlusIcon className="w-4 h-4 fill-current" />
+              Add Child
+            </button>
+          )}
         </div>
       </div>
 
@@ -354,13 +358,15 @@ export default function Children() {
           <p className="text-gray-500 text-sm max-w-sm mb-4">
             Get started by adding a new child to your care roster.
           </p>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
-          >
-            <PlusIcon className="w-4 h-4 fill-current" />
-            Add Child
-          </button>
+          {user?.role?.name?.toLowerCase() === 'parent/guardian' && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+            >
+              <PlusIcon className="w-4 h-4 fill-current" />
+              Add Child
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
