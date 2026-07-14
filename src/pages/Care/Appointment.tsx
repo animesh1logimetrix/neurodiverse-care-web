@@ -195,6 +195,24 @@ const AppointmentCard: React.FC<{
 export default function Appointment() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"List" | "Calendar">("List");
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+  
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const [editAppointmentId, setEditAppointmentId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -360,6 +378,27 @@ export default function Appointment() {
     return new Date(rawApt.scheduled_at).toDateString() !== todayDateStr;
   });
 
+  const daysInMonth = getDaysInMonth(currentMonth);
+  const firstDay = getFirstDayOfMonth(currentMonth);
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const blanks = Array.from({ length: firstDay }, (_, i) => i);
+
+  const selectedDateStr = selectedDate.toDateString();
+  const selectedDateAppointments = formattedAppointments.filter((apt: any) => {
+    const rawApt = appointmentsRaw.find((a: any) => String(a.id) === apt.id);
+    if (!rawApt?.scheduled_at) return false;
+    return new Date(rawApt.scheduled_at).toDateString() === selectedDateStr;
+  });
+
+  const getAppointmentsCountForDate = (day: number) => {
+    const dateStr = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString();
+    return formattedAppointments.filter((apt: any) => {
+      const rawApt = appointmentsRaw.find((a: any) => String(a.id) === apt.id);
+      if (!rawApt?.scheduled_at) return false;
+      return new Date(rawApt.scheduled_at).toDateString() === dateStr;
+    }).length;
+  };
+
   const [bookForm, setBookForm] = useState({
     child: "",
     therapist: "",
@@ -490,11 +529,90 @@ export default function Appointment() {
             </div>
           </section>
         </div>
-      ) : (
-        <div className="bg-white border border-gray-200 rounded-xl p-8 flex items-center justify-center text-gray-500 h-64">
-          Calendar View Placeholder
+      ) : activeTab === "Calendar" ? (
+        <div className="flex flex-col xl:flex-row gap-6 mb-8">
+          {/* Calendar Grid */}
+          <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-6 sm:p-8 shadow-[0_8px_30px_rgba(15,23,42,0.08)]">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-medium text-gray-800">
+                {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </h2>
+              <div className="flex items-center gap-2">
+                <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button onClick={handleNextMonth} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-7 gap-y-4 gap-x-2 mb-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center text-xs font-medium text-gray-400 py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-7 gap-y-4 gap-x-2">
+              {blanks.map(blank => (
+                <div key={`blank-${blank}`} className="aspect-square max-w-[80px] mx-auto w-full"></div>
+              ))}
+              {days.map(day => {
+                const isSelected = selectedDate.getDate() === day && selectedDate.getMonth() === currentMonth.getMonth() && selectedDate.getFullYear() === currentMonth.getFullYear();
+                const count = getAppointmentsCountForDate(day);
+                return (
+                  <div 
+                    key={day} 
+                    onClick={() => setSelectedDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day))}
+                    className={`aspect-square max-w-[80px] mx-auto w-full flex flex-col items-center justify-center rounded-2xl cursor-pointer transition-all relative ${
+                      isSelected ? 'bg-brand-500 text-white shadow-md transform scale-105' : 'hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{day}</span>
+                    {count > 0 && (
+                      <div className="absolute bottom-2 sm:bottom-3 flex gap-1">
+                        {Array.from({ length: Math.min(count, 3) }).map((_, i) => (
+                          <div key={i} className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-brand-500'}`}></div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Details Panel */}
+          <div className="w-full xl:w-[400px] bg-white border border-gray-100 rounded-2xl p-6 shadow-[0_8px_30px_rgba(15,23,42,0.08)] self-start sticky top-6">
+            <div className="flex items-center gap-2 text-brand-500 font-medium mb-6">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <span>{selectedDate.getFullYear()}-{String(selectedDate.getMonth() + 1).padStart(2, '0')}-{String(selectedDate.getDate()).padStart(2, '0')}</span>
+            </div>
+            
+            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+              {selectedDateAppointments.length > 0 ? (
+                selectedDateAppointments.map((apt: any) => (
+                  <div key={apt.id} className="flex flex-col gap-1 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-800">{apt.time} - {apt.title}</span>
+                    </div>
+                    <span className="text-sm text-gray-500">{apt.patientName}</span>
+                    <span className="text-xs text-gray-400">{apt.therapistName}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-gray-500 py-8 text-center">
+                  No appointments on this date.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      ) : null}
 
       {/* Book Appointment Modal */}
       <CustomModal
