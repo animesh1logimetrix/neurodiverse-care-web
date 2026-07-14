@@ -67,9 +67,32 @@ export default function Children() {
     mrn: `NC-2025-${String(child.id).padStart(5, '0')}`,
     status: "Active",
     pendingAction: child.notes !== "NA" && child.notes ? child.notes : "No pending action",
-    tags: [
-      { label: child.diagnosis || "No Diagnosis", color: "bg-blue-100 text-blue-500" },
-    ],
+    tags: child.diagnoses && Array.isArray(child.diagnoses) && child.diagnoses.length > 0
+      ? child.diagnoses.map((diag: any, index: number) => {
+          const colors = [
+            "bg-blue-100 text-blue-500",
+            "bg-purple-100 text-purple-500",
+            "bg-green-100 text-green-500",
+            "bg-orange-100 text-orange-500",
+            "bg-pink-100 text-pink-500",
+            "bg-teal-100 text-teal-500",
+            "bg-indigo-100 text-indigo-500",
+          ];
+          
+          const label = diag.category?.short_name || diag.category?.full_category_name || "Diagnosis";
+          
+          // Consistent pseudo-random color based on label string to prevent flickering on re-renders
+          let hash = 0;
+          for (let i = 0; i < label.length; i++) {
+            hash = label.charCodeAt(i) + ((hash << 5) - hash);
+          }
+          const color = colors[Math.abs(hash) % colors.length];
+
+          return { label, color };
+        })
+      : child.diagnosis 
+        ? [{ label: child.diagnosis, color: "bg-blue-100 text-blue-500" }] 
+        : [{ label: "No Diagnosis", color: "bg-gray-100 text-gray-500" }],
     metrics: { activeGoals: 0, achieved: 0, providers: 1 },
     nextAppointment: "Not scheduled",
     profileImageUrl: child.profile_picture && child.profile_picture.length > 0 ? child.profile_picture[0].file_url : null,
