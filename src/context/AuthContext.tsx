@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { queryClient } from "../api/queryClient";
 
 interface User {
   id?: number;
@@ -65,6 +66,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem("user");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+
+    queryClient.clear();
   };
 
   // Prevent flashing content while initial check is happening
