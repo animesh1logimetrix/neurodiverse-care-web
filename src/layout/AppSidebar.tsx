@@ -95,11 +95,7 @@ const getNavItems = (role: string): NavItem[] => {
         icon: <GridIcon />,
         path: "/dashboard"
       },
-      {
-        name: "Staff & Parents",
-        icon: <GroupIcon />,
-        path: "/administration/staff-parents"
-      },
+    
       {
         name: "Care",
         icon: <GroupIcon />,

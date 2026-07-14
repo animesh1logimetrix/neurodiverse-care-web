@@ -263,25 +263,18 @@ export default function Children() {
         description="Children management dashboard"
       />
 
-      {/* Header Section */}
-      <div className="mb-4">
-        {/* Breadcrumb */}
-        <div className="text-sm mb-3">
-          <span className="text-gray-400">NeuroDiverse</span>
-          <span className="text-gray-400 mx-2">&lt;</span>
-          <span className="text-gray-500 font-medium">Administration</span>
-        </div>
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
+        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
+      </div>
 
-        {/* Title and Subtitle Area */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-[28px] font-bold text-gray-900 leading-tight">
-              Children
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {filteredChildren.length} children {needAttention} need attention
-            </p>
-          </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Children</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {filteredChildren.length} children · {needAttention} need attention
+          </p>
+        </div>
           {user?.role?.name?.toLowerCase() === 'parent/guardian' && (
             <button 
               onClick={() => setIsModalOpen(true)}
@@ -292,7 +285,6 @@ export default function Children() {
             </button>
           )}
         </div>
-      </div>
 
       {/* Category Tabs */}
       <div className="flex items-center gap-6 border-b border-gray-200 mb-4 pb-0">

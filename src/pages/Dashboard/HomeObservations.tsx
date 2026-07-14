@@ -626,7 +626,7 @@ export default function HomeObservations() {
       />
 
       <div
-        className="min-h-screen bg-[#f8fafc] -mx-4 md:-mx-6 -my-4 md:-my-6 p-[32px]"
+        className="min-h-screen -mx-4 md:-mx-6 -my-4 md:-my-6 p-[32px]"
         style={{ fontFamily: "Outfit, sans-serif" }}
       >
         {/* ── Header ─────────────────────────────────────────────── */}
