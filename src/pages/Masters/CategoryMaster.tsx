@@ -135,7 +135,7 @@ interface CategoryCardProps {
   onEdit: (cat: Category) => void;
   onDelete: (cat: Category) => void;
   onAddSub: (catId: number, name: string, icdCode: string) => void;
-  onDeleteSub: (catId: number, subId: number) => void;
+  onDeleteSub: (catId: number, subIndex: number) => void;
 }
 
 function CategoryCard({
@@ -219,9 +219,7 @@ function CategoryCard({
               </div>
               <button
                 onClick={() => {
-                  if (sub.id !== undefined) {
-                    onDeleteSub(category.id, sub.id);
-                  }
+                  onDeleteSub(category.id, index);
                 }}
                 className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-300 hover:text-red-500 transition-all shrink-0 cursor-pointer"
                 aria-label="Remove subcategory"
@@ -237,7 +235,7 @@ function CategoryCard({
 
         {/* Compact inline add-subcategory section */}
         {showAddRow ? (
-          <div className="flex items-center gap-1.5 pt-2 border-t border-gray-100 flex-nowrap w-full">
+          <div className="mt-auto flex items-center gap-1.5 pt-2 border-t border-gray-100 flex-nowrap w-full">
             <input
               type="text"
               placeholder="Sub-category name"
@@ -621,12 +619,12 @@ export default function CategoryMaster() {
     });
   };
 
-  const handleDeleteSub = (catId: number, subId: number) => {
+  const handleDeleteSub = (catId: number, subIndex: number) => {
     const cat = categories.find((c) => c.id === catId);
     if (!cat) return;
     
-    // Filter out the deleted subcategory
-    const newSubcategories = cat.subcategories.filter((s) => s.id !== subId);
+    // Filter out the deleted subcategory by index
+    const newSubcategories = cat.subcategories.filter((_, idx) => idx !== subIndex);
     
     // Save to server
     updateMutation.mutate({

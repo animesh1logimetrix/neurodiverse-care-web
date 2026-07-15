@@ -32,7 +32,7 @@ export interface ApiContent {
   description: string;
   tags: string;
   is_featured: boolean;
-  files?: any[];
+  file?: any[];
 }
 
 // ---------------------------------------------------------------------------
@@ -196,9 +196,10 @@ interface ResourceCardProps {
   onBookmark: (id: number) => void;
   onEdit: (res: Resource) => void;
   onDelete: (id: number) => void;
+  onView: (res: Resource) => void;
 }
 
-function ResourceCard({ resource, onBookmark, onEdit, onDelete }: ResourceCardProps) {
+function ResourceCard({ resource, onBookmark, onEdit, onDelete, onView }: ResourceCardProps) {
   // Determine Type Icon
   const getResourceIcon = () => {
     switch (resource.type) {
@@ -227,9 +228,9 @@ function ResourceCard({ resource, onBookmark, onEdit, onDelete }: ResourceCardPr
           </div>
           <button
             onClick={() => onBookmark(resource.id)}
-            className="p-1 rounded text-gray-800 hover:text-yellow-500 transition-colors cursor-pointer"
+            className={`p-1 rounded transition-colors cursor-pointer ${resource.isBookmarked ? "text-yellow-500" : "text-gray-800 hover:text-yellow-500"}`}
           >
-            <BookmarkIcon className="size-5" fill={resource.isBookmarked} />
+            <BookmarkIcon className="size-5" filled={resource.isBookmarked} />
           </button>
         </div>
 
@@ -269,6 +270,7 @@ function ResourceCard({ resource, onBookmark, onEdit, onDelete }: ResourceCardPr
         <div className="flex items-center justify-between pt-3 mt-auto border-t border-gray-100">
           <div className="flex items-center gap-4">
             <button
+              onClick={() => onView(resource)}
               title="Preview"
               className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
@@ -326,30 +328,43 @@ export default function ContentCMS() {
     targetAudience: c.audience,
     tags: c.tags ? c.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
     isBookmarked: c.is_featured,
-    fileName: c.files && c.files.length > 0 ? c.files[0].file?.file_name : undefined,
-    files: c.files || [],
+    fileName: c.file && c.file.length > 0 ? c.file[0].original_file_name || c.file[0].file_name : undefined,
+    files: c.file || [],
   }));
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
 
-  // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null);
+  const [activeResourceIndex, setActiveResourceIndex] = useState<number | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewResource, setViewResource] = useState<Resource | null>(null);
+
   // Form states
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [type, setType] = useState<string>("DOCUMENT");
-  const [targetAudience, setTargetAudience] = useState<string>("THERAPIST");
-  const [tagsInput, setTagsInput] = useState("");
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    type: "DOCUMENT",
+    targetAudience: "THERAPIST",
+    tagsInput: "",
+    isFeatured: false
+  });
+  
+  const updateForm = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormErrors(prev => ({ ...prev, [field]: "" }));
+  };
+
   const [existingFiles, setExistingFiles] = useState<any[]>([]);
   const [newTagInput, setNewTagInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   // Calculate statistics counts
   const totalCount = resources.length;
@@ -421,36 +436,51 @@ export default function ContentCMS() {
 
   // Handlers
   const handleOpenAdd = () => {
-    setEditingResource(null);
-    setTitle("");
-    setDescription("");
-    setType("DOCUMENT");
-    setTargetAudience("THERAPIST");
-    setTagsInput("");
+    setModalMode('add');
+    setActiveResourceIndex(null);
+    setFormData({
+      title: "",
+      description: "",
+      type: "DOCUMENT",
+      targetAudience: "THERAPIST",
+      tagsInput: "",
+      isFeatured: false
+    });
     setExistingFiles([]);
     setNewTagInput("");
     setIsFeatured(false);
     setFormErrors({});
+    setUploadedFiles([]);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (res: Resource) => {
-    setEditingResource(res);
-    setTitle(res.title);
-    setDescription(res.description);
-    setType(res.type);
-    setTargetAudience(res.targetAudience);
-    setTagsInput(res.tags.join(", "));
+    const idx = resources.findIndex(r => r.id === res.id);
+    setActiveResourceIndex(idx !== -1 ? idx : null);
+    setModalMode('edit');
+    setFormData({
+      title: res.title,
+      description: res.description,
+      type: res.type,
+      targetAudience: res.targetAudience,
+      tagsInput: res.tags.join(", "),
+      isFeatured: res.isBookmarked || false
+    });
     setExistingFiles(res.files || []);
     setNewTagInput("");
-    setIsFeatured(res.isBookmarked || false);
     setFormErrors({});
+    setUploadedFiles([]);
     setIsModalOpen(true);
   };
 
   const handleDeleteOpen = (id: number) => {
     setDeleteTarget(id);
     setIsDeleteOpen(true);
+  };
+
+  const handleOpenView = (res: Resource) => {
+    setViewResource(res);
+    setIsViewModalOpen(true);
   };
 
   const handleBookmarkToggle = (id: number) => {
@@ -466,7 +496,7 @@ export default function ContentCMS() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors: Record<string, string> = {};
-    if (!title.trim()) errors.title = "Title is required";
+    if (!formData.title.trim()) errors.title = "Title is required";
     
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -478,21 +508,33 @@ export default function ContentCMS() {
       // Collect IDs of existing files (including newly uploaded ones)
       let finalFileIds: number[] = existingFiles.map((f: any) => f.file?.id || f.id).filter(Boolean);
 
+      if (uploadedFiles.length > 0) {
+        const uploadRes = await uploadFilesMutation.mutateAsync(uploadedFiles);
+        let filesArray: any[] = [];
+        if (Array.isArray(uploadRes)) filesArray = uploadRes;
+        else if (uploadRes?.files && Array.isArray(uploadRes.files)) filesArray = uploadRes.files;
+        else if (uploadRes?.data && Array.isArray(uploadRes.data)) filesArray = uploadRes.data;
+        
+        const newFileIds = filesArray.map((item: any) => item.file?.id || item.id).filter(Boolean);
+        finalFileIds = [...finalFileIds, ...newFileIds];
+      }
+
       const payload: any = {
-        resource_type: type,
-        audience: targetAudience,
-        title: title.trim(),
-        description: description.trim(),
-        tags: tagsInput,
-        is_featured: isFeatured,
+        resource_type: formData.type,
+        audience: formData.targetAudience,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        tags: formData.tagsInput,
+        is_featured: formData.isFeatured,
       };
 
       if (finalFileIds.length > 0) {
         payload.fileIds = finalFileIds;
       }
 
-      if (editingResource) {
-        await updateContentMutation.mutateAsync({ id: editingResource.id, payload });
+      if (modalMode === 'edit' && activeResourceIndex !== null) {
+        const activeId = resources[activeResourceIndex].id;
+        await updateContentMutation.mutateAsync({ id: activeId, payload });
       } else {
         await createContentMutation.mutateAsync(payload);
       }
@@ -501,16 +543,9 @@ export default function ContentCMS() {
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files);
-      try {
-        const uploadRes = await uploadFilesMutation.mutateAsync(files);
-        const newFilesArray = uploadRes?.files || [];
-        setExistingFiles(prev => [...prev, ...newFilesArray]);
-      } catch (err) {
-        console.error("File upload error:", err);
-      }
+      setUploadedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
     }
   };
 
@@ -541,7 +576,7 @@ export default function ContentCMS() {
         form="upload-resource-form"
         className="px-8 py-2.5 rounded bg-[#60a5fa] text-white font-semibold hover:bg-blue-500 transition-colors text-sm cursor-pointer min-w-[140px]"
       >
-        {editingResource ? "Save Changes" : "Upload Resource"}
+        {modalMode === 'edit' ? "Save Changes" : "Upload Resource"}
       </button>
     </div>
   );
@@ -704,6 +739,7 @@ export default function ContentCMS() {
               onBookmark={handleBookmarkToggle}
               onEdit={handleOpenEdit}
               onDelete={handleDeleteOpen}
+              onView={handleOpenView}
             />
           ))}
         </div>
@@ -713,7 +749,7 @@ export default function ContentCMS() {
       <CustomModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingResource ? "Edit Resource" : "Upload Resource"}
+        title={modalMode === 'edit' ? "Edit Resource" : "Upload Resource"}
         size="lg"
         showOverlay
         customFooter={modalFooter}
@@ -726,14 +762,18 @@ export default function ContentCMS() {
                 Resource Type *
               </label>
               <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
+                value={formData.type}
+                onChange={(e) => updateForm("type", e.target.value)}
                 className={`h-11 w-full rounded-lg border ${formErrors.type ? "border-red-500" : "border-gray-250"} bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500`}
               >
-                <option value="DOCUMENT">Guide</option>
-                <option value="DOCUMENT">Worksheet</option>
+                <option value="ARTICLE">Article</option>
+                <option value="PDF">PDF</option>
                 <option value="VIDEO">Video</option>
-                <option value="ARTICLE">Reference</option>
+                <option value="AUDIO">Audio</option>
+                <option value="IMAGE">Image</option>
+                <option value="DOCUMENT">Document</option>
+                <option value="LINK">Link</option>
+                <option value="OTHER">Other</option>
               </select>
               {formErrors.type && <p className="mt-1 text-xs text-red-500">{formErrors.type}</p>}
             </div>
@@ -742,12 +782,16 @@ export default function ContentCMS() {
                 Audience*
               </label>
               <select
-                value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value)}
+                value={formData.targetAudience}
+                onChange={(e) => updateForm("targetAudience", e.target.value)}
                 className={`h-11 w-full rounded-lg border ${formErrors.audience ? "border-red-500" : "border-gray-250"} bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500`}
               >
+                <option value="PARENT">Parent</option>
                 <option value="THERAPIST">Therapist</option>
-                <option value="PARENT">Parents</option>
+                <option value="DOCTOR">Doctor</option>
+                <option value="STAFF">Staff</option>
+                <option value="ADMIN">Admin</option>
+                <option value="ALL">All</option>
               </select>
               {formErrors.audience && <p className="mt-1 text-xs text-red-500">{formErrors.audience}</p>}
             </div>
@@ -761,8 +805,8 @@ export default function ContentCMS() {
             <input
               type="text"
               placeholder=""
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={formData.title}
+              onChange={(e) => updateForm("title", e.target.value)}
               className={`h-11 w-full rounded-lg border ${formErrors.title ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-gray-250 focus:border-brand-500 focus:ring-brand-500"} bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1`}
             />
             {formErrors.title && <p className="mt-1 text-xs text-red-500">{formErrors.title}</p>}
@@ -776,8 +820,8 @@ export default function ContentCMS() {
             <input
               type="text"
               placeholder=""
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={formData.description}
+              onChange={(e) => updateForm("description", e.target.value)}
               className="h-11 w-full rounded-lg border border-gray-250 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
             />
           </div>
@@ -792,25 +836,31 @@ export default function ContentCMS() {
                 existingFiles.map((fileRecord: any, idx: number) => {
                   const f = fileRecord.file || fileRecord;
                   return (
-                    <a
+                    <div
                       key={idx}
-                      href={f.file_path}
-                      target="_blank"
-                      rel="noreferrer"
+                      onClick={() => f.file_url && window.open(f.file_url, '_blank')}
                       className="w-40 shrink-0 border border-gray-200 rounded-xl p-4 flex flex-col hover:border-brand-500 hover:shadow-sm transition-all bg-white cursor-pointer group relative"
                     >
-                      <div className="absolute top-2 right-2 p-1.5 rounded-full bg-gray-50 text-gray-400 group-hover:text-brand-500 group-hover:bg-brand-50 transition-colors">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setExistingFiles(prev => prev.filter((_, i) => i !== idx));
+                        }}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-gray-50 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 transition-all cursor-pointer z-10"
+                      >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                      </div>
+                      </button>
                       <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-red-500 mb-3">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
                       </div>
-                      <p className="text-sm font-semibold text-gray-800 mb-1 truncate" title={f.file_name || f.original_name}>
-                        {f.file_name || f.original_name || "Document"}
+                      <p className="text-sm font-semibold text-gray-800 mb-1 truncate" title={f.original_file_name || f.file_name}>
+                        {f.original_file_name || f.file_name || "Document"}
                       </p>
                       <p className="text-xs text-gray-500 mb-0.5">
                         {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : ""}
@@ -819,9 +869,43 @@ export default function ContentCMS() {
                       <p className="text-xs text-gray-400 mt-2">
                         {f.file_size ? `${(f.file_size / 1024 / 1024).toFixed(2)} MB` : "Unknown Size"}
                       </p>
-                    </a>
+                    </div>
                   );
                 })}
+              {uploadedFiles.length > 0 &&
+                uploadedFiles.map((file: File, idx: number) => (
+                  <div
+                    key={`new-${idx}`}
+                    className="w-40 shrink-0 border border-gray-200 rounded-xl p-4 flex flex-col transition-all bg-white relative group"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
+                      }}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-gray-50 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 transition-all cursor-pointer"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 mb-3">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-800 mb-1 truncate" title={file.name}>
+                      {file.name}
+                    </p>
+                    <p className="text-xs text-gray-500 mb-0.5">
+                      {new Date().toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-gray-500 capitalize">{file.type || "File"}</p>
+                    <p className="text-xs text-gray-400 mt-2">
+                      {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "Unknown Size"}
+                    </p>
+                  </div>
+                ))}
               <label className="w-40 shrink-0 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-40 hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer relative bg-white">
                 {uploadFilesMutation.isPending ? (
                   <div className="flex flex-col items-center justify-center py-4 text-center">
@@ -859,18 +943,21 @@ export default function ContentCMS() {
             <div className="flex items-center gap-3 mb-2 flex-wrap">
               <span className="text-xs font-bold text-gray-800">Tags</span>
               <div className="flex flex-wrap gap-2">
-                {["ABAA", "SDADHD", "Sensory", "OT", "Speech", "Parenting"].map((tag) => {
-                  const isSelected = tagsInput.split(",").map(t => t.trim().toLowerCase()).includes(tag.toLowerCase());
+                {Array.from(new Set([
+                  ...formData.tagsInput.split(",").map(t => t.trim()).filter(Boolean),
+                  ...["ABAA", "SDADHD", "Sensory", "OT", "Speech", "Parenting"]
+                ])).map((tag) => {
+                  const isSelected = formData.tagsInput.split(",").map(t => t.trim().toLowerCase()).includes(tag.toLowerCase());
                   return (
                     <button
                       key={tag}
                       type="button"
                       onClick={() => {
-                        const currentTags = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
+                        const currentTags = formData.tagsInput.split(",").map(t => t.trim()).filter(Boolean);
                         if (isSelected) {
-                          setTagsInput(currentTags.filter(t => t.toLowerCase() !== tag.toLowerCase()).join(", "));
+                          updateForm("tagsInput", currentTags.filter(t => t.toLowerCase() !== tag.toLowerCase()).join(", "));
                         } else {
-                          setTagsInput([...currentTags, tag].join(", "));
+                          updateForm("tagsInput", [...currentTags, tag].join(", "));
                         }
                       }}
                       className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
@@ -897,9 +984,9 @@ export default function ContentCMS() {
                 type="button"
                 onClick={() => {
                   if (newTagInput.trim()) {
-                    const currentTags = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
+                    const currentTags = formData.tagsInput.split(",").map(t => t.trim()).filter(Boolean);
                     if (!currentTags.map(t => t.toLowerCase()).includes(newTagInput.trim().toLowerCase())) {
-                      setTagsInput([...currentTags, newTagInput.trim()].join(", "));
+                      updateForm("tagsInput", [...currentTags, newTagInput.trim()].join(", "));
                     }
                     setNewTagInput("");
                   }
@@ -915,14 +1002,14 @@ export default function ContentCMS() {
           <div className="flex items-center p-3 rounded-lg border border-gray-200 bg-white">
             <button
               type="button"
-              onClick={() => setIsFeatured(!isFeatured)}
+              onClick={() => updateForm("isFeatured", !formData.isFeatured)}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                isFeatured ? "bg-emerald-500" : "bg-gray-200"
+                formData.isFeatured ? "bg-emerald-500" : "bg-gray-200"
               }`}
             >
               <span
                 className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                  isFeatured ? "translate-x-5" : "translate-x-0"
+                  formData.isFeatured ? "translate-x-5" : "translate-x-0"
                 }`}
               />
             </button>
@@ -983,6 +1070,98 @@ export default function ContentCMS() {
             </div>
           </div>
         </div>
+      </CustomModal>
+
+      {/* View Resource Modal */}
+      <CustomModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title="View Resource"
+        maxWidth="max-w-3xl"
+        customFooter={
+          <div className="flex justify-end px-8 py-5 border-t border-gray-150 bg-gray-50 rounded-b-xl w-full">
+            <button
+              type="button"
+              onClick={() => setIsViewModalOpen(false)}
+              className="px-8 py-2.5 rounded bg-white border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm cursor-pointer shadow-sm"
+            >
+              Close
+            </button>
+          </div>
+        }
+      >
+        {viewResource && (
+          <div className="flex flex-col gap-6">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-bold text-gray-900">{viewResource.title}</h2>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded bg-blue-50 text-blue-600 text-xs font-semibold border border-blue-100 uppercase tracking-wider">
+                    {viewResource.type}
+                  </span>
+                  <span className="px-2.5 py-1 rounded bg-purple-50 text-purple-600 text-xs font-semibold border border-purple-100">
+                    {viewResource.targetAudience}
+                  </span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100 whitespace-pre-wrap">
+                {viewResource.description || "No description provided."}
+              </p>
+            </div>
+
+            {viewResource.tags.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <BookmarkIcon className="size-4 text-brand-500" /> Tags
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {viewResource.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200 shadow-sm"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <DocumentIcon className="size-4 text-brand-500" /> Attached Files
+              </h4>
+              {viewResource.files && viewResource.files.length > 0 ? (
+                <div className="flex flex-wrap gap-4">
+                  {viewResource.files.map((fileRecord: any, idx: number) => {
+                    const f = fileRecord.file || fileRecord;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => f.file_url && window.open(f.file_url, '_blank')}
+                        className="w-40 shrink-0 border border-gray-200 rounded-xl p-4 flex flex-col hover:border-brand-500 hover:shadow-sm transition-all bg-white cursor-pointer group relative"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 mb-3">
+                          <DocumentIcon className="size-5" />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-800 mb-1 truncate" title={f.original_file_name || f.file_name}>
+                          {f.original_file_name || f.file_name || "Document"}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {f.file_size ? `${(f.file_size / 1024 / 1024).toFixed(2)} MB` : "Unknown Size"}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 italic bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
+                  No files attached to this resource.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </CustomModal>
     </>
   );
