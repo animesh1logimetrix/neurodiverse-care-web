@@ -216,10 +216,11 @@ export default function NeuroCareAuth() {
       <div className={`hidden lg:flex w-[45%] flex-col justify-between bg-[#0a7a66] px-12 ${activeTab === 'signin' ? 'py-12' : 'py-16'} text-white overflow-y-auto`}>
         <div>
           <div className={`flex items-center gap-3 ${activeTab === "signin" ? "" : "mb-16"}`}>
-            {/* Simple logo placeholder */}
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center overflow-hidden relative">
-               <div className="absolute w-full h-full bg-orange-400 rotate-45 transform translate-x-1/2"></div>
-            </div>
+            <img
+              className="w-8 h-8 rounded-md"
+              src="/images/logo/theraverse-logo.jpeg"
+              alt="Logo"
+            />
             <span className="text-xl font-semibold">NeuroCare</span>
           </div>
 

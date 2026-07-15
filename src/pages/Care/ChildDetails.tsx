@@ -481,10 +481,12 @@ export default function ChildDetails() {
           
           {/* Bottom: Note Field */}
           <div className="mt-6 flex items-center gap-2 bg-[#fff7ed] border border-[#fed7aa] rounded-md px-3 py-2 w-full">
-            <span className="text-gray-500 text-sm">Note :</span>
+            <span className="text-gray-500 text-sm shrink-0">Note :</span>
             <input 
               type="text" 
-              className="flex-1 bg-transparent text-sm focus:outline-none"
+              readOnly
+              value={child?.notes || ""}
+              className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800"
             />
           </div>
         </div>

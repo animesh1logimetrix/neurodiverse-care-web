@@ -427,8 +427,8 @@ export default function StaffParents() {
       </div>
 
       {/* Users Table Card */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="max-w-full overflow-x-auto">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+        <div className="max-w-full overflow-visible">
           <Table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <TableHeader className="bg-gray-50 dark:bg-gray-900/50">
               <TableRow>
