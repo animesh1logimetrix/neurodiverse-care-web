@@ -764,7 +764,7 @@ export default function ContentCMS() {
               <select
                 value={formData.type}
                 onChange={(e) => updateForm("type", e.target.value)}
-                className={`h-11 w-full rounded-lg border ${formErrors.type ? "border-red-500" : "border-gray-250"} bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500`}
+                className="h-11 w-full rounded-lg border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-all border-gray-300 text-gray-900 focus:border-brand-500 focus:ring-brand-500"
               >
                 <option value="ARTICLE">Article</option>
                 <option value="PDF">PDF</option>
@@ -775,7 +775,7 @@ export default function ContentCMS() {
                 <option value="LINK">Link</option>
                 <option value="OTHER">Other</option>
               </select>
-              {formErrors.type && <p className="mt-1 text-xs text-red-500">{formErrors.type}</p>}
+              {formErrors.type && <p className="mt-1 text-xs text-error-500">{formErrors.type}</p>}
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-800 mb-1.5">
@@ -784,7 +784,7 @@ export default function ContentCMS() {
               <select
                 value={formData.targetAudience}
                 onChange={(e) => updateForm("targetAudience", e.target.value)}
-                className={`h-11 w-full rounded-lg border ${formErrors.audience ? "border-red-500" : "border-gray-250"} bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500`}
+                className="h-11 w-full rounded-lg border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-all border-gray-300 text-gray-900 focus:border-brand-500 focus:ring-brand-500"
               >
                 <option value="PARENT">Parent</option>
                 <option value="THERAPIST">Therapist</option>
@@ -793,7 +793,7 @@ export default function ContentCMS() {
                 <option value="ADMIN">Admin</option>
                 <option value="ALL">All</option>
               </select>
-              {formErrors.audience && <p className="mt-1 text-xs text-red-500">{formErrors.audience}</p>}
+              {formErrors.audience && <p className="mt-1 text-xs text-error-500">{formErrors.audience}</p>}
             </div>
           </div>
 
@@ -807,9 +807,9 @@ export default function ContentCMS() {
               placeholder=""
               value={formData.title}
               onChange={(e) => updateForm("title", e.target.value)}
-              className={`h-11 w-full rounded-lg border ${formErrors.title ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-gray-250 focus:border-brand-500 focus:ring-brand-500"} bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1`}
+              className="h-11 w-full rounded-lg border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-all border-gray-300 text-gray-900 focus:border-brand-500 focus:ring-brand-500"
             />
-            {formErrors.title && <p className="mt-1 text-xs text-red-500">{formErrors.title}</p>}
+            {formErrors.title && <p className="mt-1 text-xs text-error-500">{formErrors.title}</p>}
           </div>
 
           {/* Description (Single line height input, no asterisk) */}
@@ -822,7 +822,7 @@ export default function ContentCMS() {
               placeholder=""
               value={formData.description}
               onChange={(e) => updateForm("description", e.target.value)}
-              className="h-11 w-full rounded-lg border border-gray-250 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
             />
           </div>
 
