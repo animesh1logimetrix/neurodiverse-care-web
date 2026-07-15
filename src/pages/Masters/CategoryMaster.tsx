@@ -644,10 +644,10 @@ export default function CategoryMaster() {
   const filtered = searchQuery.trim()
     ? categories.filter(
         (c) =>
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.subcategories.some((s) =>
-            s.name.toLowerCase().includes(searchQuery.toLowerCase())
+          (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (c.description || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (c.subcategories || []).some((s) =>
+            (s?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
           )
       )
     : categories;
