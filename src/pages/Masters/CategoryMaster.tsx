@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import axiosClient from "../../api/axiosClient";
 import PageMeta from "../../components/common/PageMeta";
 import { CustomModal } from "../../components/ui/modal/CustomModal";
 import { PlusIcon, PencilIcon, TrashBinIcon } from "../../icons";
@@ -11,6 +14,16 @@ interface Subcategory {
   id: number;
   name: string;
   icdCode: string;
+}
+
+export interface ApiCategory {
+  id: number;
+  full_category_name: string;
+  short_name: string;
+  icd_code: string;
+  dsm_tr_code: string;
+  description: string;
+  sub_category: Subcategory[];
 }
 
 /** Color theme for each card */
@@ -109,42 +122,6 @@ const THEMES: Record<string, CardTheme> = {
 };
 
 const THEME_KEYS = Object.keys(THEMES);
-
-// ---------------------------------------------------------------------------
-// Static seed data
-// ---------------------------------------------------------------------------
-
-let _subId = 1000;
-const sid = () => ++_subId;
-
-const INITIAL_CATEGORIES: Category[] = [
-  {
-    id: 1,
-    name: "ADHD",
-    theme: THEMES.orange,
-    description:
-      "Neurodevelopmental disorder characterised by inattention, hyperactivity and impulsivity",
-    subcategories: [
-      { id: sid(), name: "Predominantly Inattentive (ADHD-PI)", icdCode: "F90.0· DSM 314.00" },
-      { id: sid(), name: "Predominantly Hyperactive (ADHD-PH)", icdCode: "F90.1· DSM 314.01" },
-      { id: sid(), name: "Combined Presentation (ADHD-C)", icdCode: "F90.2· DSM 314.01" },
-      { id: sid(), name: "Other Specified / Unspecified", icdCode: "F90.8· DSM 314.01" },
-    ],
-  },
-  {
-    id: 2,
-    name: "ADHD",
-    theme: THEMES.blue,
-    description:
-      "Neurodevelopmental disorder characterised by inattention, hyperactivity and impulsivity",
-    subcategories: [
-      { id: sid(), name: "Predominantly Inattentive (ADHD-PI)", icdCode: "F90.0· DSM 314.00" },
-      { id: sid(), name: "Predominantly Hyperactive (ADHD-PH)", icdCode: "F90.1· DSM 314.01" },
-      { id: sid(), name: "Combined Presentation (ADHD-C)", icdCode: "F90.2· DSM 314.01" },
-      { id: sid(), name: "Other Specified / Unspecified", icdCode: "F90.8· DSM 314.01" },
-    ],
-  },
-];
 
 const TOTAL_CHILDREN = 284;
 
@@ -316,6 +293,7 @@ interface CategoryFormProps {
   description: string;
   setDescription: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  errors: Record<string, string>;
 }
 
 function CategoryForm({
@@ -331,6 +309,7 @@ function CategoryForm({
   description,
   setDescription,
   onSubmit,
+  errors,
 }: CategoryFormProps) {
   const inputCls =
     "h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all";
@@ -345,12 +324,12 @@ function CategoryForm({
         </label>
         <input
           type="text"
-          required
           placeholder=""
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          className={inputCls}
+          className={`${inputCls} ${errors.fullName ? "border-error-500 text-error-700 bg-error-50" : ""}`}
         />
+        {errors.fullName && <p className="text-error-500 text-xs mt-1">{errors.fullName}</p>}
       </div>
 
       {/* Short Name / Abbreviation */}
@@ -360,12 +339,12 @@ function CategoryForm({
         </label>
         <input
           type="text"
-          required
           placeholder=""
           value={shortName}
           onChange={(e) => setShortName(e.target.value)}
-          className={inputCls}
+          className={`${inputCls} ${errors.shortName ? "border-error-500 text-error-700 bg-error-50" : ""}`}
         />
+        {errors.shortName && <p className="text-error-500 text-xs mt-1">{errors.shortName}</p>}
       </div>
 
       {/* ICD-11 Code */}
@@ -375,12 +354,12 @@ function CategoryForm({
         </label>
         <input
           type="text"
-          required
           placeholder=""
           value={icd11Code}
           onChange={(e) => setIcd11Code(e.target.value)}
-          className={inputCls}
+          className={`${inputCls} ${errors.icd11Code ? "border-error-500 text-error-700 bg-error-50" : ""}`}
         />
+        {errors.icd11Code && <p className="text-error-500 text-xs mt-1">{errors.icd11Code}</p>}
       </div>
 
       {/* DSM-5-TR Code */}
@@ -419,7 +398,46 @@ function CategoryForm({
 // ---------------------------------------------------------------------------
 
 export default function CategoryMaster() {
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const queryClient = useQueryClient();
+
+  const { data: apiCategories, isLoading } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/category");
+      return res.data as ApiCategory[];
+    },
+  });
+
+  const categories = (apiCategories || []).map((apiCat, index) => {
+    const nextThemeKey = THEME_KEYS[index % THEME_KEYS.length];
+    
+    // Safety check if sub_category is stored as a JSON string
+    let parsedSubcategories = [];
+    if (typeof apiCat.sub_category === 'string') {
+      try {
+        parsedSubcategories = JSON.parse(apiCat.sub_category);
+      } catch (e) {
+        parsedSubcategories = [];
+      }
+    } else if (Array.isArray(apiCat.sub_category)) {
+      parsedSubcategories = apiCat.sub_category;
+    } else if (apiCat.sub_category && typeof apiCat.sub_category === 'object') {
+      // In case it's an object with keys mapped to values
+      parsedSubcategories = Object.values(apiCat.sub_category);
+    }
+    
+    return {
+      id: apiCat.id,
+      name: apiCat.short_name,
+      fullName: apiCat.full_category_name,
+      icd11Code: apiCat.icd_code,
+      dsm5trCode: apiCat.dsm_tr_code,
+      description: apiCat.description,
+      theme: THEMES[nextThemeKey],
+      subcategories: parsedSubcategories,
+    };
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
 
   // Add
@@ -429,6 +447,7 @@ export default function CategoryMaster() {
   const [addIcd11Code, setAddIcd11Code] = useState("");
   const [addDsm5trCode, setAddDsm5trCode] = useState("");
   const [addDesc, setAddDesc] = useState("");
+  const [addErrors, setAddErrors] = useState<Record<string, string>>({});
 
   // Edit
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -438,12 +457,61 @@ export default function CategoryMaster() {
   const [editIcd11Code, setEditIcd11Code] = useState("");
   const [editDsm5trCode, setEditDsm5trCode] = useState("");
   const [editDesc, setEditDesc] = useState("");
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   // Delete
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
 
-  // ── CRUD ──────────────────────────────────────────────────────────────────
+  // ── API Mutations ─────────────────────────────────────────────────────────
+
+  const createMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await axiosClient.post("/category", payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Category created successfully");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      setIsAddOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to create category");
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: number, payload: any }) => {
+      const res = await axiosClient.patch(`/category/${id}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Category updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      setIsEditOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update category");
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await axiosClient.delete(`/category/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Category deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      setIsDeleteOpen(false);
+      setDeleteTarget(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete category");
+    }
+  });
+
+  // ── CRUD Handlers ─────────────────────────────────────────────────────────
 
   const handleOpenAdd = () => {
     setAddFullName("");
@@ -456,22 +524,25 @@ export default function CategoryMaster() {
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addShortName.trim()) return;
-    const nextThemeKey = THEME_KEYS[categories.length % THEME_KEYS.length];
-    setCategories((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        name: addShortName.trim(),
-        fullName: addFullName.trim(),
-        icd11Code: addIcd11Code.trim(),
-        dsm5trCode: addDsm5trCode.trim(),
-        description: addDesc.trim(),
-        theme: THEMES[nextThemeKey],
-        subcategories: [],
-      },
-    ]);
-    setIsAddOpen(false);
+    const errors: Record<string, string> = {};
+    if (!addFullName.trim()) errors.fullName = "Full Category Name is required";
+    if (!addShortName.trim()) errors.shortName = "Short Name is required";
+    if (!addIcd11Code.trim()) errors.icd11Code = "ICD-11 Code is required";
+    
+    if (Object.keys(errors).length > 0) {
+      setAddErrors(errors);
+      return;
+    }
+    setAddErrors({});
+    
+    createMutation.mutate({
+      full_category_name: addFullName.trim(),
+      short_name: addShortName.trim(),
+      icd_code: addIcd11Code.trim(),
+      dsm_tr_code: addDsm5trCode.trim(),
+      description: addDesc.trim(),
+      sub_category: {}
+    });
   };
 
   const handleOpenEdit = (cat: Category) => {
@@ -486,22 +557,30 @@ export default function CategoryMaster() {
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editTarget || !editShortName.trim()) return;
-    setCategories((prev) =>
-      prev.map((c) =>
-        c.id === editTarget.id
-          ? {
-              ...c,
-              name: editShortName.trim(),
-              fullName: editFullName.trim(),
-              icd11Code: editIcd11Code.trim(),
-              dsm5trCode: editDsm5trCode.trim(),
-              description: editDesc.trim(),
-            }
-          : c
-      )
-    );
-    setIsEditOpen(false);
+    if (!editTarget) return;
+
+    const errors: Record<string, string> = {};
+    if (!editFullName.trim()) errors.fullName = "Full Category Name is required";
+    if (!editShortName.trim()) errors.shortName = "Short Name is required";
+    if (!editIcd11Code.trim()) errors.icd11Code = "ICD-11 Code is required";
+    
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors);
+      return;
+    }
+    setEditErrors({});
+
+    updateMutation.mutate({
+      id: editTarget.id,
+      payload: {
+        full_category_name: editFullName.trim(),
+        short_name: editShortName.trim(),
+        icd_code: editIcd11Code.trim(),
+        dsm_tr_code: editDsm5trCode.trim(),
+        description: editDesc.trim(),
+        sub_category: { ...editTarget.subcategories }
+      }
+    });
   };
 
   const handleOpenDelete = (cat: Category) => {
@@ -511,39 +590,53 @@ export default function CategoryMaster() {
 
   const handleDeleteConfirm = () => {
     if (deleteTarget) {
-      setCategories((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      deleteMutation.mutate(deleteTarget.id);
     }
-    setIsDeleteOpen(false);
-    setDeleteTarget(null);
   };
 
   const handleAddSub = (catId: number, name: string, icdCode: string) => {
-    setCategories((prev) =>
-      prev.map((c) =>
-        c.id === catId
-          ? {
-              ...c,
-              subcategories: [
-                ...c.subcategories,
-                { id: Date.now(), name, icdCode },
-              ],
-            }
-          : c
-      )
-    );
+    const cat = categories.find((c) => c.id === catId);
+    if (!cat) return;
+    
+    // Add the new subcategory
+    const newSubcategories = [
+      ...cat.subcategories,
+      { id: Date.now(), name, icdCode },
+    ];
+    
+    // Save to server
+    updateMutation.mutate({
+      id: catId,
+      payload: {
+        full_category_name: cat.fullName || "",
+        short_name: cat.name,
+        icd_code: cat.icd11Code || "",
+        dsm_tr_code: cat.dsm5trCode || "",
+        description: cat.description || "",
+        sub_category: { ...newSubcategories }
+      }
+    });
   };
 
   const handleDeleteSub = (catId: number, subId: number) => {
-    setCategories((prev) =>
-      prev.map((c) =>
-        c.id === catId
-          ? {
-              ...c,
-              subcategories: c.subcategories.filter((s) => s.id !== subId),
-            }
-          : c
-      )
-    );
+    const cat = categories.find((c) => c.id === catId);
+    if (!cat) return;
+    
+    // Filter out the deleted subcategory
+    const newSubcategories = cat.subcategories.filter((s) => s.id !== subId);
+    
+    // Save to server
+    updateMutation.mutate({
+      id: catId,
+      payload: {
+        full_category_name: cat.fullName || "",
+        short_name: cat.name,
+        icd_code: cat.icd11Code || "",
+        dsm_tr_code: cat.dsm5trCode || "",
+        description: cat.description || "",
+        sub_category: { ...newSubcategories }
+      }
+    });
   };
 
   // ── Search filter ─────────────────────────────────────────────────────────
@@ -661,7 +754,15 @@ export default function CategoryMaster() {
       </div>
 
       {/* Cards grid */}
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <div className="py-12 flex flex-col items-center justify-center text-gray-500">
+          <svg className="animate-spin h-8 w-8 text-[#60a5fa] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="text-sm font-medium">Loading categories...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="flex items-center justify-center h-40 text-sm text-gray-400">
           No categories match your search.
         </div>
@@ -702,6 +803,7 @@ export default function CategoryMaster() {
           description={addDesc}
           setDescription={setAddDesc}
           onSubmit={handleAddSubmit}
+          errors={addErrors}
         />
       </CustomModal>
 
@@ -727,6 +829,7 @@ export default function CategoryMaster() {
           description={editDesc}
           setDescription={setEditDesc}
           onSubmit={handleEditSubmit}
+          errors={editErrors}
         />
       </CustomModal>
 
@@ -735,32 +838,47 @@ export default function CategoryMaster() {
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         title="Delete Category"
-        size="sm"
-        showOverlay
+        maxWidth="max-w-md"
         customFooter={
-          <div className="flex justify-end items-center gap-3 px-8 py-5 border-t border-gray-100 w-full">
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100">
             <button
-              type="button"
               onClick={() => setIsDeleteOpen(false)}
-              className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer"
+              className="px-4 py-2 text-gray-700 bg-gray-100 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
             >
               Cancel
             </button>
             <button
-              type="button"
               onClick={handleDeleteConfirm}
-              className="px-6 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors text-sm cursor-pointer"
+              disabled={deleteMutation.isPending}
+              className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[80px]"
             >
-              Delete
+              {deleteMutation.isPending ? (
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                "Delete"
+              )}
             </button>
           </div>
         }
       >
-        <p className="text-sm text-gray-600 leading-relaxed">
-          Are you sure you want to delete{" "}
-          <strong className="text-gray-900">{deleteTarget?.name}</strong>? This
-          action cannot be undone.
-        </p>
+        <div>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-red-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-gray-900 font-semibold mb-1">Are you sure?</h4>
+              <p className="text-sm text-gray-500">
+                Are you sure you want to delete this category? This action cannot be undone and will permanently remove this record.
+              </p>
+            </div>
+          </div>
+        </div>
       </CustomModal>
     </>
   );
