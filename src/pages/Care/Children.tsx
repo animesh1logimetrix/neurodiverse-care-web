@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { Link } from "react-router";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -287,10 +288,7 @@ export default function Children() {
         description="Children management dashboard"
       />
 
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
-        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
-      </div>
+      <PageBreadcrumb pageTitle="Children" hideTitle />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>

@@ -405,7 +405,7 @@ export default function ClinicAdminDashboard() {
 
         {/* ── Page Header ───────────────────────────────────────────────── */}
         <div className="mb-6">
-          <h1 className="text-[20px] font-bold text-gray-900 leading-tight">Clinic Dashboard</h1>
+          <h1 className="text-[20px] font-bold text-gray-900 leading-tight">Therapist Dashboard</h1>
           <p className="text-[12px] text-gray-500 mt-1">Bright Minds Developmental Clinic</p>
         </div>
 

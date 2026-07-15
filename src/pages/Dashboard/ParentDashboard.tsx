@@ -112,16 +112,16 @@ export default function ParentDashboard() {
       />
 
       <div
-        className="min-h-screen -mx-4 md:-mx-6 -my-4 md:-my-6 p-[32px]"
+        className="bg-[#f8fafc] -mx-4 md:-mx-6 -my-4 md:-my-6 p-[24px]"
         style={{ fontFamily: "Outfit, sans-serif" }}
       >
         {/* ── Welcome Header ─────────────────────────────────────────────── */}
-        <div className="mb-[32px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="mb-[16px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-[36px] font-bold text-gray-900 leading-tight">
+            <h1 className="text-[20px] font-bold text-gray-900 leading-tight">
               Welcome back, {parentName}
             </h1>
-            <p className="text-[18px] text-gray-400 mt-1">
+            <p className="text-[12px] text-black mt-1">
               Here's how Arjun is progressing
             </p>
           </div>
@@ -146,7 +146,7 @@ export default function ParentDashboard() {
         </div>
 
         {/* ── Child Summary Card ──────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] mb-[24px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-[24px]">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[16px] mb-[16px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-[16px]">
           {/* Left — Avatar + info */}
           <div className="flex items-start gap-[16px]">
             {/* Purple avatar */}
@@ -196,15 +196,15 @@ export default function ParentDashboard() {
         </div>
 
         {/* ── Main 2-column grid ─────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-[24px] items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-[16px] items-stretch">
 
           {/* ── Left: Goal Progress (spans 2 of 3 cols on desktop) ─────── */}
           <div className="lg:col-span-2 flex flex-col min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] flex flex-col flex-1 h-full">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[16px] flex flex-col flex-1 h-full">
               {/* Card header */}
-              <div className="flex items-center justify-between mb-[24px]">
-                <h2 className="text-[24px] font-semibold text-gray-800">Goal Progress</h2>
-                <span className="text-[14px] text-gray-400">4 of 6 goals active</span>
+              <div className="flex items-center justify-between mb-[16px]">
+                <h2 className="text-[15px] font-bold text-gray-800 leading-tight">Goal Progress</h2>
+                <span className="text-[12px] text-gray-400">4 of 6 goals active</span>
               </div>
 
               {/* Goal rows */}
@@ -242,11 +242,11 @@ export default function ParentDashboard() {
           </div>
 
           {/* ── Right column: Quick Actions + This Week ─────────────────── */}
-          <div className="flex flex-col gap-[24px]">
+          <div className="flex flex-col gap-[16px]">
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px]">
-              <h2 className="text-[20px] font-semibold text-gray-800 mb-[16px]">Quick Actions</h2>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[16px]">
+              <h2 className="text-[15px] font-bold text-gray-800 leading-tight mb-[12px]">Quick Actions</h2>
               <div className="flex flex-col gap-3">
                 {quickActions.map((action, idx) => (
                   <button
@@ -269,8 +269,8 @@ export default function ParentDashboard() {
             </div>
 
             {/* This Week at a Glance */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px]">
-              <h2 className="text-[20px] font-semibold text-gray-800 mb-[16px]">This Week at a Glance</h2>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[16px]">
+              <h2 className="text-[15px] font-bold text-gray-800 leading-tight mb-[12px]">This Week at a Glance</h2>
               <div className="flex flex-col gap-4">
                 {weekStats.map((stat, idx) => (
                   <div key={idx} className="flex items-center justify-between">

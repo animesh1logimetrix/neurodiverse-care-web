@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosClient from "../../api/axiosClient";
 import PageMeta from "../../components/common/PageMeta";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { PencilIcon, UserIcon, ArrowUpIcon } from "../../icons";
 import { CustomModal } from "../../components/ui/modal/CustomModal";
 import DatePicker from "../../components/form/date-picker";
@@ -344,11 +345,7 @@ export default function ChildDetails() {
       {/* Header Section */}
       <div className="mb-4">
         {/* Breadcrumb */}
-        <div className="text-sm mb-3">
-          <span className="text-gray-400">NeuroDiverse</span>
-          <span className="text-gray-400 mx-2">&lt;</span>
-          <span className="text-gray-500 font-medium">Administration</span>
-        </div>
+        <PageBreadcrumb pageTitle="Child Details" hideTitle />
 
         {/* Title Area */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
