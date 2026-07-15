@@ -1,4 +1,5 @@
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosClient from "../../api/axiosClient";
@@ -11,7 +12,7 @@ import { PlusIcon, PencilIcon, TrashBinIcon } from "../../icons";
 // ---------------------------------------------------------------------------
 
 interface Subcategory {
-  id: number;
+  id?: number;
   name: string;
   icdCode: string;
 }
@@ -203,8 +204,8 @@ function CategoryCard({
 
         {/* Subcategory list with reduced spacing and font sizes */}
         <ul className="flex flex-col gap-2">
-          {category.subcategories.map((sub) => (
-            <li key={sub.id} className="flex items-start gap-2 group">
+          {category.subcategories.map((sub, index) => (
+            <li key={sub.id || index} className="flex items-start gap-2 group">
               <span
                 className={`mt-1.5 size-1.5 rounded-full shrink-0 ${theme.dot}`}
               />
@@ -217,7 +218,11 @@ function CategoryCard({
                 </p>
               </div>
               <button
-                onClick={() => onDeleteSub(category.id, sub.id)}
+                onClick={() => {
+                  if (sub.id !== undefined) {
+                    onDeleteSub(category.id, sub.id);
+                  }
+                }}
                 className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-300 hover:text-red-500 transition-all shrink-0 cursor-pointer"
                 aria-label="Remove subcategory"
               >
@@ -324,7 +329,7 @@ function CategoryForm({
         </label>
         <input
           type="text"
-          placeholder=""
+          placeholder="Enter full category name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           className={`${inputCls} ${errors.fullName ? "border-error-500 text-error-700 bg-error-50" : ""}`}
@@ -339,7 +344,7 @@ function CategoryForm({
         </label>
         <input
           type="text"
-          placeholder=""
+          placeholder="Enter short name"
           value={shortName}
           onChange={(e) => setShortName(e.target.value)}
           className={`${inputCls} ${errors.shortName ? "border-error-500 text-error-700 bg-error-50" : ""}`}
@@ -354,7 +359,7 @@ function CategoryForm({
         </label>
         <input
           type="text"
-          placeholder=""
+          placeholder="Enter ICD-11 code"
           value={icd11Code}
           onChange={(e) => setIcd11Code(e.target.value)}
           className={`${inputCls} ${errors.icd11Code ? "border-error-500 text-error-700 bg-error-50" : ""}`}
@@ -369,7 +374,7 @@ function CategoryForm({
         </label>
         <input
           type="text"
-          placeholder=""
+          placeholder="Enter DSM-5-TR code"
           value={dsm5trCode}
           onChange={(e) => setDsm5trCode(e.target.value)}
           className={inputCls}
@@ -383,7 +388,7 @@ function CategoryForm({
         </label>
         <input
           type="text"
-          placeholder=""
+          placeholder="Enter description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className={inputCls}
@@ -534,14 +539,12 @@ export default function CategoryMaster() {
       return;
     }
     setAddErrors({});
-    
     createMutation.mutate({
       full_category_name: addFullName.trim(),
       short_name: addShortName.trim(),
       icd_code: addIcd11Code.trim(),
       dsm_tr_code: addDsm5trCode.trim(),
-      description: addDesc.trim(),
-      sub_category: {}
+      description: addDesc.trim()
     });
   };
 
@@ -601,7 +604,7 @@ export default function CategoryMaster() {
     // Add the new subcategory
     const newSubcategories = [
       ...cat.subcategories,
-      { id: Date.now(), name, icdCode },
+      { name, icdCode },
     ];
     
     // Save to server
@@ -702,10 +705,7 @@ export default function CategoryMaster() {
       />
 
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
-        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
-      </div>
+      <PageBreadcrumb pageTitle="Category Master" hideTitle />
 
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">

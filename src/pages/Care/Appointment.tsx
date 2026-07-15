@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import axiosClient from "../../api/axiosClient";
@@ -488,10 +489,7 @@ export default function Appointment() {
 
   return (
     <>
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
-        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
-      </div>
+      <PageBreadcrumb pageTitle="Appointments" hideTitle />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>

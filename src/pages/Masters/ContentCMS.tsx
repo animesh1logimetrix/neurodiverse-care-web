@@ -1,4 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import axiosClient from "../../api/axiosClient";
 import PageMeta from "../../components/common/PageMeta";
 import { CustomModal } from "../../components/ui/modal/CustomModal";
 import { PlusIcon, PencilIcon, TrashBinIcon, EyeIcon, DownloadIcon } from "../../icons";
@@ -11,11 +15,24 @@ interface Resource {
   id: number;
   title: string;
   description: string;
-  type: "guide" | "worksheet" | "video" | "reference";
-  targetAudience: "Therapist" | "Parents";
+  type: string;
+  targetAudience: string;
   tags: string[];
   isBookmarked?: boolean;
   fileName?: string;
+  isFeatured?: boolean;
+  files?: any[];
+}
+
+export interface ApiContent {
+  id: number;
+  resource_type: string;
+  audience: string;
+  title: string;
+  description: string;
+  tags: string;
+  is_featured: boolean;
+  files?: any[];
 }
 
 // ---------------------------------------------------------------------------
@@ -158,31 +175,6 @@ function StarIcon({ className }: { className?: string }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Static Initial Data (10 Total Resources)
-// ---------------------------------------------------------------------------
-
-const INITIAL_RESOURCES: Resource[] = [
-  {
-    id: 1,
-    title: "ABA Therapy Fundamentals Guide",
-    description: "Comprehensive introduction to Applied Behavior Analysis principles for therapy teams.",
-    type: "guide",
-    targetAudience: "Therapist",
-    tags: ["ABA", "ADHD", "Foundational"],
-    isBookmarked: false,
-  },
-  {
-    id: 2,
-    title: "ABA Therapy Fundamentals Guide",
-    description: "Comprehensive introduction to Applied Behavior Analysis principles for therapy teams.",
-    type: "video",
-    targetAudience: "Parents",
-    tags: ["ABA", "ADHD", "Foundational"],
-    isBookmarked: false,
-  },
-];
-
 // Helper to assign tags color classes consistently (matching mockups with black text)
 const getTagClass = (tag: string) => {
   const t = tag.toLowerCase();
@@ -302,7 +294,7 @@ function ResourceCard({ resource, onBookmark, onEdit, onDelete }: ResourceCardPr
               title="Delete"
               className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
             >
-              <DownloadIcon className="size-3.5" />
+              <TrashBinIcon className="size-3.5" />
             </button>
           </div>
         </div>
@@ -316,7 +308,28 @@ function ResourceCard({ resource, onBookmark, onEdit, onDelete }: ResourceCardPr
 // ---------------------------------------------------------------------------
 
 export default function ContentCMS() {
-  const [resources, setResources] = useState<Resource[]>(INITIAL_RESOURCES);
+  const queryClient = useQueryClient();
+
+  const { data: apiContents, isLoading } = useQuery({
+    queryKey: ["contents"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/content");
+      return res.data as ApiContent[];
+    },
+  });
+
+  const resources: Resource[] = (apiContents || []).map((c) => ({
+    id: c.id,
+    title: c.title,
+    description: c.description,
+    type: c.resource_type,
+    targetAudience: c.audience,
+    tags: c.tags ? c.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+    isBookmarked: c.is_featured,
+    fileName: c.files && c.files.length > 0 ? c.files[0].file?.file_name : undefined,
+    files: c.files || [],
+  }));
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
@@ -324,37 +337,100 @@ export default function ContentCMS() {
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<"guide" | "worksheet" | "video" | "reference">("guide");
-  const [targetAudience, setTargetAudience] = useState<"Therapist" | "Parents">("Therapist");
+  const [type, setType] = useState<string>("DOCUMENT");
+  const [targetAudience, setTargetAudience] = useState<string>("THERAPIST");
   const [tagsInput, setTagsInput] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [existingFiles, setExistingFiles] = useState<any[]>([]);
   const [newTagInput, setNewTagInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Calculate statistics counts (Hardcoded to match reference image)
-  const totalCount = 10;
-  const therapistCount = 6;
-  const parentsCount = 4;
-  const savedCount = 4;
+  // Calculate statistics counts
+  const totalCount = resources.length;
+  const therapistCount = resources.filter((r) => r.targetAudience === "THERAPIST").length;
+  const parentsCount = resources.filter((r) => r.targetAudience === "PARENT").length;
+  const savedCount = resources.filter((r) => r.isBookmarked).length;
 
   // Derive unique tags list
   const allTags = Array.from(new Set(resources.flatMap((r) => r.tags)));
+
+  // Mutations
+  const uploadFilesMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      const formData = new FormData();
+      files.forEach(file => formData.append("files", file));
+      formData.append("folder", "uploads");
+      const res = await axiosClient.post("/media/uploads", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    },
+  });
+
+  const createContentMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await axiosClient.post("/content", payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Content created successfully");
+      queryClient.invalidateQueries({ queryKey: ["contents"] });
+      setIsModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to create content");
+    },
+  });
+
+  const updateContentMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: any }) => {
+      const res = await axiosClient.patch(`/content/${id}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Content updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["contents"] });
+      setIsModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update content");
+    },
+  });
+
+  const deleteContentMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await axiosClient.delete(`/content/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Content deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["contents"] });
+      setIsDeleteOpen(false);
+      setDeleteTarget(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete content");
+    },
+  });
 
   // Handlers
   const handleOpenAdd = () => {
     setEditingResource(null);
     setTitle("");
     setDescription("");
-    setType("guide");
-    setTargetAudience("Therapist");
+    setType("DOCUMENT");
+    setTargetAudience("THERAPIST");
     setTagsInput("");
-    setSelectedFile(null);
+    setExistingFiles([]);
     setNewTagInput("");
     setIsFeatured(false);
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -365,78 +441,85 @@ export default function ContentCMS() {
     setType(res.type);
     setTargetAudience(res.targetAudience);
     setTagsInput(res.tags.join(", "));
-    setSelectedFile(null);
+    setExistingFiles(res.files || []);
     setNewTagInput("");
-    setIsFeatured(false);
+    setIsFeatured(res.isBookmarked || false);
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setResources((prev) => prev.filter((r) => r.id !== id));
+  const handleDeleteOpen = (id: number) => {
+    setDeleteTarget(id);
+    setIsDeleteOpen(true);
   };
 
   const handleBookmarkToggle = (id: number) => {
-    setResources((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, isBookmarked: !r.isBookmarked } : r))
-    );
+    const resource = resources.find((r) => r.id === id);
+    if (!resource) return;
+    
+    updateContentMutation.mutate({
+      id,
+      payload: { is_featured: !resource.isBookmarked },
+    });
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) return;
+    const errors: Record<string, string> = {};
+    if (!title.trim()) errors.title = "Title is required";
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
 
-    const parsedTags = tagsInput
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
+    try {
+      // Collect IDs of existing files (including newly uploaded ones)
+      let finalFileIds: number[] = existingFiles.map((f: any) => f.file?.id || f.id).filter(Boolean);
 
-    if (editingResource) {
-      // Edit resource
-      setResources((prev) =>
-        prev.map((r) =>
-          r.id === editingResource.id
-            ? {
-                ...r,
-                title: title.trim(),
-                description: description.trim(),
-                type,
-                targetAudience,
-                tags: parsedTags,
-                fileName: selectedFile ? selectedFile.name : r.fileName,
-              }
-            : r
-        )
-      );
-    } else {
-      // Create new resource
-      const newRes: Resource = {
-        id: Date.now(),
+      const payload: any = {
+        resource_type: type,
+        audience: targetAudience,
         title: title.trim(),
         description: description.trim(),
-        type,
-        targetAudience,
-        tags: parsedTags,
-        isBookmarked: false,
-        fileName: selectedFile ? selectedFile.name : undefined,
+        tags: tagsInput,
+        is_featured: isFeatured,
       };
-      setResources((prev) => [newRes, ...prev]);
-    }
 
-    setIsModalOpen(false);
+      if (finalFileIds.length > 0) {
+        payload.fileIds = finalFileIds;
+      }
+
+      if (editingResource) {
+        await updateContentMutation.mutateAsync({ id: editingResource.id, payload });
+      } else {
+        await createContentMutation.mutateAsync(payload);
+      }
+    } catch (error) {
+      console.error("Error saving resource:", error);
+    }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      try {
+        const uploadRes = await uploadFilesMutation.mutateAsync(files);
+        const newFilesArray = uploadRes?.files || [];
+        setExistingFiles(prev => [...prev, ...newFilesArray]);
+      } catch (err) {
+        console.error("File upload error:", err);
+      }
     }
   };
 
   // Filtered resources
   const filteredResources = resources.filter((res) => {
     const matchesSearch =
-      res.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      res.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      res.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      (res.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (res.description || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (res.tags || []).some((t) => (t || "").toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesTag = selectedTag ? res.tags.includes(selectedTag) : true;
 
@@ -471,10 +554,7 @@ export default function ContentCMS() {
       />
 
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
-        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
-      </div>
+      <PageBreadcrumb pageTitle="Content CMS" hideTitle />
 
       {/* Header section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
@@ -601,7 +681,17 @@ export default function ContentCMS() {
       </div>
 
       {/* Grid listing */}
-      {filteredResources.length === 0 ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-brand-500 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-sm text-gray-500 font-medium">Loading contents...</span>
+          </div>
+        </div>
+      ) : filteredResources.length === 0 ? (
         <div className="flex items-center justify-center h-48 text-sm text-gray-400">
           No resources match your search or filters.
         </div>
@@ -613,7 +703,7 @@ export default function ContentCMS() {
               resource={res}
               onBookmark={handleBookmarkToggle}
               onEdit={handleOpenEdit}
-              onDelete={handleDelete}
+              onDelete={handleDeleteOpen}
             />
           ))}
         </div>
@@ -637,15 +727,15 @@ export default function ContentCMS() {
               </label>
               <select
                 value={type}
-                onChange={(e) => setType(e.target.value as any)}
-                className="h-11 w-full rounded-lg border border-gray-250 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                onChange={(e) => setType(e.target.value)}
+                className={`h-11 w-full rounded-lg border ${formErrors.type ? "border-red-500" : "border-gray-250"} bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500`}
               >
-                <option value="guide">Select</option>
-                <option value="guide">Guide</option>
-                <option value="worksheet">Worksheet</option>
-                <option value="video">Video</option>
-                <option value="reference">Reference</option>
+                <option value="DOCUMENT">Guide</option>
+                <option value="DOCUMENT">Worksheet</option>
+                <option value="VIDEO">Video</option>
+                <option value="ARTICLE">Reference</option>
               </select>
+              {formErrors.type && <p className="mt-1 text-xs text-red-500">{formErrors.type}</p>}
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-800 mb-1.5">
@@ -653,13 +743,13 @@ export default function ContentCMS() {
               </label>
               <select
                 value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value as any)}
-                className="h-11 w-full rounded-lg border border-gray-250 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                onChange={(e) => setTargetAudience(e.target.value)}
+                className={`h-11 w-full rounded-lg border ${formErrors.audience ? "border-red-500" : "border-gray-250"} bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500`}
               >
-                <option value="Therapist">Select</option>
-                <option value="Therapist">Therapist</option>
-                <option value="Parents">Parents</option>
+                <option value="THERAPIST">Therapist</option>
+                <option value="PARENT">Parents</option>
               </select>
+              {formErrors.audience && <p className="mt-1 text-xs text-red-500">{formErrors.audience}</p>}
             </div>
           </div>
 
@@ -670,12 +760,12 @@ export default function ContentCMS() {
             </label>
             <input
               type="text"
-              required
               placeholder=""
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-11 w-full rounded-lg border border-gray-250 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              className={`h-11 w-full rounded-lg border ${formErrors.title ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-gray-250 focus:border-brand-500 focus:ring-brand-500"} bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1`}
             />
+            {formErrors.title && <p className="mt-1 text-xs text-red-500">{formErrors.title}</p>}
           </div>
 
           {/* Description (Single line height input, no asterisk) */}
@@ -692,30 +782,76 @@ export default function ContentCMS() {
             />
           </div>
 
-          {/* File Upload */}
+          {/* File Upload / Existing Files */}
           <div>
             <label className="block text-xs font-bold text-gray-800 mb-1.5">
               File Upload
             </label>
-            <div className="flex items-center justify-center w-full">
-              <label className="flex flex-col items-center justify-center w-full h-24 border border-gray-200 border-dashed rounded-lg cursor-pointer bg-white hover:bg-gray-50/50 transition-colors">
-                <div className="flex flex-col items-center justify-center py-4">
-                  <svg className="w-5 h-5 mb-1.5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                  <p className="text-xs text-gray-500">
-                    Drag & drop or <span className="text-blue-500 font-medium hover:underline">browse files</span> PDF, DOCX, PPTX, MP4
-                  </p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">Max 50 MB</p>
-                </div>
-                <input type="file" className="hidden" onChange={handleFileChange} />
+            <div className="flex flex-wrap gap-4 mb-4">
+              {existingFiles.length > 0 &&
+                existingFiles.map((fileRecord: any, idx: number) => {
+                  const f = fileRecord.file || fileRecord;
+                  return (
+                    <a
+                      key={idx}
+                      href={f.file_path}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-40 shrink-0 border border-gray-200 rounded-xl p-4 flex flex-col hover:border-brand-500 hover:shadow-sm transition-all bg-white cursor-pointer group relative"
+                    >
+                      <div className="absolute top-2 right-2 p-1.5 rounded-full bg-gray-50 text-gray-400 group-hover:text-brand-500 group-hover:bg-brand-50 transition-colors">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </div>
+                      <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-red-500 mb-3">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-800 mb-1 truncate" title={f.file_name || f.original_name}>
+                        {f.file_name || f.original_name || "Document"}
+                      </p>
+                      <p className="text-xs text-gray-500 mb-0.5">
+                        {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : ""}
+                      </p>
+                      <p className="text-xs text-gray-500 capitalize">{f.file_type || "File"}</p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {f.file_size ? `${(f.file_size / 1024 / 1024).toFixed(2)} MB` : "Unknown Size"}
+                      </p>
+                    </a>
+                  );
+                })}
+              <label className="w-40 shrink-0 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-40 hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer relative bg-white">
+                {uploadFilesMutation.isPending ? (
+                  <div className="flex flex-col items-center justify-center py-4 text-center">
+                    <svg className="animate-spin h-6 w-6 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-xs font-medium text-gray-600">Uploading...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-4 text-center">
+                    <svg className="w-5 h-5 mb-1.5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <p className="text-xs text-gray-500">
+                      <span className="text-blue-500 font-medium hover:underline">Browse</span> files
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Max 50 MB</p>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  multiple 
+                  className="hidden" 
+                  accept="image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, video/mp4"
+                  disabled={uploadFilesMutation.isPending}
+                  onChange={handleFileChange} 
+                />
               </label>
             </div>
-            {selectedFile && (
-              <p className="text-xs text-brand-600 font-semibold mt-2">
-                Selected: {selectedFile.name}
-              </p>
-            )}
           </div>
 
           {/* Tags */}
@@ -795,6 +931,58 @@ export default function ContentCMS() {
             </span>
           </div>
         </form>
+      </CustomModal>
+
+      {/* Delete Confirmation Modal */}
+      <CustomModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        title="Delete Resource"
+        maxWidth="max-w-md"
+        customFooter={
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100">
+            <button
+              onClick={() => setIsDeleteOpen(false)}
+              className="px-4 py-2 text-gray-700 bg-gray-100 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (deleteTarget) {
+                  deleteContentMutation.mutate(deleteTarget);
+                }
+              }}
+              disabled={deleteContentMutation.isPending}
+              className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[80px]"
+            >
+              {deleteContentMutation.isPending ? (
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                "Delete"
+              )}
+            </button>
+          </div>
+        }
+      >
+        <div>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-red-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-gray-900 font-semibold mb-1">Are you sure?</h4>
+              <p className="text-sm text-gray-500">
+                Are you sure you want to delete this resource? This action cannot be undone and will permanently remove this record.
+              </p>
+            </div>
+          </div>
+        </div>
       </CustomModal>
     </>
   );

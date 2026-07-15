@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
 // import Badge from "../../components/ui/badge/Badge";
@@ -261,10 +262,7 @@ export default function RoleManagement() {
       />
 
       {/* Custom Figma Header Breadcrumb */}
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-        <span className="text-gray-400 dark:text-gray-500">NeuroDiverse</span> &lt;{" "}
-        <span className="text-gray-700 dark:text-gray-300 font-medium">Administration</span>
-      </div>
+      <PageBreadcrumb pageTitle="Role Management" hideTitle />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="max-w-[70%]">
