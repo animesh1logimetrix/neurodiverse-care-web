@@ -27,6 +27,7 @@ interface AppointmentData {
   location: string;
   note: string;
   status: string;
+  scheduledAt?: string;
   yourNote?: string;
   timeSlots?: TimeSlot[];
   expanded?: boolean;
@@ -46,6 +47,8 @@ const AppointmentCard: React.FC<{
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const isPast = data.scheduledAt ? new Date(data.scheduledAt) < new Date() : false;
+
   return (
     <div className="bg-white rounded-2xl border border-orange-200 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] mb-[24px] transition-all">
       <div
@@ -63,12 +66,12 @@ const AppointmentCard: React.FC<{
           <h3 className="font-bold text-gray-800 text-sm mb-1">{data.title}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div className="flex flex-col">
-              <span className="text-gray-500 font-medium">{data.patientName}</span>
-              <span className="text-gray-400 mt-0.5">{data.location}</span>
+              <span className="text-gray-700 font-semibold">{data.patientName}</span>
+              <span className="text-gray-500 mt-0.5">{data.location}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-gray-500 font-medium">{data.therapistName}</span>
-              <span className="text-gray-400 mt-0.5">{data.note}</span>
+              <span className="text-gray-700 font-semibold">{data.therapistName}</span>
+              <span className="text-gray-500 mt-0.5">{data.note}</span>
             </div>
           </div>
         </div>
@@ -104,15 +107,17 @@ const AppointmentCard: React.FC<{
               className="w-44 right-0 mt-2 shadow-theme-md z-10"
             >
               <div className="py-1">
-                <DropdownItem 
-                  onClick={(e) => {
-                    e?.stopPropagation();
-                    setIsMenuOpen(false);
-                    onEdit(data);
-                  }}
-                >
-                  Edit
-                </DropdownItem>
+                {!isPast && (
+                  <DropdownItem 
+                    onClick={(e) => {
+                      e?.stopPropagation();
+                      setIsMenuOpen(false);
+                      onEdit(data);
+                    }}
+                  >
+                    Edit
+                  </DropdownItem>
+                )}
 
                 {/* <div className="border-t border-gray-100 my-1"></div>
                 
@@ -325,12 +330,15 @@ export default function Appointment() {
 
   const handleEdit = (data: AppointmentData) => {
     const rawApt = appointmentsRaw.find((a: any) => String(a.id) === data.id);
-    let formattedDate = "";
+    let dateStr = "";
+    let timeStr = "";
     if (rawApt?.scheduled_at) {
       const d = new Date(rawApt.scheduled_at);
       if (!isNaN(d.getTime())) {
         const tzOffset = d.getTimezoneOffset() * 60000;
-        formattedDate = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+        const iso = new Date(d.getTime() - tzOffset).toISOString();
+        dateStr = iso.slice(0, 10);
+        timeStr = iso.slice(11, 16);
       }
     }
 
@@ -338,7 +346,8 @@ export default function Appointment() {
       child: String(rawApt?.childId || rawApt?.child_id || rawApt?.child?.id || ""),
       therapist: String(rawApt?.therapistId || rawApt?.therapist_id || rawApt?.therapist?.id || ""),
       sessionType: rawApt?.sessionType || rawApt?.session_type || "",
-      scheduleAt: formattedDate,
+      scheduleDate: dateStr,
+      scheduleTime: timeStr,
       note: rawApt?.note || rawApt?.reason || "",
       status: rawApt?.status || "PENDING"
     });
@@ -348,7 +357,7 @@ export default function Appointment() {
   };
 
   const closeModal = () => {
-    setBookForm({ child: "", therapist: "", sessionType: "", scheduleAt: "", note: "", status: "PENDING" });
+    setBookForm({ child: "", therapist: "", sessionType: "", scheduleDate: "", scheduleTime: "", note: "", status: "PENDING" });
     setBookErrors({});
     setEditAppointmentId(null);
     setIsBookModalOpen(false);
@@ -364,6 +373,7 @@ export default function Appointment() {
     location: apt.location || "",
     note: apt.reason || "",
     status: apt.status || "PENDING",
+    scheduledAt: apt.scheduled_at,
   }));
 
   const todayDateStr = new Date().toDateString();
@@ -403,7 +413,8 @@ export default function Appointment() {
     child: "",
     therapist: "",
     sessionType: "",
-    scheduleAt: "",
+    scheduleDate: "",
+    scheduleTime: "",
     note: "",
     status: "PENDING"
   });
@@ -420,7 +431,8 @@ export default function Appointment() {
     const errors: Record<string, string> = {};
     if (!bookForm.child.trim()) errors.child = "Child is required";
     if (!bookForm.therapist.trim()) errors.therapist = "Therapist is required";
-    if (!bookForm.scheduleAt.trim()) errors.scheduleAt = "Schedule at is required";
+    if (!bookForm.scheduleDate.trim()) errors.scheduleDate = "Date is required";
+    if (!bookForm.scheduleTime.trim()) errors.scheduleTime = "Time is required";
     if (!bookForm.sessionType.trim()) errors.sessionType = "Session type is required";
 
     if (Object.keys(errors).length > 0) {
@@ -428,11 +440,20 @@ export default function Appointment() {
       return;
     }
 
+    let scheduled_at_iso = "";
+    if (bookForm.scheduleDate && bookForm.scheduleTime) {
+      try {
+        scheduled_at_iso = new Date(`${bookForm.scheduleDate}T${bookForm.scheduleTime}:00`).toISOString();
+      } catch (e) {
+        console.error("Invalid date/time", e);
+      }
+    }
+
     const payload = {
       child_id: Number(bookForm.child),
       therapist_id: Number(bookForm.therapist),
       session_type: bookForm.sessionType,
-      scheduled_at: bookForm.scheduleAt ? new Date(bookForm.scheduleAt).toISOString() : "",
+      scheduled_at: scheduled_at_iso,
       reason: bookForm.note,
       status: bookForm.status,
       requestedBy_id: 1, // Fallback default
@@ -447,6 +468,23 @@ export default function Appointment() {
       createAppointmentMutation.mutate(payload);
     }
   };
+
+  const timeOptions = React.useMemo(() => {
+    const options = [];
+    for (let h = 10; h <= 21; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        if (h === 21 && m > 45) continue;
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const hour12 = h > 12 ? h - 12 : h;
+        const mins = m === 0 ? '00' : m.toString();
+        options.push({
+          value: `${h.toString().padStart(2, '0')}:${mins}`,
+          label: `${hour12}:${mins} ${ampm}`
+        });
+      }
+    }
+    return options;
+  }, []);
 
   return (
     <>
@@ -694,16 +732,41 @@ export default function Appointment() {
             />
           </div>
           <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Schedule At <span className="text-black">*</span>
+            <label className="block text-xs font-bold text-black">
+              Schedule Date <span className="text-black">*</span>
             </label>
             <input 
-              type="datetime-local" 
-              className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-theme-xs focus:outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 bg-transparent dark:text-white/90"
-              value={bookForm.scheduleAt}
-              onChange={(e) => handleBookFormChange("scheduleAt", e.target.value)}
+              type="date" 
+              min={(() => {
+                const d = new Date();
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              })()}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-theme-xs focus:outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:bg-gray-900 dark:border-gray-700 dark:text-white/90"
+              value={bookForm.scheduleDate}
+              onChange={(e) => handleBookFormChange("scheduleDate", e.target.value)}
+              onClick={(e) => {
+                try {
+                  if ('showPicker' in HTMLInputElement.prototype) {
+                    (e.currentTarget as HTMLInputElement).showPicker();
+                  }
+                } catch (err) {
+                  // ignore
+                }
+              }}
             />
-            {bookErrors.scheduleAt && <p className="text-xs text-red-600">{bookErrors.scheduleAt}</p>}
+            {bookErrors.scheduleDate && <p className="text-xs text-red-600">{bookErrors.scheduleDate}</p>}
+          </div>
+          <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+            <label className="block text-xs font-bold text-black">
+              Schedule Time <span className="text-black">*</span>
+            </label>
+            <Select 
+              options={timeOptions}
+              placeholder="Select Time"
+              value={bookForm.scheduleTime}
+              onChange={(val) => handleBookFormChange("scheduleTime", val)}
+            />
+            {bookErrors.scheduleTime && <p className="text-xs text-red-600">{bookErrors.scheduleTime}</p>}
           </div>
         </div>
 
