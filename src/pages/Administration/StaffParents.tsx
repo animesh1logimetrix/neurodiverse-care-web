@@ -182,9 +182,9 @@ export default function StaffParents() {
   const users: User[] = Array.isArray(invitationsData) 
     ? invitationsData.map((inv: any) => ({
         id: inv.id,
-        name: inv.child?.full_name ? `Parent of ${inv.child.full_name}` : (inv.invitedBy?.name || "Invited User"),
+        name: "Not Available",
         email: inv.email,
-        role: "Parent",
+        role: "Not Available",
         status: inv.status === "PENDING" ? "Pending" : "Active",
         lastActive: "Never",
         createdAt: inv.createdAt ? new Date(inv.createdAt).toISOString().split("T")[0] : "",
@@ -515,8 +515,14 @@ export default function StaffParents() {
                             />
                           </div>
                         ) : (
-                          <div className="flex size-10 items-center justify-center rounded-full bg-brand-50 text-brand-600 font-semibold text-sm dark:bg-brand-500/10 dark:text-brand-400">
-                            {getInitials(user.name)}
+                          <div className="size-10 overflow-hidden rounded-full border border-gray-100 dark:border-gray-800">
+                            <img
+                              width={40}
+                              height={40}
+                              src="/images/user/owner.jpg"
+                              alt={user.name}
+                              className="size-full object-cover"
+                            />
                           </div>
                         )}
                         <div>
