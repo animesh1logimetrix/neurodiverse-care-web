@@ -700,7 +700,7 @@ export default function DiagnosesTab() {
                 id="diagnosisDate"
                 defaultDate={formData.diagnosisDate}
                 maxDate="today"
-                onChange={(dates) => updateForm('diagnosisDate', dates[0]?.toString() || '')} 
+                onChange={(_, dateStr) => updateForm('diagnosisDate', dateStr)} 
                 placeholder="Select Date" 
               />
               {formErrors.diagnosisDate && <p className="mt-1 text-xs text-red-600">{formErrors.diagnosisDate}</p>}
@@ -713,7 +713,7 @@ export default function DiagnosesTab() {
                 id="reviewDate"
                 defaultDate={formData.reviewDate}
                 maxDate="today"
-                onChange={(dates) => updateForm('reviewDate', dates[0]?.toString() || '')} 
+                onChange={(_, dateStr) => updateForm('reviewDate', dateStr)} 
                 placeholder="Select Date" 
               />
             </div>
