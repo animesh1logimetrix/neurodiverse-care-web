@@ -71,7 +71,7 @@ export default function NeuroCareAuth() {
                  setSelectedRoleId(therapistRole.id);
                }
              } else {
-               const parentRole = res.data.roles.find((r: any) => r.name === "Parent/Guardian");
+               const parentRole = res.data.roles.find((r: any) => r.name === "Parent / Guardian");
                if (parentRole) {
                  setSelectedRoleId(parentRole.id);
                }
@@ -385,8 +385,8 @@ export default function NeuroCareAuth() {
                   <Label>I am a...</Label>
                   <div className="grid grid-cols-2 gap-3 mt-1">
                     {/* 1. Show Dynamic Roles First (Parent/Guardian sorted to top) */}
-                    {dynamicRoles.length > 0 && [...dynamicRoles].sort((a, b) => a.name === "Parent/Guardian" ? -1 : (b.name === "Parent/Guardian" ? 1 : 0)).map((role: any) => {
-                      const isParent = role.name === "Parent/Guardian";
+                    {dynamicRoles.length > 0 && [...dynamicRoles].sort((a, b) => a.name === "Parent / Guardian" ? -1 : (b.name === "Parent / Guardian" ? 1 : 0)).map((role: any) => {
+                      const isParent = role.name === "Parent / Guardian";
                       const icon = isParent ? "👨‍👩‍👦" : (role.name === "Therapist" ? "🤝" : "🧑‍⚕️");
                       return (
                       <button
