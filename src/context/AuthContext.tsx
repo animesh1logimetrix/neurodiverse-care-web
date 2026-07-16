@@ -21,6 +21,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (userData: User, tokens: { accessToken: string; refreshToken: string }) => void;
   logout: () => void;
+  updateUser: (updatedData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,6 +71,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     queryClient.clear();
   };
 
+  const updateUser = (updatedData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...updatedData };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
+  };
+
   // Prevent flashing content while initial check is happening
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>; // Could replace with a spinner component
@@ -78,7 +87,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isAuthenticated = !!accessToken;
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, refreshToken, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, accessToken, refreshToken, isAuthenticated, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
