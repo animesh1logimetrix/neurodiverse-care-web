@@ -10,6 +10,7 @@ import { CustomModal } from "../../components/ui/modal/CustomModal";
 import DatePicker from "../../components/form/date-picker";
 import Select from "../../components/form/Select";
 import { useAuth } from "../../context/AuthContext";
+import { isParentGuardian } from "../../utils/roles";
 
 // Mock Data for the Cards
 const baseChild = {
@@ -297,7 +298,7 @@ export default function Children() {
             {filteredChildren.length} children · {needAttention} need attention
           </p>
         </div>
-          {user?.role?.name?.toLowerCase() === 'parent/guardian' && (
+          {isParentGuardian(user?.role?.name) && (
             <button 
               onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
@@ -375,7 +376,7 @@ export default function Children() {
           <p className="text-gray-500 text-sm max-w-sm mb-4">
             Get started by adding a new child to your care roster.
           </p>
-          {user?.role?.name?.toLowerCase() === 'parent/guardian' && (
+          {isParentGuardian(user?.role?.name) && (
             <button 
               onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
