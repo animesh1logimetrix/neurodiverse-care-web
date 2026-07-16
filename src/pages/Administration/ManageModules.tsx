@@ -195,39 +195,48 @@ export default function ManageModules() {
       </div>
 
       {/* Modules Table Card */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-premium-soft dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="max-w-full overflow-x-auto">
-          <Table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
-            <TableHeader className="bg-gray-50 dark:bg-gray-900/50">
-              <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[25%]"
-                >
-                  Name
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[60%]"
-                >
-                  Description
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[15%]"
-                >
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="bg-white divide-y divide-gray-100 dark:bg-transparent dark:divide-gray-800">
-              {filteredModules.length === 0 ? (
+      <div className="overflow-visible rounded-2xl border border-gray-200 bg-white shadow-premium-soft dark:border-gray-800 dark:bg-white/[0.03]">
+        {isLoading ? (
+          <div className="py-12 flex flex-col items-center justify-center text-gray-500">
+            <svg className="animate-spin h-8 w-8 text-[#60a5fa] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-sm font-medium">Loading modules...</p>
+          </div>
+        ) : (
+          <div className="max-w-full overflow-visible">
+            <Table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
+              <TableHeader className="bg-gray-50 dark:bg-gray-900/50">
                 <TableRow>
-                  <TableCell colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                    No modules found matching the query.
+                  <TableCell
+                    isHeader
+                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[25%]"
+                  >
+                    Name
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[60%]"
+                  >
+                    Description
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[15%]"
+                  >
+                    Actions
                   </TableCell>
                 </TableRow>
-              ) : (
+              </TableHeader>
+              <TableBody className="bg-white divide-y divide-gray-100 dark:bg-transparent dark:divide-gray-800">
+                {filteredModules.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                      No modules found matching the query.
+                    </TableCell>
+                  </TableRow>
+                ) : (
                 filteredModules.map((mod) => (
                   <TableRow key={mod.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.01]">
                     {/* Name */}
@@ -274,6 +283,7 @@ export default function ManageModules() {
             </TableBody>
           </Table>
         </div>
+        )}
       </div>
 
       {/* Add/Edit Module Modal */}
@@ -349,31 +359,25 @@ export default function ManageModules() {
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         title="Delete Module"
-        showOverlay
-        backdropBlur={false}
         maxWidth="max-w-md"
-        padding="px-8 py-6"
-        showCloseIcon
         customFooter={
-          <div className="flex justify-end items-center gap-3 px-8 py-5 border-t border-gray-100 w-full">
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
             <button
-              type="button"
               onClick={() => setIsDeleteOpen(false)}
-              className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer"
+              className="px-4 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
             <button
-              type="button"
               onClick={handleDeleteConfirm}
-              className="px-6 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors text-sm cursor-pointer"
+              className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
             >
               Delete
             </button>
           </div>
         }
       >
-        <div className="p-2 -mx-4">
+        <div className="p-2">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shrink-0">
               <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
