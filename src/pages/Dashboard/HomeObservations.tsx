@@ -684,34 +684,30 @@ export default function HomeObservations() {
               />
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="relative w-full sm:w-auto">
-                <select 
+              <div className="relative w-full sm:w-[160px]">
+                <Select
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="block w-full sm:w-[140px] pl-3 pr-10 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] appearance-none cursor-pointer transition-colors"
-                >
-                  <option value="All Statuses">All Statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Viewed">Viewed</option>
-                  <option value="Acknowledged">Acknowledged</option>
-                  <option value="Actioned">Actioned</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                  <ChevronDownIcon />
-                </div>
+                  onChange={(val) => setFilterStatus(val)}
+                  options={[
+                    { value: "All Statuses", label: "All Statuses" },
+                    { value: "Pending", label: "Pending" },
+                    { value: "Viewed", label: "Viewed" },
+                    { value: "Acknowledged", label: "Acknowledged" },
+                    { value: "Actioned", label: "Actioned" }
+                  ]}
+                  className="w-full bg-gray-50 border-gray-200"
+                />
               </div>
-              <div className="relative w-full sm:w-auto">
-                <select 
+              <div className="relative w-full sm:w-[180px]">
+                <Select
                   value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="block w-full sm:w-[160px] pl-3 pr-10 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] appearance-none cursor-pointer transition-colors"
-                >
-                  <option value="All Categories">All Categories</option>
-                  {categoriesList.map((c: any) => <option key={c.id} value={c.full_category_name}>{c.full_category_name}</option>)}
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                  <ChevronDownIcon />
-                </div>
+                  onChange={(val) => setFilterCategory(val)}
+                  options={[
+                    { value: "All Categories", label: "All Categories" },
+                    ...categoriesList.map((c: any) => ({ value: c.full_category_name, label: c.full_category_name }))
+                  ]}
+                  className="w-full bg-gray-50 border-gray-200"
+                />
               </div>
             </div>
           </div>

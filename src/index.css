@@ -186,8 +186,11 @@ layer(base);
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  html {
+    @apply text-gray-700 bg-gray-50;
+  }
   body {
-    @apply relative font-normal font-outfit z-1 bg-white;
+    @apply relative font-normal font-outfit z-1 bg-gray-50;
   }
 }
 

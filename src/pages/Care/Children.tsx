@@ -312,21 +312,17 @@ export default function Children() {
       {/* Category Dropdown Filter & Alerts */}
       <div className="flex items-center gap-6 border-b border-gray-200 mb-4 pb-0">
         <div className="relative w-full sm:w-[220px] mb-3">
-          <select
+          <Select
             value={activeTab === "Alerts" ? "All Categories" : activeTab}
-            onChange={(e) => setActiveTab(e.target.value)}
-            className="block w-full h-[48px] px-4 pr-10 bg-white border border-gray-200 rounded-xl text-gray-700 text-left font-medium text-[14px] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500/10 focus:border-brand-300 transition-colors"
-          >
-            <option value="All Categories">All Categories</option>
-            <option value="ASD">ASD</option>
-            <option value="ADHD">ADHD</option>
-            <option value="Speech">Speech</option>
-          </select>
-          <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
+            onChange={(val) => setActiveTab(val)}
+            className="w-full rounded-xl"
+            options={[
+              { value: "All Categories", label: "All Categories" },
+              { value: "ASD", label: "ASD" },
+              { value: "ADHD", label: "ADHD" },
+              { value: "Speech", label: "Speech" }
+            ]}
+          />
         </div>
 
         <button
@@ -560,25 +556,18 @@ export default function Children() {
               <label className="block text-xs font-bold text-black">
                 Gender<span className="text-black">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={childForm.gender}
-                  onChange={(e) => handleChildFormChange("gender", e.target.value)}
-                  // required
-                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-                >
-                  <option value="">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-                {formErrors.gender && <p className="mt-1 text-xs text-red-600">{formErrors.gender}</p>}
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-              </div>
+              <Select
+                value={childForm.gender}
+                onChange={(val) => handleChildFormChange("gender", val)}
+                placeholder="Select gender"
+                options={[
+                  { value: "Male", label: "Male" },
+                  { value: "Female", label: "Female" },
+                  { value: "Other", label: "Other" }
+                ]}
+                className="w-full"
+              />
+              {formErrors.gender && <p className="mt-1 text-xs text-red-600">{formErrors.gender}</p>}
             </div>
 
             {/* Address */}
@@ -602,26 +591,19 @@ export default function Children() {
               <label className="block text-xs font-bold text-black">
                 Diagnoses<span className="text-black">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={childForm.diagnoses}
-                  onChange={(e) => handleChildFormChange("diagnoses", e.target.value)}
-                  // required
-                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-                >
-                  <option value="">Select diagnoses</option>
-                  <option value="ADHD">ADHD</option>
-                  <option value="ASD">ASD</option>
-                  <option value="Sensory Processing Disorder">Sensory Processing Disorder</option>
-                  <option value="Speech Impairment">Speech Impairment</option>
-                </select>
-                {formErrors.diagnoses && <p className="mt-1 text-xs text-red-600">{formErrors.diagnoses}</p>}
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-              </div>
+              <Select
+                value={childForm.diagnoses}
+                onChange={(val) => handleChildFormChange("diagnoses", val)}
+                placeholder="Select diagnoses"
+                options={[
+                  { value: "ADHD", label: "ADHD" },
+                  { value: "ASD", label: "ASD" },
+                  { value: "Sensory Processing Disorder", label: "Sensory Processing Disorder" },
+                  { value: "Speech Impairment", label: "Speech Impairment" }
+                ]}
+                className="w-full"
+              />
+              {formErrors.diagnoses && <p className="mt-1 text-xs text-red-600">{formErrors.diagnoses}</p>}
             </div>
 
             {/* Blood Group */}
@@ -629,30 +611,23 @@ export default function Children() {
               <label className="block text-xs font-bold text-black">
                 Blood Group<span className="text-black">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={childForm.bloodGroup}
-                  onChange={(e) => handleChildFormChange("bloodGroup", e.target.value)}
-                  // required
-                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-                >
-                  <option value="">Select blood group</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                </select>
-                {formErrors.bloodGroup && <p className="mt-1 text-xs text-red-600">{formErrors.bloodGroup}</p>}
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-              </div>
+              <Select
+                value={childForm.bloodGroup}
+                onChange={(val) => handleChildFormChange("bloodGroup", val)}
+                placeholder="Select blood group"
+                options={[
+                  { value: "A+", label: "A+" },
+                  { value: "A-", label: "A-" },
+                  { value: "B+", label: "B+" },
+                  { value: "B-", label: "B-" },
+                  { value: "AB+", label: "AB+" },
+                  { value: "AB-", label: "AB-" },
+                  { value: "O+", label: "O+" },
+                  { value: "O-", label: "O-" }
+                ]}
+                className="w-full"
+              />
+              {formErrors.bloodGroup && <p className="mt-1 text-xs text-red-600">{formErrors.bloodGroup}</p>}
             </div>
 
             {/* Mother's Name */}

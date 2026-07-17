@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import { useAuth } from "../../context/AuthContext";
+import Select from "../../components/form/Select";
 
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
 
@@ -127,21 +128,16 @@ export default function ParentDashboard() {
           </div>
           
           <div className="flex-shrink-0">
-            <select 
+            <Select 
               value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value)}
-              className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7db9fb] focus:border-[#7db9fb] hover:bg-gray-50 transition-colors cursor-pointer appearance-none pr-10 relative"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                backgroundPosition: `right 12px center`,
-                backgroundRepeat: `no-repeat`,
-                backgroundSize: `16px`,
-              }}
-            >
-              <option value="Daily Progress">Daily Progress</option>
-              <option value="Weekly Progress">Weekly Progress</option>
-              <option value="Monthly Progress">Monthly Progress</option>
-            </select>
+              onChange={(val) => setTimeFilter(val)}
+              className="w-40 border-gray-200 rounded-xl bg-white shadow-sm font-medium"
+              options={[
+                { value: "Daily Progress", label: "Daily Progress" },
+                { value: "Weekly Progress", label: "Weekly Progress" },
+                { value: "Monthly Progress", label: "Monthly Progress" }
+              ]}
+            />
           </div>
         </div>
 

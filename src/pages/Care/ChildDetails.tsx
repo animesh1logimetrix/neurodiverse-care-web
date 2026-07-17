@@ -15,6 +15,7 @@ import GeneticTestingTab from "../../components/Care/GeneticTestingTab";
 import AssessmentsTab from "../../components/Care/AssessmentsTab";
 import IEPGoalsTab from "../../components/Care/IEPGoalsTab";
 import SessionNotesTab from "../../components/Care/SessionNotesTab";
+import Select from "../../components/form/Select";
 
 export default function ChildDetails() {
   const { id } = useParams();
@@ -494,25 +495,25 @@ export default function ChildDetails() {
 
       {/* Tabs */}
       <div className="flex items-center gap-6 border-b border-gray-200 mb-6 overflow-x-auto custom-scrollbar">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`transition-all whitespace-nowrap ${
-              activeTab === tab
-                ? "w-fit p-0 text-[14px] font-semibold text-white"
-                : "pb-3 text-sm font-semibold text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            <span className={`${
-              activeTab === tab 
-              ? "inline-flex w-fit items-center rounded-[6px] bg-[#7CC3FF] px-[11px] py-[5px]"
-              : "rounded-md bg-transparent px-4 py-1.5"
-            }`}>
-              {tab}
-            </span>
-          </button>
-        ))}
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`transition-all whitespace-nowrap pb-3 text-sm font-semibold ${
+                activeTab === tab
+                  ? "text-white"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <span className={`inline-flex items-center rounded-md px-4 py-1.5 ${
+                activeTab === tab 
+                ? "bg-[#7CC3FF]"
+                : "bg-transparent"
+              }`}>
+                {tab}
+              </span>
+            </button>
+          ))}
       </div>
 
       {/* Overview Content */}
@@ -608,24 +609,18 @@ export default function ChildDetails() {
               <label className="block text-xs font-bold text-black">
                 Gender<span className="text-black">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={childForm.gender}
-                  onChange={(e) => handleChildFormChange("gender", e.target.value)}
-                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-                >
-                  <option value="">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-                {formErrors.gender && <p className="mt-1 text-xs text-red-600">{formErrors.gender}</p>}
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-              </div>
+              <Select
+                value={childForm.gender}
+                onChange={(val) => handleChildFormChange("gender", val)}
+                placeholder="Select gender"
+                options={[
+                  { value: "Male", label: "Male" },
+                  { value: "Female", label: "Female" },
+                  { value: "Other", label: "Other" }
+                ]}
+                className="w-full"
+              />
+              {formErrors.gender && <p className="mt-1 text-xs text-red-600">{formErrors.gender}</p>}
             </div>
 
             {/* Address */}
@@ -648,25 +643,19 @@ export default function ChildDetails() {
               <label className="block text-xs font-bold text-black">
                 Diagnoses<span className="text-black">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={childForm.diagnoses}
-                  onChange={(e) => handleChildFormChange("diagnoses", e.target.value)}
-                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-                >
-                  <option value="">Select diagnoses</option>
-                  <option value="ADHD">ADHD</option>
-                  <option value="ASD">ASD</option>
-                  <option value="Sensory Processing Disorder">Sensory Processing Disorder</option>
-                  <option value="Speech Impairment">Speech Impairment</option>
-                </select>
-                {formErrors.diagnoses && <p className="mt-1 text-xs text-red-600">{formErrors.diagnoses}</p>}
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-              </div>
+              <Select
+                value={childForm.diagnoses}
+                onChange={(val) => handleChildFormChange("diagnoses", val)}
+                placeholder="Select diagnoses"
+                options={[
+                  { value: "ADHD", label: "ADHD" },
+                  { value: "ASD", label: "ASD" },
+                  { value: "Sensory Processing Disorder", label: "Sensory Processing Disorder" },
+                  { value: "Speech Impairment", label: "Speech Impairment" }
+                ]}
+                className="w-full"
+              />
+              {formErrors.diagnoses && <p className="mt-1 text-xs text-red-600">{formErrors.diagnoses}</p>}
             </div>
 
             {/* Blood Group */}
@@ -674,29 +663,23 @@ export default function ChildDetails() {
               <label className="block text-xs font-bold text-black">
                 Blood Group<span className="text-black">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={childForm.bloodGroup}
-                  onChange={(e) => handleChildFormChange("bloodGroup", e.target.value)}
-                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-                >
-                  <option value="">Select blood group</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                </select>
-                {formErrors.bloodGroup && <p className="mt-1 text-xs text-red-600">{formErrors.bloodGroup}</p>}
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-              </div>
+              <Select
+                value={childForm.bloodGroup}
+                onChange={(val) => handleChildFormChange("bloodGroup", val)}
+                placeholder="Select blood group"
+                options={[
+                  { value: "A+", label: "A+" },
+                  { value: "A-", label: "A-" },
+                  { value: "B+", label: "B+" },
+                  { value: "B-", label: "B-" },
+                  { value: "AB+", label: "AB+" },
+                  { value: "AB-", label: "AB-" },
+                  { value: "O+", label: "O+" },
+                  { value: "O-", label: "O-" }
+                ]}
+                className="w-full"
+              />
+              {formErrors.bloodGroup && <p className="mt-1 text-xs text-red-600">{formErrors.bloodGroup}</p>}
             </div>
 
             {/* Mother's Name */}
