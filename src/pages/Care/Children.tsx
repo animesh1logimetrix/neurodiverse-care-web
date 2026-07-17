@@ -40,7 +40,7 @@ export default function Children() {
     age: "",
     gender: "",
     address: "",
-    diagnoses: "",
+    // diagnoses: "",
     bloodGroup: "",
     motherName: "",
     fatherName: "",
@@ -127,7 +127,7 @@ export default function Children() {
         age: "",
         gender: "",
         address: "",
-        diagnoses: "",
+        // diagnoses: "",
         bloodGroup: "",
         motherName: "",
         fatherName: "",
@@ -163,7 +163,7 @@ export default function Children() {
     if (!childForm.age.trim()) errors.age = "Date of birth is required.";
     if (!childForm.gender) errors.gender = "Gender is required.";
     if (!childForm.address.trim()) errors.address = "Address is required.";
-    if (!childForm.diagnoses) errors.diagnoses = "Diagnoses is required.";
+    // if (!childForm.diagnoses) errors.diagnoses = "Diagnoses is required.";
     if (!childForm.bloodGroup) errors.bloodGroup = "Blood group is required.";
     if (!childForm.motherName.trim()) errors.motherName = "Mother's name is required.";
     if (!childForm.fatherName.trim()) errors.fatherName = "Father's name is required.";
@@ -262,7 +262,7 @@ export default function Children() {
       age: Math.max(0, calculatedAge),
       gender: mapGender(childForm.gender),
       address: childForm.address,
-      diagnosis: childForm.diagnoses,
+      // diagnosis: childForm.diagnoses,
       blood_group: mapBloodGroup(childForm.bloodGroup),
       mother_name: childForm.motherName,
       father_name: childForm.fatherName,
@@ -587,7 +587,7 @@ export default function Children() {
             </div>
 
             {/* Diagnoses */}
-            <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
+            {/* <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
               <label className="block text-xs font-bold text-black">
                 Diagnoses<span className="text-black">*</span>
               </label>
@@ -604,7 +604,7 @@ export default function Children() {
                 className="w-full"
               />
               {formErrors.diagnoses && <p className="mt-1 text-xs text-red-600">{formErrors.diagnoses}</p>}
-            </div>
+            </div> */}
 
             {/* Blood Group */}
             <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">

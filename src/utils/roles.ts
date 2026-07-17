@@ -16,3 +16,8 @@ export const isTherapist = (roleName?: string) => {
   return normalizeRole(roleName) === normalizeRole(ROLES.THERAPIST);
 };
 
+export const isSuperAdmin = (roleName?: string) => {
+  if (!roleName) return false;
+  return normalizeRole(roleName) === normalizeRole(ROLES.SUPER_ADMIN);
+};
+

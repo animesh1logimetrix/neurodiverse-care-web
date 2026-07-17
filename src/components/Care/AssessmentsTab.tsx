@@ -352,13 +352,22 @@ export default function AssessmentsTab() {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <h3 className="font-bold text-sm text-gray-900">
-                        {assessment.assesment_name} {assessment.module ? `(${assessment.module})` : ''}
-                      </h3>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h3 className="font-bold text-sm text-gray-900">
+                          {assessment.assesment_name} {assessment.module ? `(${assessment.module})` : ''}
+                        </h3>
+                        {assessment.status && (
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            assessment.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                            assessment.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                            assessment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {assessment.status.replace("_", " ")}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-3">
-                        <div className="bg-green-50 border-green-200 border px-3 py-1 rounded-sm text-xs font-semibold text-green-700 whitespace-nowrap">
-                          {assessment.status?.replace("_", " ")}
-                        </div>
                         <button 
                           onClick={(e) => { e.stopPropagation(); openEditModal(index); }}
                           className="text-gray-400 hover:text-blue-500 transition-colors"

@@ -9,7 +9,7 @@ import Input from "../../components/form/input/InputField";
 import Checkbox from "../../components/form/input/Checkbox";
 import Button from "../../components/ui/button/Button";
 import { useAuth } from "../../context/AuthContext";
-import { ROLES, isParentGuardian } from "../../utils/roles";
+import { ROLES, isParentGuardian, isSuperAdmin } from "../../utils/roles";
 
 export default function NeuroCareAuth() {
   const navigate = useNavigate();
@@ -386,7 +386,10 @@ export default function NeuroCareAuth() {
                   <Label>I am a...</Label>
                   <div className="grid grid-cols-2 gap-3 mt-1">
                     {/* 1. Show Dynamic Roles First (Parent/Guardian sorted to top) */}
-                    {dynamicRoles.length > 0 && [...dynamicRoles].sort((a, b) => isParentGuardian(a.name) ? -1 : (isParentGuardian(b.name) ? 1 : 0)).map((role: any) => {
+                    {dynamicRoles.length > 0 && [...dynamicRoles]
+                      .filter((role: any) => !isSuperAdmin(role.name))
+                      .sort((a, b) => isParentGuardian(a.name) ? -1 : (isParentGuardian(b.name) ? 1 : 0))
+                      .map((role: any) => {
                       const isParent = isParentGuardian(role.name);
                       const icon = isParent ? "👨‍👩‍👦" : (role.name === "Therapist" ? "🤝" : "🧑‍⚕️");
                       return (
