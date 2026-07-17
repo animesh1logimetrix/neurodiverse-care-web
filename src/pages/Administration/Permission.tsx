@@ -7,6 +7,7 @@ import { PlusIcon, HorizontaLDots } from '../../icons';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "../../api/axiosClient";
 import toast from "react-hot-toast";
+import Select from "../../components/form/Select";
 
 // Icons 
 const SearchIcon = () => (
@@ -477,21 +478,18 @@ export default function PermissionMatrix() {
                 Modules <span className="text-black">*</span>
               </label>
               <div className="relative">
-                <select
-                  className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-brand-500 transition-all cursor-pointer"
-                  onChange={(e) => handleModuleToggle(e.target.value)}
-                  value="Select"
-                >
-                  <option disabled value="Select">Select</option>
-                  {apiModules.filter((m: any) => !selectedModules.includes(Number(m.id))).map((mod: any) => (
-                    <option key={mod.id} value={mod.id}>{mod.Name || mod.title || mod.name || `Module ${mod.id}`}</option>
-                  ))}
-                </select>
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
+                <Select
+                  value=""
+                  onChange={(val) => handleModuleToggle(val)}
+                  placeholder="Select"
+                  options={apiModules
+                    .filter((m: any) => !selectedModules.includes(Number(m.id)))
+                    .map((mod: any) => ({
+                      value: String(mod.id),
+                      label: mod.Name || mod.title || mod.name || `Module ${mod.id}`
+                    }))}
+                  className="w-full"
+                />
               </div>
               {formErrors.modules && <p className="text-xs text-red-500 mt-0.5">{formErrors.modules}</p>}
             </div>

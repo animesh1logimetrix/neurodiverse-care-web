@@ -662,7 +662,7 @@ export default function DiagnosesTab() {
             
             <div>
               <Label>ICD-10 Code *</Label>
-              <Input value={formData.icd10} onChange={(e) => updateForm('icd10', e.target.value)} placeholder="Enter code" />
+              <Input value={formData.icd10} onChange={(e) => updateForm('icd10', e.target.value)} readOnly={true} placeholder="Enter code" />
               {formErrors.icd10 && <p className="mt-1 text-xs text-red-600">{formErrors.icd10}</p>}
             </div>
 

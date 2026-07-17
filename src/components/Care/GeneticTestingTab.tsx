@@ -10,6 +10,11 @@ import DatePicker from "../form/date-picker";
 import Label from "../form/Label";
 import TextArea from "../form/input/TextArea";
 
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return "-";
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 type GeneticTestStatus = "NEEDS_REVIEW" | "AWAITING_REPORT" | "NORMAL" | "POSITIVE" | "REVIEWED" | "NEGATIVE";
 
 interface GeneticTest {
@@ -139,12 +144,12 @@ const GeneticTestCard = ({ test, isExpanded, onToggle, onViewReport, onAddClinic
             <p className="text-sm font-semibold text-gray-900">{test.title}</p>
             {test.status === "NEEDS_REVIEW" && <WarningIcon className="w-4 h-4 text-orange-500" />}
           </div>
-          <p className="text-xs text-gray-600">
-            Lab: {test.lab}&nbsp;&nbsp;
-            Ordered: {test.orderedDate}&nbsp;&nbsp;
-            Reported: {test.reportedDate || "-"}&nbsp;&nbsp;
-            By: {test.orderedBy}
-          </p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 mt-1.5">
+              <span>Lab: {test.lab}</span>
+              <span>Ordered: {formatDate(test.orderedDate)}</span>
+              <span>Reported: {formatDate(test.reportedDate)}</span>
+              <span>By: {test.orderedBy}</span>
+            </div>
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={test.status} />
@@ -1121,16 +1126,16 @@ export default function GeneticTestingTab() {
             </div>
 
             {/* Meta info row */}
-            <p className="text-[12px] text-gray-500 mb-4">
-              Lab: {selectedTest.lab}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              Ordered: {selectedTest.orderedDate}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-gray-500 mb-5">
+              <span>Lab: {selectedTest.lab}</span>
+              <span>Ordered: {formatDate(selectedTest.orderedDate)}</span>
               <span className={
                 selectedTest.status === "NEEDS_REVIEW" ? "text-gray-700 font-medium" :
                 selectedTest.status === "AWAITING_REPORT" ? "text-yellow-600 font-medium" : "text-gray-700 font-medium"
-              }>{statusConfig[selectedTest.status].label}</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              {selectedTest.reportedDate && <>Reported: {selectedTest.reportedDate}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</>}
-              Ordered by: {selectedTest.orderedBy}
-            </p>
+              }>{statusConfig[selectedTest.status].label}</span>
+              {selectedTest.reportedDate && <span>Reported: {formatDate(selectedTest.reportedDate)}</span>}
+              <span>Ordered by: {selectedTest.orderedBy}</span>
+            </div>
 
             {/* Horizontal rule */}
             <div className="border-t border-gray-200 -mx-8" />
