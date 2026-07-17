@@ -365,9 +365,9 @@ export default function ChildDetails() {
       </div>
 
       {/* Main Profile Section */}
-      <div className="flex flex-col md:flex-row gap-8 mb-8 items-start">
+      <div className="flex flex-col md:flex-row gap-8 mb-8 items-stretch">
         {/* Avatar (Left) */}
-        <div className="w-52 h-52 rounded-[28px] bg-[#fdf3e7] overflow-hidden shrink-0 flex items-center justify-center shadow-sm border border-[#ffedd5] relative">
+        <div className="w-full max-w-[240px] aspect-square mx-auto md:mx-0 md:max-w-none md:w-48 lg:w-56 md:h-auto rounded-[28px] bg-[#fdf3e7] overflow-hidden shrink-0 flex items-center justify-center shadow-sm border border-[#ffedd5] relative">
           {/* Photo */}
           {isUploadingPhoto && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
@@ -389,60 +389,62 @@ export default function ChildDetails() {
         </div>
 
         {/* Right Side (Details + Actions + Note) */}
-        <div className="flex-1 flex flex-col justify-between py-1">
+        <div className="flex-1 flex flex-col justify-between gap-6 lg:gap-0 w-full h-auto">
           
           {/* Top: Details & Actions */}
-          <div className="flex flex-col xl:flex-row gap-6 items-start">
+          <div className="flex flex-col md:flex-row gap-6 items-start justify-between w-full">
             
             {/* Details */}
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">{child?.full_name || "Loading..."}</h2>
-                <span className="bg-[#e5f5e8] text-[#16a34a] px-3 py-1 rounded-md text-xs font-bold tracking-wide capitalize">
+              <div className="flex items-center gap-3 mb-3">
+                <h2 className="text-2xl font-bold text-gray-800 leading-none">{child?.full_name || "Loading..."}</h2>
+                <span className="bg-[#e5f5e8] text-[#16a34a] px-3 py-1 rounded-md text-xs font-bold tracking-wide capitalize leading-none">
                   Active
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-5 gap-x-4">
-                <div>
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-3 gap-x-4">
+                <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Child Code</p>
-                  <p className="font-bold text-gray-800 text-sm">
+                  <p className="font-bold text-gray-800 text-sm truncate">
                     {child?.id ? `NC-2025-${String(child.id).padStart(5, '0')}` : "N/A"}
                   </p>
                 </div>
-                <div>
+                <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">DOB</p>
-                  <p className="font-bold text-gray-800 text-sm">
+                  <p className="font-bold text-gray-800 text-sm truncate">
                     {child?.dob ? new Date(child.dob).toLocaleDateString() : "N/A"}
                   </p>
                 </div>
-                <div>
+                <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Gender</p>
-                  <p className="font-bold text-gray-800 text-sm capitalize">{child?.gender?.toLowerCase() || "N/A"}</p>
+                  <p className="font-bold text-gray-800 text-sm capitalize truncate">{child?.gender?.toLowerCase() || "N/A"}</p>
                 </div>
-                <div>
+                <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Blood Group</p>
-                  <p className="font-bold text-gray-800 text-sm">{child?.blood_group?.replace("_", " ") || "N/A"}</p>
+                  <p className="font-bold text-gray-800 text-sm truncate">{child?.blood_group?.replace("_", " ") || "N/A"}</p>
                 </div>
-                <div>
+                
+                <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Primary Diagnosis</p>
-                  <p className="font-bold text-gray-800 text-sm">{child?.diagnosis || "N/A"}</p>
+                  <p className="font-bold text-gray-800 text-sm truncate">{child?.diagnosis || "N/A"}</p>
                 </div>
-                <div>
+                <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Referred By</p>
-                  <p className="font-bold text-gray-800 text-sm">{child?.referred_by || "N/A"}</p>
+                  <p className="font-bold text-gray-800 text-sm truncate">{child?.referred_by || "N/A"}</p>
                 </div>
-                <div>
+                <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Address</p>
-                  <p className="font-bold text-gray-800 text-sm">{child?.address || "N/A"}</p>
+                  <p className="font-bold text-gray-800 text-sm break-words line-clamp-2">{child?.address || "N/A"}</p>
                 </div>
-                <div>
+                <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Allergies</p>
-                  <p className="font-bold text-gray-800 text-sm">{child?.allergies || "N/A"}</p>
+                  <p className="font-bold text-gray-800 text-sm truncate">{child?.allergies || "N/A"}</p>
                 </div>
-                <div className="col-span-2">
+                
+                <div className="flex flex-col col-span-2 lg:col-span-4">
                   <p className="text-sm text-gray-500 mb-0.5">Parents</p>
-                  <p className="font-bold text-gray-800 text-sm">
+                  <p className="font-bold text-gray-800 text-sm truncate">
                     {child?.childUsers?.filter((cu: any) => cu.relation === "PARENT").map((cu: any) => cu.user?.name).join(", ") || "N/A"}
                   </p>
                 </div>
@@ -450,10 +452,10 @@ export default function ChildDetails() {
             </div>
 
             {/* Actions (Right) */}
-            <div className="flex flex-col shrink-0 min-w-56 w-56 border border-[#fed7aa] rounded-xl bg-white">
+            <div className="flex flex-col shrink-0 w-full md:w-48 lg:w-[200px] border border-[#fed7aa] rounded-xl bg-white overflow-hidden">
               <button 
                 onClick={openEditModal}
-                className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors border-b border-gray-100 rounded-t-xl"
+                className="flex items-center gap-3 w-full px-4 py-3.5 text-gray-600 text-sm hover:bg-orange-50 transition-colors border-b border-gray-100"
               >
                 <PencilIcon className="w-4 h-4 fill-current text-gray-400" />
                 Edit Child Details
@@ -461,7 +463,7 @@ export default function ChildDetails() {
               <button 
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploadingPhoto}
-                className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors border-b border-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-3 w-full px-4 py-3.5 text-gray-600 text-sm hover:bg-orange-50 transition-colors border-b border-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowUpIcon className="w-4 h-4 fill-current text-gray-400" />
                 {isUploadingPhoto ? "Uploading..." : "Upload Photo"}
@@ -473,15 +475,15 @@ export default function ChildDetails() {
                 accept="image/jpeg,image/png,image/gif,image/webp"
                 onChange={handlePhotoUpload} 
               />
-              {/* <button className="flex items-center gap-3 w-full px-5 py-4 text-gray-600 text-sm hover:bg-orange-50 transition-colors rounded-b-xl">
+              {/* <button className="flex items-center gap-3 w-full px-4 py-3.5 text-gray-600 text-sm hover:bg-orange-50 transition-colors">
                 <UserIcon className="w-4 h-4 fill-current text-gray-400" />
                 View Profile
               </button> */}
             </div>
           </div>
           
-          {/* Bottom: Note Field */}
-          <div className="mt-6 flex items-center gap-2 bg-[#fff7ed] border border-[#fed7aa] rounded-md px-3 py-2 w-full">
+          {/* Bottom Row: Note Field */}
+          <div className="mt-3 flex items-center gap-2 bg-[#fff7ed] border border-[#fed7aa] rounded-md px-3 py-2 w-full">
             <span className="text-gray-500 text-sm shrink-0">Note :</span>
             <input 
               type="text" 
