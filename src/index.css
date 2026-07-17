@@ -802,3 +802,9 @@ span.flatpickr-weekday,
 .simplebar-scrollbar.simplebar-visible:before {
   @apply opacity-100;
 }
+
+/* Custom Toast Styling for long texts */
+.custom-toast > div[role="status"] {
+  max-height: 400px;
+  overflow-y: auto;
+}

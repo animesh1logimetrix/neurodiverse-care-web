@@ -46,6 +46,12 @@ export default function App() {
       <Toaster 
         position="top-center" 
         containerStyle={{ zIndex: 999999 }}
+        toastOptions={{
+          className: 'custom-toast',
+          style: {
+            wordBreak: 'break-word',
+          },
+        }}
       />
       <Router>
         <ScrollToTop />
