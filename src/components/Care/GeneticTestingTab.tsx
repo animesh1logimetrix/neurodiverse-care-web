@@ -78,25 +78,40 @@ const StatusBadge = ({ status }: { status: GeneticTestStatus }) => {
 };
 
 // Clinical Review Alert Component
-const ClinicalReviewAlert = () => (
-  <div className="border border-orange-200 bg-orange-50 rounded-lg p-4 mb-4">
-    <div className="flex gap-3">
-      <WarningIcon className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
-      <div className="flex-1">
-        <p className="text-sm font-medium text-gray-700">Genetic result requires clinical review</p>
-        <div className="mt-4 space-y-1">
-          <p className="text-sm text-gray-600">
-            Chromosomal Microarray identified a 16p11.2 microdeletion (VUS). Genetic counseling and family trio testing have been recommended.
-          </p>
-          <p className="text-sm text-gray-600">No provider has acknowledged this result yet.</p>
-        </div>
-        <button className="text-sm text-gray-600 font-medium hover:text-gray-900 mt-1 flex items-center gap-1">
-          Acknowledge &amp; schedule counseling &rarr;
-        </button>
-      </div>
+const ClinicalReviewAlert = ({ tests }: { tests: GeneticTest[] }) => {
+  if (!tests || tests.length === 0) return null;
+  
+  return (
+    <div className="flex flex-col gap-4 mb-4">
+      {tests.map((test) => {
+        const reportedTime = test.reportedDate ? new Date(test.reportedDate).getTime() : 0;
+        const isExtended = reportedTime ? (new Date().getTime() - reportedTime) / (1000 * 3600 * 24) > 7 : false;
+        
+        return (
+          <div key={test.id} className="border border-orange-200 bg-orange-50 rounded-lg p-4">
+            <div className="flex gap-3">
+              <WarningIcon className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-700">
+                  Genetic result requires clinical review {isExtended && <span className="text-red-600 ml-2 font-bold">(Pending for extended period)</span>}
+                </p>
+                <div className="mt-4 space-y-1">
+                  <p className="text-sm text-gray-600">
+                    {test.title} {test.result ? `identified ${test.result}.` : 'report is available.'} {test.recommendations ? test.recommendations : ''}
+                  </p>
+                  <p className="text-sm text-gray-600">No provider has acknowledged this result yet.</p>
+                </div>
+                <button className="text-sm text-gray-600 font-medium hover:text-gray-900 mt-1 flex items-center gap-1">
+                  Acknowledge &amp; mark as reviewed &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
-  </div>
-);
+  );
+};
 
 // Genetic Test Card Component
 interface GeneticTestCardProps {
@@ -190,21 +205,7 @@ const GeneticTestCard = ({ test, isExpanded, onToggle, onViewReport, onAddClinic
   </div>
 );
 
-// Counseling Card Component
-const CounselingCard = () => (
-  <div className="border border-gray-200 rounded-lg bg-white p-4 flex items-center justify-between">
-    <div className="flex items-center gap-3">
-      <DocumentIcon className="w-5 h-5 text-orange-500 shrink-0" />
-      <div>
-        <p className="text-sm font-semibold text-gray-900">Need help understanding results?</p>
-        <p className="text-xs text-gray-600">Schedule a genetic counseling session with our clinical geneticist.</p>
-      </div>
-    </div>
-    <button className="border-2 border-green-500 text-green-600 rounded-full px-4 py-1.5 text-xs font-semibold hover:bg-green-50 transition-colors shrink-0">
-      Schedule Counseling
-    </button>
-  </div>
-);
+
 
 const initialFormState = {
   testType: "",
@@ -680,7 +681,7 @@ export default function GeneticTestingTab() {
       </div>
 
       {/* Clinical Review Alert */}
-      <ClinicalReviewAlert />
+      <ClinicalReviewAlert tests={parsedTests.filter(t => t.status === "NEEDS_REVIEW")} />
 
       {/* Test Cards */}
       <div>
@@ -713,8 +714,7 @@ export default function GeneticTestingTab() {
         )}
       </div>
 
-      {/* Counseling Card */}
-      <CounselingCard />
+
 
       {/* Upload/Edit Genetic Test Report Modal */}
       <CustomModal

@@ -401,7 +401,7 @@ export default function ClinicAdminDashboard() {
     <>
       <PageMeta title="Clinic Dashboard | NeuroDiverse" description="Clinic administrator analytics dashboard for NeuroDiverse" />
 
-      <div className="min-h-screen bg-[#f8fafc] -mx-4 md:-mx-6 -my-4 md:-my-6 p-[32px]" style={{ fontFamily: "Outfit, sans-serif" }}>
+      <div className="min-h-screen  -mx-4 md:-mx-6 -my-4 md:-my-6 p-[32px]" style={{ fontFamily: "Outfit, sans-serif" }}>
 
         {/* ── Page Header ───────────────────────────────────────────────── */}
         <div className="mb-6">

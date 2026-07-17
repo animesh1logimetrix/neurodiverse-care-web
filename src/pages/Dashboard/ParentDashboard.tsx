@@ -112,7 +112,7 @@ export default function ParentDashboard() {
       />
 
       <div
-        className="bg-[#f8fafc] -mx-4 md:-mx-6 -my-4 md:-my-6 p-[24px]"
+        className=" -mx-4 md:-mx-6 -my-4 md:-my-6 p-[24px]"
         style={{ fontFamily: "Outfit, sans-serif" }}
       >
         {/* ── Welcome Header ─────────────────────────────────────────────── */}

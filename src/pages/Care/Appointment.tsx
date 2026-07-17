@@ -603,7 +603,7 @@ export default function Appointment() {
                     key={day} 
                     onClick={() => setSelectedDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day))}
                     className={`aspect-square max-w-[80px] mx-auto w-full flex flex-col items-center justify-center rounded-2xl cursor-pointer transition-all relative ${
-                      isSelected ? 'bg-brand-500 text-white shadow-md transform scale-105' : 'hover:bg-gray-50 text-gray-700'
+                      isSelected ? 'bg-brand-500 text-white shadow-md transform scale-105' : 'hover:bg-white text-gray-700'
                     }`}
                   >
                     <span className="text-sm font-medium">{day}</span>
@@ -884,3 +884,4 @@ export default function Appointment() {
     </>
   );
 }
+

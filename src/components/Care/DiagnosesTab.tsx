@@ -39,11 +39,12 @@ export default function DiagnosesTab() {
   });
 
   const { data: iepGoalsData } = useQuery({
-    queryKey: ["iep-goal"],
+    queryKey: ["iep-goal", childId],
     queryFn: async () => {
-      const res = await axiosClient.get("/iep-goal");
+      const res = await axiosClient.get(`/iep-goal?childId=${childId}`);
       return res.data;
     },
+    enabled: !!childId,
   });
 
   const categories = Array.isArray(categoriesData) ? categoriesData : categoriesData?.data || [];
@@ -647,7 +648,13 @@ export default function DiagnosesTab() {
                 key={`categoryId-${formData.categoryId}`}
                 defaultValue={formData.categoryId}
                 options={categories.map((c: any) => ({ value: String(c.id), label: c.full_category_name || `Category ${c.id}` }))}
-                onChange={(val) => updateForm('categoryId', val)}
+                onChange={(val) => {
+                  updateForm('categoryId', val);
+                  const selectedCategory = categories.find((c: any) => String(c.id) === val);
+                  if (selectedCategory?.icd_code) {
+                    updateForm('icd10', selectedCategory.icd_code);
+                  }
+                }}
                 placeholder="Select Category"
               />
               {formErrors.categoryId && <p className="mt-1 text-xs text-red-600">{formErrors.categoryId}</p>}
@@ -743,7 +750,7 @@ export default function DiagnosesTab() {
               <Select 
                 key={selectedIepGoals.length}
                 options={allIepGoals
-                  .filter((g: any) => !selectedIepGoals.includes(g.id))
+                  .filter((g: any) => !selectedIepGoals.includes(g.id) && (!formData.categoryId || String(g.domain_id) === String(formData.categoryId)))
                   .map((g: any) => ({ value: String(g.id), label: g.goal_title || `Goal ${g.id}` }))}
                 onChange={handleGoalSelect}
                 placeholder="Select an IEP Goal"
