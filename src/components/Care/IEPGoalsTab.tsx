@@ -965,8 +965,8 @@ const IEPGoalsTab = () => {
               <div className="flex flex-wrap items-center gap-8 text-[12px] text-gray-500">
                 <span>Therapist: <span className="text-gray-600">{selectedViewGoal.therapistName}</span></span>
                 <span>Priority: <span className="text-gray-600">{selectedViewGoal.priority || "Medium"}</span></span>
-                <span>Start: <span className="text-gray-600">{selectedViewGoal.start_date || "-"}</span></span>
-                <span>Target: <span className="text-gray-600">{selectedViewGoal.target_date || "-"}</span></span>
+                <span>Start: <span className="text-gray-600">{formatDate(selectedViewGoal.start_date)}</span></span>
+                <span>Target: <span className="text-gray-600">{formatDate(selectedViewGoal.target_date)}</span></span>
                 <span>Status: <span className="text-gray-600">{selectedViewGoal.status}</span></span>
               </div>
             </div>
@@ -1047,11 +1047,11 @@ const IEPGoalsTab = () => {
                   </div>
                   <div className="flex">
                     <span className="text-gray-500 w-[135px] shrink-0">Start Date</span>
-                    <span className="text-gray-600">{selectedViewGoal.start_date || "-"}</span>
+                    <span className="text-gray-600">{formatDate(selectedViewGoal.start_date)}</span>
                   </div>
                   <div className="flex">
                     <span className="text-gray-500 w-[135px] shrink-0">Target Date</span>
-                    <span className="text-gray-600">{selectedViewGoal.target_date || "-"}</span>
+                    <span className="text-gray-600">{formatDate(selectedViewGoal.target_date)}</span>
                   </div>
                   <div className="flex">
                     <span className="text-gray-500 w-[135px] shrink-0">Status</span>
