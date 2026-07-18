@@ -289,7 +289,7 @@ export default function PermissionMatrix() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-visible mb-8">
         {isLoading ? (
           <div className="py-12 flex flex-col items-center justify-center text-gray-500">
-            <svg className="animate-spin h-8 w-8 text-[#60a5fa] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-8 w-8 text-[#2DA0FF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -432,7 +432,7 @@ export default function PermissionMatrix() {
               type="submit"
               form="add-edit-permission-form"
               disabled={createPermissionMutation.isPending || updatePermissionMutation.isPending}
-              className="px-6 py-2.5 rounded-lg bg-[#6db3ff] hover:bg-blue-400 text-sm font-semibold text-white transition-colors cursor-pointer min-w-[120px] flex items-center justify-center disabled:opacity-50"
+              className="px-6 py-2.5 rounded-lg bg-[#2DA0FF] hover:bg-blue-400 text-sm font-semibold text-white transition-colors cursor-pointer min-w-[120px] flex items-center justify-center disabled:opacity-50"
             >
               {createPermissionMutation.isPending || updatePermissionMutation.isPending ? "Saving..." : (selectedPermission ? "Save Permission" : "Create Permission")}
             </button>

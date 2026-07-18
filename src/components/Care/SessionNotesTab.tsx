@@ -321,7 +321,7 @@ const SessionNotesTab = () => {
         </div>
         <button 
           onClick={openAddModal}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#2DA0FF] transition-colors"
         >
           + Add Note
         </button>
@@ -348,7 +348,7 @@ const SessionNotesTab = () => {
       <div className="space-y-4">
         {isSessionsLoading ? (
           <div className="py-12 flex flex-col items-center justify-center text-gray-500">
-            <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-8 w-8 text-[#2DA0FF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -384,7 +384,7 @@ const SessionNotesTab = () => {
                     </button>
                     <button 
                       onClick={() => openEditModal(note.id)}
-                      className="p-1.5 text-gray-400 hover:text-[#60a5fa] hover:bg-blue-50 rounded-md transition-colors"
+                      className="p-1.5 text-gray-400 hover:text-[#2DA0FF] hover:bg-blue-50 rounded-md transition-colors"
                       title="Edit"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -435,7 +435,7 @@ const SessionNotesTab = () => {
             <button
               onClick={handleSave}
               disabled={createSessionMutation.isPending || updateSessionMutation.isPending}
-              className="px-8 py-2 text-sm font-bold text-white bg-[#60a5fa] rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
+              className="px-8 py-2 text-sm font-bold text-white bg-[#2DA0FF] rounded-lg hover:bg-[#2DA0FF] transition-colors disabled:opacity-50"
             >
               {createSessionMutation.isPending || updateSessionMutation.isPending ? "Saving..." : "Save Session Note"}
             </button>
@@ -674,7 +674,7 @@ const SessionNotesTab = () => {
           return (
             <div className="pt-2 pb-6">
               <div className="bg-blue-50/80 border border-blue-100 text-blue-700 p-3.5 rounded-lg text-sm mb-8 flex items-start gap-3 shadow-sm">
-                <svg className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-[#2DA0FF] mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="leading-relaxed">

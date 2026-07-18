@@ -157,7 +157,7 @@ function FileIcon() {
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const stats = [
-  { label: "Total Submitted", value: "5", icon: <HomeIcon />, color: "#7db9fb", bg: "#f0f6fe" },
+  { label: "Total Submitted", value: "5", icon: <HomeIcon />, color: "#2DA0FF", bg: "#f0f6fe" },
   { label: "Pending Review", value: "1", icon: <ClockIcon />, color: "#f79009", bg: "#fffaeb" },
   { label: "Actioned", value: "2", icon: <CheckCircleIcon />, color: "#12b76a", bg: "#ecfdf3" },
 ];
@@ -190,7 +190,7 @@ const observations = [
     attachments: 0,
     status: "Actioned",
     icon: <BookIcon />,
-    iconColor: "#7db9fb",
+    iconColor: "#2DA0FF",
     iconBg: "#f0f6fe",
     statusBadge: "bg-[#ecfdf3] text-[#12b76a]",
     statusIcon: (
@@ -246,7 +246,7 @@ const observations = [
     icon: <MortarboardIcon />,
     iconColor: "#7a5af8",
     iconBg: "#f4f3ff",
-    statusBadge: "bg-[#f0f6fe] text-[#7db9fb]",
+    statusBadge: "bg-[#f0f6fe] text-[#2DA0FF]",
     statusIcon: (
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
         <polyline points="20 6 9 17 4 12"/>
@@ -286,9 +286,9 @@ const getStatusTheme = (status: string) => {
     case "ACKNOWLEDGED":
       return { statusBadge: "bg-[#f4f3ff] text-[#7a5af8]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> };
     case "VIEWED":
-      return { statusBadge: "bg-[#f0f6fe] text-[#7db9fb]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> };
+      return { statusBadge: "bg-[#f0f6fe] text-[#2DA0FF]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> };
     default:
-      return { statusBadge: "bg-[#f0f6fe] text-[#7db9fb]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><polyline points="20 6 9 17 4 12"/></svg> };
+      return { statusBadge: "bg-[#f0f6fe] text-[#2DA0FF]", statusIcon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><polyline points="20 6 9 17 4 12"/></svg> };
   }
 };
 
@@ -600,7 +600,7 @@ export default function HomeObservations() {
           <button type="button" onClick={handleCloseModal} className="px-5 py-2.5 rounded-lg text-gray-700 bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors">
             Cancel
           </button>
-          <button type="button" onClick={handleNext} className="flex items-center gap-1.5 px-6 py-2.5 rounded-lg text-white bg-[#7db9fb] hover:opacity-90 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]">
+          <button type="button" onClick={handleNext} className="flex items-center gap-1.5 px-6 py-2.5 rounded-lg text-white bg-[#2DA0FF] hover:opacity-90 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]">
             Continue <ChevronRightIcon />
           </button>
         </>
@@ -609,7 +609,7 @@ export default function HomeObservations() {
           <button type="button" onClick={() => setStep(1)} className="px-5 py-2.5 rounded-lg text-gray-700 bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors">
             ← Back
           </button>
-          <button type="button" onClick={handleSubmit} disabled={createObservationMutation.isPending || uploadFilesMutation.isPending} className="px-6 py-2.5 rounded-lg text-white bg-[#7db9fb] hover:opacity-90 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed">
+          <button type="button" onClick={handleSubmit} disabled={createObservationMutation.isPending || uploadFilesMutation.isPending} className="px-6 py-2.5 rounded-lg text-white bg-[#2DA0FF] hover:opacity-90 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed">
             {createObservationMutation.isPending || uploadFilesMutation.isPending ? "Submitting..." : "Submit Observation"}
           </button>
         </>
@@ -640,8 +640,8 @@ export default function HomeObservations() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-[#60a5fa] px-5 py-2.5 rounded-lg text-white text-[15px] font-semibold transition-all duration-150 hover:opacity-90 active:scale-[0.98] shadow-sm"
-            // style={{ backgroundColor: "#7db9fb" }}
+            className="flex items-center justify-center gap-2 bg-[#2DA0FF] px-5 py-2.5 rounded-lg text-white text-[15px] font-semibold transition-all duration-150 hover:opacity-90 active:scale-[0.98] shadow-sm"
+            // style={{ backgroundColor: "#2DA0FF" }}
           >
             <PlusIcon />
             New Observation
@@ -680,7 +680,7 @@ export default function HomeObservations() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search observations..."
-                className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7db9fb]/20 focus:border-[#7db9fb] text-[14px] transition-colors"
+                className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2DA0FF]/20 focus:border-[#2DA0FF] text-[14px] transition-colors"
               />
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -715,7 +715,7 @@ export default function HomeObservations() {
           {/* List Items */}
           {isObservationsLoading ? (
             <div className="flex flex-col items-center justify-center p-16 text-center gap-4">
-              <div className="w-10 h-10 border-4 border-gray-200 border-t-[#7db9fb] rounded-full animate-spin"></div>
+              <div className="w-10 h-10 border-4 border-gray-200 border-t-[#2DA0FF] rounded-full animate-spin"></div>
               <p className="text-sm text-gray-500 font-medium animate-pulse">Loading observations...</p>
             </div>
           ) : filteredObservations.length === 0 ? (
@@ -746,7 +746,7 @@ export default function HomeObservations() {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-1.5">
                     <div>
-                      <h3 className="text-[16px] sm:text-[18px] font-semibold text-gray-900 leading-snug group-hover:text-[#7db9fb] transition-colors">
+                      <h3 className="text-[16px] sm:text-[18px] font-semibold text-gray-900 leading-snug group-hover:text-[#2DA0FF] transition-colors">
                         {obs.title}
                       </h3>
                       <div className="flex items-center flex-wrap gap-2 text-[14px] text-gray-500 mt-1">
@@ -765,7 +765,7 @@ export default function HomeObservations() {
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={(e) => { e.stopPropagation(); openEditModal(obs); }}
-                          className="p-1.5 text-gray-400 hover:text-[#7db9fb] hover:bg-blue-50 rounded-md transition-colors"
+                          className="p-1.5 text-gray-400 hover:text-[#2DA0FF] hover:bg-blue-50 rounded-md transition-colors"
                           title="Edit"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -832,8 +832,8 @@ export default function HomeObservations() {
         <div className="px-6 py-4 flex-1">
           {/* Progress Bar */}
           <div className="pb-4 flex gap-2 flex-shrink-0">
-            <div className={`h-1 flex-1 rounded-full ${step >= 1 ? 'bg-[#7db9fb]' : 'bg-gray-200'}`}></div>
-            <div className={`h-1 flex-1 rounded-full ${step >= 2 ? 'bg-[#7db9fb]' : 'bg-gray-200'}`}></div>
+            <div className={`h-1 flex-1 rounded-full ${step >= 1 ? 'bg-[#2DA0FF]' : 'bg-gray-200'}`}></div>
+            <div className={`h-1 flex-1 rounded-full ${step >= 2 ? 'bg-[#2DA0FF]' : 'bg-gray-200'}`}></div>
           </div>
 
           {step === 1 && (
@@ -950,7 +950,7 @@ export default function HomeObservations() {
                            <FileIcon />
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col">
-                          <a href={file.file_url} target="_blank" rel="noreferrer" className="text-[13px] font-medium text-[#7db9fb] hover:underline truncate">
+                          <a href={file.file_url} target="_blank" rel="noreferrer" className="text-[13px] font-medium text-[#2DA0FF] hover:underline truncate">
                             {file.original_file_name || file.file_name || `File ${file.id}`}
                           </a>
                           {file.file_size && <div className="text-[11px] text-gray-500">{formatFileSize(file.file_size)}</div>}
@@ -1076,7 +1076,7 @@ export default function HomeObservations() {
                         </div>
                         {file.file_size && <div className="text-[11px] text-gray-500">{formatFileSize(file.file_size)}</div>}
                       </div>
-                      <a href={file.file_url} target="_blank" rel="noreferrer" className="text-[12px] font-medium text-[#7db9fb] hover:underline px-2">
+                      <a href={file.file_url} target="_blank" rel="noreferrer" className="text-[12px] font-medium text-[#2DA0FF] hover:underline px-2">
                         View
                       </a>
                     </div>

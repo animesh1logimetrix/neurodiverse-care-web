@@ -514,12 +514,12 @@ const IEPGoalsTab = () => {
       <div className="md:col-span-2">
         <div className="flex items-center justify-between mb-2">
           <Label>Progress</Label>
-          <span className="text-sm font-semibold text-[#60a5fa]">{formData.progress}%</span>
+          <span className="text-sm font-semibold text-[#2DA0FF]">{formData.progress}%</span>
         </div>
         <style>{`
-          .iep-progress-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 10px; border-radius: 9999px; outline: none; cursor: pointer; background: linear-gradient(to right, #60a5fa ${formData.progress}%, #e2e8f0 ${formData.progress}%); }
-          .iep-progress-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #60a5fa; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.25); cursor: pointer; }
-          .iep-progress-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #60a5fa; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.25); cursor: pointer; }
+          .iep-progress-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 10px; border-radius: 9999px; outline: none; cursor: pointer; background: linear-gradient(to right, #2DA0FF ${formData.progress}%, #e2e8f0 ${formData.progress}%); }
+          .iep-progress-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #2DA0FF; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.25); cursor: pointer; }
+          .iep-progress-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #2DA0FF; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.25); cursor: pointer; }
         `}</style>
         <input
           type="range"
@@ -644,7 +644,7 @@ const IEPGoalsTab = () => {
         </div>
         <button
           onClick={openAddModal}
-          className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+          className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#2DA0FF] transition-colors"
         >
           + Add Goal
         </button>
@@ -671,7 +671,7 @@ const IEPGoalsTab = () => {
       <div className="space-y-4">
         {isGoalsLoading && (
           <div className="py-12 flex flex-col items-center justify-center text-gray-500">
-            <svg className="animate-spin h-8 w-8 text-[#60a5fa] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-8 w-8 text-[#2DA0FF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -800,7 +800,7 @@ const IEPGoalsTab = () => {
                 createGoalMutation.mutate(buildPayload(formData));
               }}
               disabled={createGoalMutation.isPending}
-              className="px-8 py-2 text-sm font-bold text-white bg-[#60a5fa] rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
+              className="px-8 py-2 text-sm font-bold text-white bg-[#2DA0FF] rounded-lg hover:bg-[#2DA0FF] transition-colors disabled:opacity-50"
             >
               {createGoalMutation.isPending ? "Saving..." : "Save Goal"}
             </button>
@@ -842,7 +842,7 @@ const IEPGoalsTab = () => {
                 }
               }}
               disabled={updateGoalMutation.isPending}
-              className="px-8 py-2 text-sm font-bold text-white bg-[#60a5fa] rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
+              className="px-8 py-2 text-sm font-bold text-white bg-[#2DA0FF] rounded-lg hover:bg-[#2DA0FF] transition-colors disabled:opacity-50"
             >
               {updateGoalMutation.isPending ? "Saving..." : "Save Goal"}
             </button>
@@ -927,7 +927,7 @@ const IEPGoalsTab = () => {
                   setIsViewModalOpen(false);
                   openEditModal(selectedViewGoal);
                 }}
-                className="px-8 py-2.5 text-[15px] font-bold text-white bg-[#60a5fa] rounded-lg hover:bg-blue-500 transition-colors shadow-sm"
+                className="px-8 py-2.5 text-[15px] font-bold text-white bg-[#2DA0FF] rounded-lg hover:bg-[#2DA0FF] transition-colors shadow-sm"
               >
                 Edit Goal
               </button>

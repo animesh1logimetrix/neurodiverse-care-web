@@ -183,7 +183,7 @@ const AppointmentCard: React.FC<{
           </div>
           <div className="flex justify-center md:justify-center w-full">
             <button
-              className="bg-[#60a5fa] hover:bg-blue-500 text-white font-semibold rounded-lg px-8 py-2.5 text-sm transition-colors shadow-sm w-full md:w-auto"
+              className="bg-[#2DA0FF] hover:bg-[#2DA0FF] text-white font-semibold rounded-lg px-8 py-2.5 text-sm transition-colors shadow-sm w-full md:w-auto"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsExpanded(false);
@@ -521,7 +521,7 @@ export default function Appointment() {
 
           <button 
             onClick={() => setIsBookModalOpen(true)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#2DA0FF] transition-colors"
           >
             <PlusIcon className="w-4 h-4 fill-current" /> Book Appointment
           </button>
@@ -531,7 +531,7 @@ export default function Appointment() {
         {/* Content */}
         {isAppointmentsLoading ? (
           <div className="py-12 flex flex-col items-center justify-center text-gray-500">
-            <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-8 w-8 text-[#2DA0FF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>

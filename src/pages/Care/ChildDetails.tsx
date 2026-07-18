@@ -358,7 +358,7 @@ export default function ChildDetails() {
               6 children 3 need attention
             </p> */}
           </div>
-          {/* <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
+          {/* <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#2DA0FF] transition-colors">
             + Add Child
           </button> */}
         </div>

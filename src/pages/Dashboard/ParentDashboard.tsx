@@ -63,7 +63,7 @@ const goals = [
     title: "Following 2-Step Instructions",
     category: "Communication",
     status: "Steady progress",
-    statusColor: "#7db9fb",
+    statusColor: "#2DA0FF",
     percent: 60,
     barColor: "#88c2fb",
   },
@@ -86,7 +86,7 @@ const goals = [
 ];
 
 const quickActions = [
-  { label: "Log Home Observation",  icon: <PlusIcon />,     bg: "#7db9fb", hover: "#6aa8e7", path: "/dashboard/home-observations" },
+  { label: "Log Home Observation",  icon: <PlusIcon />,     bg: "#2DA0FF", hover: "#6aa8e7", path: "/dashboard/home-observations" },
   // { label: "Message Priya Sharma",  icon: <MessageIcon />,  bg: "#0d9488", hover: "#0f766e" },
   { label: "Book Advisory Session", icon: <CalendarIcon />, bg: "#12b76a", hover: "#039855", path: "#" },
   { label: "View Progress Report",  icon: <ReportIcon />,   bg: "#7a5af8", hover: "#6941c6", path: "#" },
@@ -175,7 +175,7 @@ export default function ParentDashboard() {
                 </span>
                 <span
                   className="text-[12px] font-semibold px-2 py-0.5 rounded"
-                  style={{ backgroundColor: "#f0f6fe", color: "#7db9fb" }}
+                  style={{ backgroundColor: "#f0f6fe", color: "#2DA0FF" }}
                 >
                   ASD
                 </span>

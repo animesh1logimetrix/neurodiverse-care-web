@@ -48,7 +48,7 @@ export default function ClinicAdminDashboard() {
       sparkline: { enabled: false },
       parentHeightOffset: 0
     },
-    colors: ["#60a5fa"],
+    colors: ["#2DA0FF"],
     stroke: {
       curve: "smooth",
       width: 2.5,
@@ -128,7 +128,7 @@ export default function ClinicAdminDashboard() {
         }
       }
     },
-    colors: ["#818cf8", "#e879f9", "#fb923c", "#4ade80", "#60a5fa"],
+    colors: ["#818cf8", "#e879f9", "#fb923c", "#4ade80", "#2DA0FF"],
     labels: ["ASD", "ADHD", "SPD", "SPEECH", "OTHER"],
     dataLabels: { enabled: false },
     legend: { show: false },
@@ -143,7 +143,7 @@ export default function ClinicAdminDashboard() {
     { count: 3, label: "ADHD", bg: "#e879f9" },
     { count: 2, label: "SPD", bg: "#fb923c" },
     { count: 2, label: "SPEECH", bg: "#4ade80" },
-    { count: 1, label: "OTHER", bg: "#60a5fa" }
+    { count: 1, label: "OTHER", bg: "#2DA0FF" }
   ];
 
   // ── Chart 3: Goal Achievement (Area) ──────────────────────────────────────

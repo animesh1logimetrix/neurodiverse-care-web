@@ -206,7 +206,7 @@ function ResourceCard({ resource, onBookmark, onEdit, onDelete, onView }: Resour
       case "video":
         return <VideoCameraIcon className="size-6 text-orange-500" />;
       default:
-        return <BookOpenIcon className="size-6 text-blue-500" />;
+        return <BookOpenIcon className="size-6 text-[#2DA0FF]" />;
     }
   };
 
@@ -574,7 +574,7 @@ export default function ContentCMS() {
       <button
         type="submit"
         form="upload-resource-form"
-        className="px-8 py-2.5 rounded bg-[#60a5fa] text-white font-semibold hover:bg-blue-500 transition-colors text-sm cursor-pointer min-w-[140px]"
+        className="px-8 py-2.5 rounded bg-[#2DA0FF] text-white font-semibold hover:bg-[#2DA0FF] transition-colors text-sm cursor-pointer min-w-[140px]"
       >
         {modalMode === 'edit' ? "Save Changes" : "Upload Resource"}
       </button>
@@ -601,7 +601,7 @@ export default function ContentCMS() {
         </div>
         <button
           onClick={handleOpenAdd}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-theme-xs hover:bg-blue-500 transition-all duration-200 shrink-0 cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-4 py-2.5 text-sm font-semibold text-white shadow-theme-xs hover:bg-[#2DA0FF] transition-all duration-200 shrink-0 cursor-pointer"
         >
           <PlusIcon className="size-4 fill-current text-white" />
           Upload Resource
@@ -718,7 +718,7 @@ export default function ContentCMS() {
       {/* Grid listing */}
       {isLoading ? (
         <div className="py-12 flex flex-col items-center justify-center text-gray-500">
-          <svg className="animate-spin h-8 w-8 text-[#60a5fa] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-8 w-8 text-[#2DA0FF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
@@ -887,7 +887,7 @@ export default function ContentCMS() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[#2DA0FF] mb-3">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
@@ -907,7 +907,7 @@ export default function ContentCMS() {
               <label className="w-40 shrink-0 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-40 hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer relative bg-white">
                 {uploadFilesMutation.isPending ? (
                   <div className="flex flex-col items-center justify-center py-4 text-center">
-                    <svg className="animate-spin h-6 w-6 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-6 w-6 text-[#2DA0FF] mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -919,7 +919,7 @@ export default function ContentCMS() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     <p className="text-xs text-gray-500">
-                      <span className="text-blue-500 font-medium hover:underline">Browse</span> files
+                      <span className="text-[#2DA0FF] font-medium hover:underline">Browse</span> files
                     </p>
                     <p className="text-[10px] text-gray-400 mt-0.5">Max 50 MB</p>
                   </div>
@@ -1139,7 +1139,7 @@ export default function ContentCMS() {
                         onClick={() => f.file_url && window.open(f.file_url, '_blank')}
                         className="w-40 shrink-0 border border-gray-200 rounded-xl p-4 flex flex-col hover:border-brand-500 hover:shadow-sm transition-all bg-white cursor-pointer group relative"
                       >
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 mb-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[#2DA0FF] mb-3">
                           <DocumentIcon className="size-5" />
                         </div>
                         <p className="text-sm font-semibold text-gray-800 mb-1 truncate" title={f.original_file_name || f.file_name}>

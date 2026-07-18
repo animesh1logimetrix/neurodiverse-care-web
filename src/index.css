@@ -47,7 +47,7 @@ layer(base);
   --color-brand-200: #c9e2fd;
   --color-brand-300: #a5cffd;
   --color-brand-400: #88c2fb;
-  --color-brand-500: #7db9fb;
+  --color-brand-500: #2DA0FF;
   --color-brand-600: #6aa8e7;
   --color-brand-700: #4b89cc;
   --color-brand-800: #3c6fa3;
@@ -60,7 +60,7 @@ layer(base);
   --color-blue-light-200: #b9e6fe;
   --color-blue-light-300: #7cd4fd;
   --color-blue-light-400: #36bffa;
-  --color-blue-light-500: #0ba5ec;
+  --color-blue-light-500: #2DA0FF;
   --color-blue-light-600: #0086c9;
   --color-blue-light-700: #026aa2;
   --color-blue-light-800: #065986;
@@ -535,13 +535,13 @@ span.flatpickr-weekday,
 .flatpickr-day.selected.nextMonthDay,
 .flatpickr-day.startRange.nextMonthDay,
 .flatpickr-day.endRange.nextMonthDay {
-  background: #7db9fb;
+  background: #2DA0FF;
   @apply !border-brand-500 !bg-brand-500 hover:!border-brand-500 hover:!bg-brand-500;
 }
 .flatpickr-day.selected.startRange + .endRange:not(:nth-child(7n + 1)),
 .flatpickr-day.startRange.startRange + .endRange:not(:nth-child(7n + 1)),
 .flatpickr-day.endRange.startRange + .endRange:not(:nth-child(7n + 1)) {
-  box-shadow: -10px 0 0 #7db9fb;
+  box-shadow: -10px 0 0 #2DA0FF;
 }
 
 .flatpickr-months .flatpickr-prev-month svg,

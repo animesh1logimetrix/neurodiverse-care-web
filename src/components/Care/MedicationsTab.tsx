@@ -637,7 +637,7 @@ const MedicationsTab = () => {
         <div className="flex justify-end">
         <button 
           onClick={handleOpenAddMedicationModal}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#2DA0FF] transition-colors"
         >
           + Add Medication
         </button>
@@ -655,7 +655,7 @@ const MedicationsTab = () => {
         {/* Loading State */}
         {isLoadingMedications ? (
           <div className="py-12 flex flex-col items-center justify-center text-gray-500">
-            <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-8 w-8 text-[#2DA0FF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -973,7 +973,7 @@ const MedicationsTab = () => {
                     />
                     {(uploadFilesMutation.isPending || updateMedicationMutation.isPending) ? (
                       <div className="flex flex-col items-center">
-                        <svg className="animate-spin h-5 w-5 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-5 w-5 text-[#2DA0FF] mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -1034,7 +1034,7 @@ const MedicationsTab = () => {
             <button
               onClick={handleAddMedicationSubmit}
               disabled={isSubmittingMedication || createMedicationMutation.isPending || updateMedicationMutation.isPending || uploadFilesMutation.isPending}
-              className="px-8 py-2 text-sm font-bold text-white bg-[#60a5fa] rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
+              className="px-8 py-2 text-sm font-bold text-white bg-[#2DA0FF] rounded-lg hover:bg-[#2DA0FF] transition-colors disabled:opacity-50"
             >
               {createMedicationMutation.isPending || updateMedicationMutation.isPending || uploadFilesMutation.isPending ? editingMedication ? "Updating..." : "Creating..." : editingMedication ? "Update Medication" : "Save Medication"}
             </button>
@@ -1204,7 +1204,7 @@ const MedicationsTab = () => {
             >
               <svg className="w-6 h-6 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
               <p className="text-sm text-gray-500">
-                Drag & drop or <span className="text-[#60a5fa] font-medium">browse files</span> Jpeg, Png, Pdf
+                Drag & drop or <span className="text-[#2DA0FF] font-medium">browse files</span> Jpeg, Png, Pdf
               </p>
             </div>
             <input 

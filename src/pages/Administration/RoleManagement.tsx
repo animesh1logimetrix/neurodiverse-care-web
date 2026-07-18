@@ -564,7 +564,7 @@ export default function RoleManagement() {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-4 py-2.5 rounded-lg border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-[#0c111d] text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#7DB9FB]/50 focus:border-[#7DB9FB] transition-all"
+                    className="w-full px-4 py-2.5 rounded-lg border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-[#0c111d] text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2DA0FF]/50 focus:border-[#2DA0FF] transition-all"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     required
@@ -578,7 +578,7 @@ export default function RoleManagement() {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-4 py-2.5 rounded-lg border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-[#0c111d] text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#7DB9FB]/50 focus:border-[#7DB9FB] transition-all"
+                    className="w-full px-4 py-2.5 rounded-lg border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-[#0c111d] text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2DA0FF]/50 focus:border-[#2DA0FF] transition-all"
                     value={formDescription}
                     onChange={(e) => setFormDescription(e.target.value)}
                     required
@@ -593,7 +593,7 @@ export default function RoleManagement() {
                   <button
                     type="button"
                     onClick={() => setIsPermissionsDropdownOpen(!isPermissionsDropdownOpen)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-[#0c111d] text-[14px] text-left text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#7DB9FB]/50 focus:border-[#7DB9FB] flex items-center justify-between transition-all"
+                    className="w-full px-4 py-2.5 rounded-lg border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-[#0c111d] text-[14px] text-left text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2DA0FF]/50 focus:border-[#2DA0FF] flex items-center justify-between transition-all"
                   >
                     <span className={formPermissions.length === 0 ? "text-[#6B7280]" : "truncate mr-2 text-gray-900 dark:text-white"}>
                       {formPermissions.length === 0 ? "Select" : formPermissions.join(", ")}
@@ -618,7 +618,7 @@ export default function RoleManagement() {
                               <input
                                 type="checkbox"
                                 checked={isChecked}
-                                className="w-4 h-4 rounded border-[#D1D5DB] text-[#7DB9FB] focus:ring-[#7DB9FB]/30 focus:ring-offset-0"
+                                className="w-4 h-4 rounded border-[#D1D5DB] text-[#2DA0FF] focus:ring-[#2DA0FF]/30 focus:ring-offset-0"
                                 onChange={() => {
                                   if (isChecked) {
                                     setFormPermissions(formPermissions.filter(p => p !== perm));
@@ -648,7 +648,7 @@ export default function RoleManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-lg bg-[#7DB9FB] hover:bg-[#6AA8E7] text-white font-semibold text-[14px] transition-colors min-w-[120px]"
+                  className="px-6 py-2.5 rounded-lg bg-[#2DA0FF] hover:bg-[#6AA8E7] text-white font-semibold text-[14px] transition-colors min-w-[120px]"
                 >
                   {editingRole ? "Save Changes" : "Create Role"}
                 </button>

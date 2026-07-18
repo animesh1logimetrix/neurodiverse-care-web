@@ -20,7 +20,7 @@ const baseChild = {
   status: "Active",
   pendingAction: "Genetic test pending review",
   tags: [
-    { label: "ASD (Level 2)", color: "bg-blue-100 text-blue-500" },
+    { label: "ASD (Level 2)", color: "bg-blue-100 text-[#2DA0FF]" },
     { label: "ADHD-Combined", color: "bg-purple-100 text-purple-500" },
     { label: "Sensory Processing Disorder", color: "bg-green-100 text-green-500" },
   ],
@@ -73,7 +73,7 @@ export default function Children() {
     tags: child.diagnoses && Array.isArray(child.diagnoses) && child.diagnoses.length > 0
       ? child.diagnoses.map((diag: any, index: number) => {
           const colors = [
-            "bg-blue-100 text-blue-500",
+            "bg-blue-100 text-[#2DA0FF]",
             "bg-purple-100 text-purple-500",
             "bg-green-100 text-green-500",
             "bg-orange-100 text-orange-500",
@@ -94,7 +94,7 @@ export default function Children() {
           return { label, color };
         })
       : child.diagnosis 
-        ? [{ label: child.diagnosis, color: "bg-blue-100 text-blue-500" }] 
+        ? [{ label: child.diagnosis, color: "bg-blue-100 text-[#2DA0FF]" }] 
         : [{ label: "No Diagnosis", color: "bg-gray-100 text-gray-500" }],
     metrics: { activeGoals: 0, achieved: 0, providers: 1 },
     nextAppointment: "Not scheduled",
@@ -301,7 +301,7 @@ export default function Children() {
           {isParentGuardian(user?.role?.name) && (
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#2DA0FF] transition-colors"
             >
               <PlusIcon className="w-4 h-4 fill-current" />
               Add Child
@@ -375,7 +375,7 @@ export default function Children() {
           {isParentGuardian(user?.role?.name) && (
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#60a5fa] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#2DA0FF] transition-colors"
             >
               <PlusIcon className="w-4 h-4 fill-current" />
               Add Child

@@ -57,7 +57,7 @@ const Select: React.FC<SelectProps> = ({
       <div
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center justify-between h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-theme-xs cursor-pointer transition-all ${
-          isOpen ? "border-[#7db9fb] ring-3 ring-[#7db9fb]/20" : "hover:border-gray-400"
+          isOpen ? "border-[#2DA0FF] ring-3 ring-[#2DA0FF]/20" : "hover:border-gray-400"
         } ${
           selectedValue
             ? "text-gray-800"

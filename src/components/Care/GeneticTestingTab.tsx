@@ -155,7 +155,7 @@ const GeneticTestCard = ({ test, isExpanded, onToggle, onViewReport, onAddClinic
           <StatusBadge status={test.status} />
           <button 
             onClick={(e) => { e.stopPropagation(); onEdit(test); }}
-            className="text-gray-400 hover:text-blue-500 transition-colors"
+            className="text-gray-400 hover:text-[#2DA0FF] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
           </button>
@@ -679,7 +679,7 @@ export default function GeneticTestingTab() {
         <h1 className="text-2xl font-bold text-gray-900">Genetic Testing</h1>
         <button
           onClick={() => { setModalMode('add'); setIsUploadModalOpen(true); }}
-          className="bg-[#2D8CFF] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-2"
+          className="bg-[#2DA0FF] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-2"
         >
           + Add Genetic Test
         </button>
@@ -692,7 +692,7 @@ export default function GeneticTestingTab() {
       <div>
         {isTestsLoading ? (
           <div className="flex justify-center p-8">
-            <svg className="animate-spin h-6 w-6 text-[#60a5fa]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-6 w-6 text-[#2DA0FF]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -741,7 +741,7 @@ export default function GeneticTestingTab() {
               type="button"
               onClick={handleSave}
               disabled={isSaving || uploadFilesMutation.isPending}
-              className="px-6 py-2 bg-[#2D8CFF] text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 min-w-[150px] flex items-center justify-center gap-2 cursor-pointer"
+              className="px-6 py-2 bg-[#2DA0FF] text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 min-w-[150px] flex items-center justify-center gap-2 cursor-pointer"
             >
               {isSaving || uploadFilesMutation.isPending ? (
                 <>
@@ -1240,7 +1240,7 @@ export default function GeneticTestingTab() {
                           rel="noopener noreferrer"
                           className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors w-fit pr-10"
                         >
-                          <div className="w-10 h-10 flex-shrink-0 bg-blue-50 text-blue-500 rounded flex items-center justify-center">
+                          <div className="w-10 h-10 flex-shrink-0 bg-blue-50 text-[#2DA0FF] rounded flex items-center justify-center">
                             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                             </svg>
@@ -1329,7 +1329,7 @@ export default function GeneticTestingTab() {
             <button
               onClick={handleSaveNote}
               disabled={updateTestMutation.isPending}
-              className="px-6 py-2 bg-[#2D8CFF] text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 min-w-[150px] flex items-center justify-center gap-2 cursor-pointer"
+              className="px-6 py-2 bg-[#2DA0FF] text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 min-w-[150px] flex items-center justify-center gap-2 cursor-pointer"
             >
               {updateTestMutation.isPending ? "Saving..." : "Save Note"}
             </button>
