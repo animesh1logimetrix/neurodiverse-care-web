@@ -11,6 +11,7 @@ import { CustomModal } from "../../components/ui/modal/CustomModal";
 import { HorizontaLDots, PlusIcon } from "../../icons";
 import { Dropdown } from "../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
+import DatePicker from "../../components/form/date-picker";
 import { useAuth } from "../../context/AuthContext";
 
 interface SharedSlot {
@@ -166,10 +167,11 @@ const AppointmentCard: React.FC<{
           >
             {data.status === AppointmentStatus.PENDING ? 'Pending Review' : data.status === AppointmentStatus.SHARED_SLOT ? 'Slots Shared' : data.status === AppointmentStatus.SLOT_SELECTED ? 'Slot Selected' : data.status.toLowerCase()}
           </Badge>
-          <div className="relative">
-            <button 
-              className="dropdown-toggle text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
-              onClick={(e) => {
+          {!(data.status === AppointmentStatus.SLOT_SELECTED || data.status === AppointmentStatus.CONFIRMED || data.status === AppointmentStatus.APPROVED || data.status === AppointmentStatus.COMPLETED) && !isTherapist && (
+            <div className="relative">
+              <button 
+                className="dropdown-toggle text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                onClick={(e) => {
                 e.stopPropagation();
                 setIsMenuOpen(!isMenuOpen);
               }}
@@ -182,7 +184,7 @@ const AppointmentCard: React.FC<{
               className="w-44 right-0 mt-2 shadow-theme-md z-10"
             >
               <div className="py-1">
-                {!isPast && (
+                {!isPast && !isTherapist && (
                   <DropdownItem 
                     onClick={(e) => {
                       e?.stopPropagation();
@@ -207,20 +209,22 @@ const AppointmentCard: React.FC<{
                 </DropdownItem>
 
                 <div className="border-t border-gray-100 my-1"></div> */}
-                
-                <DropdownItem
-                  onClick={(e) => {
-                    e?.stopPropagation();
-                    setIsMenuOpen(false);
-                    onDelete(data.id);
-                  }}
-                  className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20"
-                >
-                  Delete
-                </DropdownItem>
+                {!isTherapist && (
+                  <DropdownItem
+                    onClick={(e) => {
+                      e?.stopPropagation();
+                      setIsMenuOpen(false);
+                      onDelete(data.id);
+                    }}
+                    className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20"
+                  >
+                    Delete
+                  </DropdownItem>
+                )}
               </div>
             </Dropdown>
           </div>
+          )}
         </div>
       </div>
 
@@ -783,13 +787,12 @@ export default function Appointment() {
             </button>
           </div>
 
-          <button 
-            onClick={() => setIsBookModalOpen(true)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#2DA0FF] transition-colors"
-          >
-            <PlusIcon className="w-4 h-4 fill-current" /> Book Appointment
-          </button>
-      </div>
+          {!isTherapist && (
+            <Button size="sm" onClick={() => setIsBookModalOpen(true)}>
+              <PlusIcon className="w-4 h-4 fill-current" /> Book Appointment
+            </Button>
+          )}
+        </div>
       </div>
 
         {/* Content */}
@@ -1078,81 +1081,79 @@ export default function Appointment() {
               {shareSlotsErrors}
             </div>
           )}
-          {shareSlots.map((slot, index) => (
-            <div key={index} className="grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100 relative">
-              <div className="flex flex-col gap-1.5">
-                <label className="block text-xs font-bold text-black">
-                  Date <span className="text-black">*</span>
-                </label>
-                <input 
-                  type="date" 
-                  min={(() => {
-                    const d = new Date();
-                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                  })()}
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-theme-xs focus:outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10"
-                  value={slot.date}
-                  onChange={(e) => {
-                    const newSlots = [...shareSlots];
-                    newSlots[index].date = e.target.value;
-                    setShareSlots(newSlots);
-                    setShareSlotsErrors("");
-                  }}
-                  onClick={(e) => {
-                    try {
-                      if ('showPicker' in HTMLInputElement.prototype) {
-                        (e.currentTarget as HTMLInputElement).showPicker();
-                      }
-                    } catch (err) {}
-                  }}
-                />
+          <div className="flex flex-col gap-3">
+            {shareSlots.map((slot, index) => (
+              <div key={index} className="flex items-end gap-3 w-full">
+                <div className="flex-1 min-w-0">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Date <span className="text-error-500">*</span>
+                  </label>
+                  <DatePicker 
+                    id={`share-slot-date-${index}`}
+                    mode="single"
+                    defaultDate={slot.date}
+                    onChange={(dates, dateStr) => {
+                      const newSlots = [...shareSlots];
+                      newSlots[index].date = dateStr;
+                      setShareSlots(newSlots);
+                      setShareSlotsErrors("");
+                    }}
+                    minDate={(() => {
+                      const d = new Date();
+                      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    })()}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Start Time <span className="text-error-500">*</span>
+                  </label>
+                  <Select 
+                    options={timeOptions}
+                    placeholder="Select"
+                    value={slot.startTime}
+                    onChange={(val) => {
+                      const newSlots = [...shareSlots];
+                      newSlots[index].startTime = val;
+                      setShareSlots(newSlots);
+                      setShareSlotsErrors("");
+                    }}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    End Time <span className="text-error-500">*</span>
+                  </label>
+                  <Select 
+                    options={timeOptions}
+                    placeholder="Select"
+                    value={slot.endTime}
+                    onChange={(val) => {
+                      const newSlots = [...shareSlots];
+                      newSlots[index].endTime = val;
+                      setShareSlots(newSlots);
+                      setShareSlotsErrors("");
+                    }}
+                  />
+                </div>
+                
+                {shareSlots.length > 1 ? (
+                  <button
+                    type="button"
+                    className="h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-error-500 hover:bg-error-50 transition-colors"
+                    onClick={() => {
+                      const newSlots = shareSlots.filter((_, i) => i !== index);
+                      setShareSlots(newSlots);
+                    }}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                ) : (
+                  <div className="w-11 h-11 flex-shrink-0"></div>
+                )}
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="block text-xs font-bold text-black">
-                  Start Time <span className="text-black">*</span>
-                </label>
-                <Select 
-                  options={timeOptions}
-                  placeholder="Select"
-                  value={slot.startTime}
-                  onChange={(val) => {
-                    const newSlots = [...shareSlots];
-                    newSlots[index].startTime = val;
-                    setShareSlots(newSlots);
-                    setShareSlotsErrors("");
-                  }}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5 pr-8">
-                <label className="block text-xs font-bold text-black">
-                  End Time <span className="text-black">*</span>
-                </label>
-                <Select 
-                  options={timeOptions}
-                  placeholder="Select"
-                  value={slot.endTime}
-                  onChange={(val) => {
-                    const newSlots = [...shareSlots];
-                    newSlots[index].endTime = val;
-                    setShareSlots(newSlots);
-                    setShareSlotsErrors("");
-                  }}
-                />
-              </div>
-              {shareSlots.length > 1 && (
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                  onClick={() => {
-                    const newSlots = shareSlots.filter((_, i) => i !== index);
-                    setShareSlots(newSlots);
-                  }}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
           <button
             type="button"
             className="flex items-center justify-center gap-2 text-[#2DA0FF] font-semibold text-sm hover:bg-blue-50 py-2 rounded-lg transition-colors border border-dashed border-[#2DA0FF]"
