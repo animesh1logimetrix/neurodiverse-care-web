@@ -703,7 +703,7 @@ export default function CategoryMaster() {
       />
 
       {/* Breadcrumb */}
-      <PageBreadcrumb pageTitle="Category Master" hideTitle />
+      {/* <PageBreadcrumb pageTitle="Category Master" hideTitle /> */}
 
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">

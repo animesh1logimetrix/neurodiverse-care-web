@@ -247,7 +247,7 @@ export default function PermissionMatrix() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Permissions" hideTitle />
+      {/* <PageBreadcrumb pageTitle="Permissions" hideTitle /> */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>

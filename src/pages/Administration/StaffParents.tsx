@@ -357,7 +357,7 @@ export default function StaffParents() {
       />
 
       {/* Custom Figma Header Breadcrumb */}
-      <PageBreadcrumb pageTitle="Staff & Parents" hideTitle />
+      {/* <PageBreadcrumb pageTitle="Staff & Parents" hideTitle /> */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>

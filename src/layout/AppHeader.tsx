@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import NotificationDropdown from "../components/header/NotificationDropdown";
 import UserDropdown from "../components/header/UserDropdown";
+import PageBreadcrumb from "../components/common/PageBreadCrumb";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const location = useLocation();
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -40,12 +42,37 @@ const AppHeader: React.FC = () => {
     };
   }, []);
 
+  const getPageTitle = (pathname: string) => {
+    const parts = pathname.split('/').filter(Boolean);
+    if (parts.length === 0) return 'Dashboard';
+    const lastPart = parts[parts.length - 1];
+    
+    const routeMap: Record<string, string> = {
+      'dashboard': 'Dashboard',
+      'staff-parents': 'Staff & Parents',
+      'role-management': 'Role Management',
+      'modules': 'Modules',
+      'permission': 'Permissions',
+      'category-master': 'Category Master',
+      'content-cms': 'Content & CMS',
+      'children': 'Children',
+      'appointment': 'Appointment',
+      'home-observations': 'Home Observations'
+    };
+    
+    if (routeMap[lastPart]) return routeMap[lastPart];
+    
+    return lastPart.charAt(0).toUpperCase() + lastPart.slice(1).replace(/-/g, ' ');
+  };
+
+  const pageTitle = getPageTitle(location.pathname);
+
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
+    <header className="sticky top-0 flex w-full bg-white z-99999 dark:bg-gray-900">
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6">
         <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0 lg:py-4">
           <button
-            className="items-center justify-center w-10 h-10 text-gray-500 border-gray-200 rounded-lg z-99999 dark:border-gray-800 lg:flex dark:text-gray-400 lg:h-11 lg:w-11 lg:border"
+            className="flex items-center justify-center w-10 h-10 text-gray-500 border-gray-200 rounded-lg z-99999 dark:border-gray-800 lg:hidden dark:text-gray-400"
             onClick={handleToggle}
             aria-label="Toggle Sidebar"
           >
@@ -82,6 +109,9 @@ const AppHeader: React.FC = () => {
             )}
             {/* Cross Icon */}
           </button>
+          <div className="hidden lg:block">
+            <PageBreadcrumb pageTitle={pageTitle} hideTitle />
+          </div>
 
           <Link to="/" className="lg:hidden flex items-center gap-2">
             <img
@@ -89,7 +119,7 @@ const AppHeader: React.FC = () => {
               src="/images/logo/theraverse-logo.jpeg"
               alt="Logo"
             />
-            <span className="text-lg font-bold text-gray-900 dark:text-white">Theraverse</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-white">NeuroCare</span>
           </Link>
 
           <button

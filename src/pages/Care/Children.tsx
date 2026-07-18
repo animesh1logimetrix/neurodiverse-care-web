@@ -289,7 +289,7 @@ export default function Children() {
         description="Children management dashboard"
       />
 
-      <PageBreadcrumb pageTitle="Children" hideTitle />
+      {/* <PageBreadcrumb pageTitle="Children" hideTitle /> */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>

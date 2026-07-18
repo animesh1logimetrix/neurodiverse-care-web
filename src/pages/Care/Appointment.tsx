@@ -757,7 +757,7 @@ export default function Appointment() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Appointments" hideTitle />
+      {/* <PageBreadcrumb pageTitle="Appointments" hideTitle /> */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>

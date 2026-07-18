@@ -589,7 +589,7 @@ export default function ContentCMS() {
       />
 
       {/* Breadcrumb */}
-      <PageBreadcrumb pageTitle="Content CMS" hideTitle />
+      {/* <PageBreadcrumb pageTitle="Content CMS" hideTitle /> */}
 
       {/* Header section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">

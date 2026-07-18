@@ -8,19 +8,19 @@ interface BreadcrumbProps {
 
 const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, hideTitle }) => {
   const breadcrumbContent = (
-    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-      <Link to="/" className="text-gray-400 dark:text-gray-500 hover:text-brand-500 transition-colors">
+    <div className="flex items-center gap-3 text-base text-gray-500 dark:text-gray-400 font-medium tracking-wide">
+      <Link to="/" className="hover:text-brand-500 transition-colors">
         NeuroDiverse
       </Link>
-      <span className="text-gray-400 dark:text-gray-500">&gt;</span>
-      <span className="text-gray-700 dark:text-gray-300 font-semibold">
+      <span className="text-gray-400 dark:text-gray-500 text-sm font-normal">&gt;</span>
+      <span>
         {pageTitle}
       </span>
     </div>
   );
 
   if (hideTitle) {
-    return <div className="mb-2">{breadcrumbContent}</div>;
+    return <div>{breadcrumbContent}</div>;
   }
 
   return (

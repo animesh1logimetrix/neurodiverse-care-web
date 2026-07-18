@@ -31,13 +31,13 @@ export default function UserDropdown() {
     <div className="relative">
       <button
         onClick={toggleDropdown}
-        className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
+        className="flex items-center gap-2 text-gray-500 dropdown-toggle dark:text-gray-400 hover:text-gray-700 transition-colors"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <img src={user?.profile || "/images/user/owner.jpg"} alt="User" />
+        <span className="overflow-hidden rounded-full h-8 w-8">
+          <img src={user?.profile || "/images/user/owner.jpg"} alt="User" className="w-full h-full object-cover" />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">{userName}</span>
+        <span className="block font-medium text-sm">{userName}</span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
