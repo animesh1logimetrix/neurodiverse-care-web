@@ -241,13 +241,13 @@ export default function Appointment() {
   }));
 
   const { data: usersRaw = [] } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["user", "therapist"],
     queryFn: async () => {
-      const res = await axiosClient.get("/user");
+      const res = await axiosClient.get("/user?roleName=therapist");
       return res.data;
     },
   });
-  const therapistOptions = usersRaw.map((user: any) => ({
+  const therapistOptions = (Array.isArray(usersRaw) ? usersRaw : usersRaw?.data || []).map((user: any) => ({
     value: String(user.id),
     label: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
   }));

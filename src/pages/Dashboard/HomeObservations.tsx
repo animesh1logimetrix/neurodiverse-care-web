@@ -335,9 +335,9 @@ export default function HomeObservations() {
   });
 
   const { data: usersData } = useQuery({
-    queryKey: ["user"],
+    queryKey: ["user", "therapist"],
     queryFn: async () => {
-      const res = await axiosClient.get("/user");
+      const res = await axiosClient.get("/user?roleName=therapist");
       return res.data;
     },
   });
