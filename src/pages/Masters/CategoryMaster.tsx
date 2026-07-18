@@ -210,10 +210,10 @@ function CategoryCard({
                 className={`mt-1.5 size-1.5 rounded-full shrink-0 ${theme.dot}`}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold text-gray-800 leading-snug">
+                <p className="text-[11px] font-medium text-gray-550 leading-snug">
                   {sub.name}
                 </p>
-                <p className="text-[10px] text-gray-400 font-normal mt-0.5">
+                <p className="text-[10px] text-gray-400 font-medium mt-0.5">
                   {sub.icdCode}
                 </p>
               </div>
@@ -708,7 +708,7 @@ export default function CategoryMaster() {
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white">
             Category Master
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

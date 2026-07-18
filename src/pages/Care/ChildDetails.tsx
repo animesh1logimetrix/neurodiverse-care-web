@@ -346,7 +346,7 @@ export default function ChildDetails() {
       {/* Header Section */}
       <div className="mb-4">
         {/* Breadcrumb */}
-        <PageBreadcrumb pageTitle="Child Details" hideTitle />
+        {/* <PageBreadcrumb pageTitle="Child Details" hideTitle /> */}
 
         {/* Title Area */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

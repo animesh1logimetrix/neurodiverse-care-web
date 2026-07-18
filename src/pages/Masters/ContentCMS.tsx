@@ -246,10 +246,10 @@ function ResourceCard({ resource, onBookmark, onEdit, onDelete, onView }: Resour
 
         {/* Content Section */}
         <div className="flex flex-col gap-1.5">
-          <h3 className="text-xs font-bold text-black leading-snug">
+          <h3 className="text-xs font-semibold text-gray-550 dark:text-white leading-snug">
             {resource.title}
           </h3>
-          <p className="text-[11px] text-black leading-relaxed line-clamp-3">
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
             {resource.description}
           </p>
         </div>
@@ -594,8 +594,8 @@ export default function ContentCMS() {
       {/* Header section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-black">Content & Resources</h1>
-          <p className="text-sm text-black mt-1">
+          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white">Content & Resources</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Guides, worksheets, videos and reference materials for your team and families.
           </p>
         </div>
@@ -615,7 +615,7 @@ export default function ContentCMS() {
           <div className="flex items-start justify-between p-4 h-20 bg-[#eff6ff] border border-blue-100 rounded-lg">
             <div className="flex flex-col justify-between h-full">
               <span className="text-2xl font-bold text-black leading-none">{totalCount}</span>
-              <span className="text-[11px] text-black font-medium leading-none">Total Resources</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-none">Total Resources</span>
             </div>
             <div className="shrink-0 self-start">
               <BookOpenIcon className="size-6 text-[#1e3a8a] stroke-[1.8]" />
@@ -626,7 +626,7 @@ export default function ContentCMS() {
           <div className="flex items-start justify-between p-4 h-20 bg-[#f9fafb] border border-gray-100 rounded-lg">
             <div className="flex flex-col justify-between h-full">
               <span className="text-2xl font-bold text-black leading-none">{therapistCount}</span>
-              <span className="text-[11px] text-black font-medium leading-none">For Therapists</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-none">For Therapists</span>
             </div>
             <div className="shrink-0 self-start">
               <GraduationCapIcon className="size-6 text-[#4b5563] stroke-[1.8]" />
@@ -637,7 +637,7 @@ export default function ContentCMS() {
           <div className="flex items-start justify-between p-4 h-20 bg-[#f9fafb] border border-gray-100 rounded-lg">
             <div className="flex flex-col justify-between h-full">
               <span className="text-2xl font-bold text-black leading-none">{parentsCount}</span>
-              <span className="text-[11px] text-black font-medium leading-none">For Parents</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-none">For Parents</span>
             </div>
             <div className="shrink-0 self-start">
               <HeartIcon className="size-6 text-[#4b5563] stroke-[1.8]" />
@@ -648,7 +648,7 @@ export default function ContentCMS() {
           <div className="flex items-start justify-between p-4 h-20 bg-[#f9fafb] border border-gray-100 rounded-lg">
             <div className="flex flex-col justify-between h-full">
               <span className="text-2xl font-bold text-black leading-none">{savedCount}</span>
-              <span className="text-[11px] text-black font-medium leading-none">Saved by You</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-none">Saved by You</span>
             </div>
             <div className="shrink-0 self-start">
               <BookBookmarkIcon className="size-6 text-[#4b5563] stroke-[1.8]" />
@@ -1077,15 +1077,7 @@ export default function ContentCMS() {
         title="View Resource"
         maxWidth="max-w-3xl"
         customFooter={
-          <div className="flex justify-end px-8 py-5 border-t border-gray-150 bg-gray-50 rounded-b-xl w-full">
-            <button
-              type="button"
-              onClick={() => setIsViewModalOpen(false)}
-              className="px-8 py-2.5 rounded bg-white border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm cursor-pointer shadow-sm"
-            >
-              Close
-            </button>
-          </div>
+          <></>
         }
       >
         {viewResource && (
