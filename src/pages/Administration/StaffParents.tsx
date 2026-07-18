@@ -355,7 +355,7 @@ export default function StaffParents() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
+          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white sm:text-3xl">
             User Management
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -428,37 +428,37 @@ export default function StaffParents() {
               <TableRow>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                 >
                   User
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                 >
                   Role
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                 >
                   Status
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                 >
                   Last Active
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                 >
                   Created At
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
+                  className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                 >
                   Action
                 </TableCell>
@@ -484,7 +484,7 @@ export default function StaffParents() {
                         </svg>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">No users found</p>
+                        <p className="font-medium text-gray-550 dark:text-white">No users found</p>
                         <p className="text-sm text-gray-500 mt-1 dark:text-gray-400">Try adjusting your search or send a new invitation.</p>
                       </div>
                     </div>
@@ -518,7 +518,7 @@ export default function StaffParents() {
                           </div>
                         )}
                         <div>
-                          <span className="block font-semibold text-gray-900 text-sm dark:text-white">
+                          <span className="block font-medium text-gray-550 text-sm dark:text-white">
                             {user.name}
                           </span>
                           <span className="block text-gray-500 text-xs dark:text-gray-400 mt-0.5">

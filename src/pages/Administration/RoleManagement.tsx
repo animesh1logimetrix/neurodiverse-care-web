@@ -266,7 +266,7 @@ export default function RoleManagement() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="max-w-[70%]">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
+          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white sm:text-3xl">
             Role Management
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -314,49 +314,49 @@ export default function RoleManagement() {
                 <TableRow>
                   <TableCell
                     isHeader
-                    className="px-6 py-4.5 text-left text-xs font-semibold uppercase tracking-wider text-[#475467] dark:text-gray-400"
+                    className="px-6 py-4.5 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                   >
                     Role Name
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-6 py-4.5 text-left text-xs font-semibold uppercase tracking-wider text-[#475467] dark:text-gray-400"
+                    className="px-6 py-4.5 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                   >
                     Description
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-6 py-4.5 text-left text-xs font-semibold uppercase tracking-wider text-[#475467] dark:text-gray-400"
+                    className="px-6 py-4.5 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                   >
                     Permissions
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-4 py-4.5 text-center text-xs font-semibold uppercase tracking-wider text-[#475467] dark:text-gray-400"
+                    className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                   >
                     Create
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-4 py-4.5 text-center text-xs font-semibold uppercase tracking-wider text-[#475467] dark:text-gray-400"
+                    className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                   >
                     Read
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-4 py-4.5 text-center text-xs font-semibold uppercase tracking-wider text-[#475467] dark:text-gray-400"
+                    className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                   >
                     Update
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-4 py-4.5 text-center text-xs font-semibold uppercase tracking-wider text-[#475467] dark:text-gray-400"
+                    className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                   >
                     Delete
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-6 py-4.5 text-center text-xs font-semibold uppercase tracking-wider text-[#475467] dark:text-gray-400"
+                    className="px-6 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
                   >
                     Actions
                   </TableCell>
@@ -365,7 +365,7 @@ export default function RoleManagement() {
               <TableBody className="bg-white divide-y divide-gray-100 dark:bg-transparent dark:divide-gray-800">
                 {filteredRoles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="px-6 py-8 text-center text-sm text-[#475467] dark:text-gray-400">
+                    <TableCell colSpan={8} className="px-6 py-8 text-center text-sm text-gray-550 dark:text-gray-400">
                       No roles found matching the search query.
                     </TableCell>
                   </TableRow>
@@ -373,7 +373,7 @@ export default function RoleManagement() {
                   filteredRoles.map((role) => (
                     <TableRow key={role.id} className="hover:bg-gray-50/40 dark:hover:bg-white/[0.01] transition-colors duration-155">
                       {/* Role Name */}
-                      <TableCell className="px-6 py-4.5 whitespace-nowrap text-sm font-semibold text-[#101828] dark:text-white align-middle">
+                      <TableCell className="px-6 py-4.5 whitespace-nowrap text-sm font-medium text-gray-550 dark:text-white align-middle">
                         {role.name}
                       </TableCell>
 
