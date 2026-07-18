@@ -509,7 +509,7 @@ export default function ChildDetails() {
             >
               <span className={`inline-flex items-center rounded-md px-4 py-1.5 ${
                 activeTab === tab 
-                ? "bg-[#7CC3FF]"
+                ? "bg-[#2DA0FF]"
                 : "bg-transparent"
               }`}>
                 {tab}

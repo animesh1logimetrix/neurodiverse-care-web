@@ -11,6 +11,12 @@ import { CustomModal } from "../../components/ui/modal/CustomModal";
 import { HorizontaLDots, PlusIcon } from "../../icons";
 import { Dropdown } from "../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
+import { useAuth } from "../../context/AuthContext";
+
+interface SharedSlot {
+  slot_time: string;
+  is_select: boolean;
+}
 
 interface TimeSlot {
   id: string;
@@ -31,24 +37,91 @@ interface AppointmentData {
   scheduledAt?: string;
   yourNote?: string;
   timeSlots?: TimeSlot[];
+  sharedSlots?: SharedSlot[];
   expanded?: boolean;
 }
 
+function CalendarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
 
+export enum AppointmentStatus {
+  PENDING = "PENDING",
+  SHARED_SLOT = "SHARED_SLOT",
+  SLOT_SELECTED = "SLOT_SELECTED",
+  APPROVED = "APPROVED",
+  CONFIRMED = "CONFIRMED",
+  REJECTED = "REJECTED",
+  CANCELLED = "CANCELLED",
+  COMPLETED = "COMPLETED"
+}
 
 const AppointmentCard: React.FC<{ 
   data: AppointmentData; 
   onDelete: (id: string) => void;
   onEdit: (data: AppointmentData) => void;
   onChangeStatus: (data: AppointmentData) => void;
-}> = ({ data, onDelete, onEdit, onChangeStatus }) => {
-  const [isExpanded, setIsExpanded] = useState(!!data.expanded);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(
-    data.timeSlots?.[0]?.id || null
+  isTherapist?: boolean;
+  onShareSlots?: (id: string) => void;
+}> = ({ data, onDelete, onEdit, onChangeStatus, isTherapist, onShareSlots }) => {
+  const [isExpanded, setIsExpanded] = useState(
+    (data.sharedSlots && data.sharedSlots.length > 0 && data.status !== 'COMPLETED') ? true : !!data.expanded
   );
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const isPast = data.scheduledAt ? new Date(data.scheduledAt) < new Date() : false;
+
+  const selectSlotMutation = useMutation({
+    mutationFn: async (payload: { slot_time: string }) => {
+      if (data.status !== AppointmentStatus.SHARED_SLOT) {
+        await axiosClient.patch(`/appointment/${data.id}`, { status: AppointmentStatus.SHARED_SLOT });
+      }
+      const res = await axiosClient.patch(`/appointment/${data.id}/select-slot`, payload);
+      await axiosClient.patch(`/appointment/${data.id}`, { status: AppointmentStatus.SLOT_SELECTED });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Slot confirmed successfully");
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to confirm slot");
+    }
+  });
+
+  const handleConfirmSlot = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (selectedSlot) {
+      selectSlotMutation.mutate({ slot_time: selectedSlot });
+    }
+  };
+
+  const formatSlotDate = (isoString: string) => {
+    try {
+      const date = new Date(isoString);
+      const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+      const day = date.getDate();
+      const monthName = date.toLocaleDateString("en-US", { month: "long" });
+      
+      const startTime = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+      const endDate = new Date(date.getTime() + 60 * 60 * 1000); // Add 1 hour
+      const endTime = endDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+      
+      return {
+        dateLine: `${dayName}, ${day} ${monthName}`,
+        timeLine: `${startTime}-${endTime}`
+      };
+    } catch (e) {
+      return { dateLine: isoString, timeLine: "" };
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-orange-200 shadow-[0_8px_30px_rgba(15,23,42,0.08)] p-[24px] mb-[24px] transition-all">
@@ -81,16 +154,17 @@ const AppointmentCard: React.FC<{
         <div className="flex items-center justify-between w-full md:w-auto gap-4 shrink-0 mt-2 md:mt-0 relative">
           <Badge 
             size="sm" 
-            color={data.status === "COMPLETED" ? "success" : data.status === "APPROVED" ? "info" : data.status === "CANCELLED" || data.status === "REJECTED" ? "error" : "warning"}
+            color={data.status === AppointmentStatus.COMPLETED ? "success" : data.status === AppointmentStatus.APPROVED || data.status === AppointmentStatus.CONFIRMED || data.status === AppointmentStatus.SLOT_SELECTED ? "info" : data.status === AppointmentStatus.CANCELLED || data.status === AppointmentStatus.REJECTED ? "error" : "warning"}
             className={`font-semibold rounded-md border px-3 py-1 capitalize !bg-opacity-50
-            ${data.status === 'COMPLETED' ? 'border-success-500 text-success-700 bg-success-50' :
-              data.status === 'PENDING' ? 'border-warning-500 text-warning-700 bg-warning-50' :
-              data.status === 'CANCELLED' ? 'border-error-500 text-error-700 bg-error-50' :
-              data.status === 'APPROVED' ? 'border-info-500 text-info-700 bg-info-50' :
-              data.status === 'REJECTED' ? 'border-error-500 text-error-700 bg-error-50' : ''
+            ${data.status === AppointmentStatus.COMPLETED ? 'border-success-500 text-success-700 bg-success-50' :
+              data.status === AppointmentStatus.PENDING ? 'border-warning-500 text-warning-700 bg-warning-50' :
+              data.status === AppointmentStatus.CANCELLED ? 'border-error-500 text-error-700 bg-error-50' :
+              data.status === AppointmentStatus.APPROVED || data.status === AppointmentStatus.CONFIRMED || data.status === AppointmentStatus.SLOT_SELECTED ? 'border-info-500 text-info-700 bg-info-50' :
+              data.status === AppointmentStatus.SHARED_SLOT ? 'border-brand-500 text-brand-700 bg-brand-50' :
+              data.status === AppointmentStatus.REJECTED ? 'border-error-500 text-error-700 bg-error-50' : ''
             }`}
           >
-            {data.status === 'PENDING' ? 'Pending Review' : data.status.toLowerCase()}
+            {data.status === AppointmentStatus.PENDING ? 'Pending Review' : data.status === AppointmentStatus.SHARED_SLOT ? 'Slots Shared' : data.status === AppointmentStatus.SLOT_SELECTED ? 'Slot Selected' : data.status.toLowerCase()}
           </Badge>
           <div className="relative">
             <button 
@@ -151,47 +225,148 @@ const AppointmentCard: React.FC<{
       </div>
 
       {/* Expanded State */}
-      {isExpanded && data.yourNote && data.timeSlots && (
-        <div className="mt-6 border-t border-gray-100 pt-6">
-          <h4 className="text-xs font-bold text-gray-800 mb-2 uppercase">Your Note</h4>
-          <p className="text-sm text-gray-600 mb-6 leading-relaxed max-w-4xl">
-            {data.yourNote}
-          </p>
+      {isExpanded && (data.note || (data.sharedSlots && data.sharedSlots.length > 0) || (isTherapist && data.status === 'PENDING')) && (
+        <div className="mt-6 border-t border-gray-100 pt-6 cursor-default" onClick={(e) => e.stopPropagation()}>
+          {data.note && (
+            <div className="mb-6">
+              <h4 className="text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">{isTherapist ? "Parent's Request" : "Your Note"}</h4>
+              <p className="text-[13px] text-gray-500 leading-relaxed max-w-4xl whitespace-pre-wrap">
+                {data.note}
+              </p>
+            </div>
+          )}
 
-          <h4 className="text-xs font-bold text-gray-500 mb-4 uppercase">
-            Select a time slot
-          </h4>
-          <div className="flex flex-col gap-4 mb-8">
-            {data.timeSlots.map((slot) => (
-              <div key={slot.id} className="flex items-start gap-4">
-                <div onClick={(e) => e.stopPropagation()}>
-                  <Switch
-                    label=""
-                    color={selectedSlot === slot.id ? "blue" : "gray"}
-                    defaultChecked={selectedSlot === slot.id}
-                    onChange={(checked) => {
-                      if (checked) setSelectedSlot(slot.id);
+          {isTherapist ? (
+            // Therapist View
+            <>
+              {(data.status === 'PENDING' && (!data.sharedSlots || data.sharedSlots.length === 0)) && (
+                <div className="flex justify-start w-full mt-4">
+                  <button
+                    className="bg-[#2DA0FF] hover:bg-[#2890e6] text-white font-medium rounded-lg px-6 py-2.5 text-sm transition-colors shadow-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onShareSlots && onShareSlots(data.id);
                     }}
-                  />
+                  >
+                    Share Available Slots
+                  </button>
                 </div>
-                <div className="flex flex-col text-sm">
-                  <span className="font-bold text-gray-800">{slot.date}</span>
-                  <span className="text-gray-500">{slot.time}</span>
+              )}
+
+              {(data.status === 'SHARED_SLOT' || (data.status === 'PENDING' && data.sharedSlots && data.sharedSlots.length > 0)) && (
+                <>
+                  <h4 className="text-[11px] font-bold text-gray-500 mb-4 uppercase tracking-wider">
+                    Shared time slots
+                  </h4>
+                  <div className="flex flex-col gap-4 mb-4">
+                    {data.sharedSlots?.map((slot, index) => {
+                      const { dateLine, timeLine } = formatSlotDate(slot.slot_time);
+                      return (
+                        <div key={index} className="flex items-start gap-3 w-fit">
+                          <div className="flex flex-col text-[13px] leading-tight">
+                            <span className="text-gray-700 font-bold mb-1">{dateLine}</span>
+                            <span className="text-gray-500">{timeLine}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {(data.status === AppointmentStatus.CONFIRMED || data.status === AppointmentStatus.SLOT_SELECTED || data.status === AppointmentStatus.APPROVED || data.status === AppointmentStatus.COMPLETED) && data.sharedSlots?.filter(s => s.is_select).map((slot, index) => {
+                const { dateLine, timeLine } = formatSlotDate(slot.slot_time);
+                return (
+                  <div key={index} className="mt-6 bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4 flex items-start gap-3">
+                    <div className="mt-0.5 text-[#16a34a]">
+                      <CalendarIcon className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[#16a34a] font-semibold text-[13px]">Confirmed Appointment</span>
+                      <span className="text-[#16a34a] text-[13px] mt-0.5">{dateLine} · {timeLine}</span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {data.status === 'COMPLETED' && (
+                <div className="flex justify-start w-full mt-4">
+                  <button
+                    className="border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg px-6 py-2.5 text-sm transition-colors"
+                  >
+                    View Notes
+                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-center md:justify-center w-full">
-            <button
-              className="bg-[#2DA0FF] hover:bg-[#2DA0FF] text-white font-semibold rounded-lg px-8 py-2.5 text-sm transition-colors shadow-sm w-full md:w-auto"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(false);
-              }}
-            >
-              Confirm This Slot
-            </button>
-          </div>
+              )}
+            </>
+          ) : (
+            // Parent View
+            <>
+              {(data.status !== AppointmentStatus.CONFIRMED && data.status !== AppointmentStatus.COMPLETED && data.status !== AppointmentStatus.SLOT_SELECTED && data.status !== AppointmentStatus.APPROVED) && data.sharedSlots && data.sharedSlots.length > 0 && (
+                <>
+                  <h4 className="text-[11px] font-bold text-gray-500 mb-4 uppercase tracking-wider">
+                    Select a time slot
+                  </h4>
+                  <div className="flex flex-col gap-4 mb-8">
+                    {data.sharedSlots.map((slot, index) => {
+                      const { dateLine, timeLine } = formatSlotDate(slot.slot_time);
+                      const isSelected = selectedSlot === slot.slot_time || slot.is_select;
+                      
+                      return (
+                        <div 
+                          key={index} 
+                          className="flex items-start gap-3 w-fit"
+                        >
+                          <div className="mt-0.5" onClick={(e) => {
+                            e.stopPropagation();
+                            if (data.status !== AppointmentStatus.CONFIRMED && data.status !== AppointmentStatus.COMPLETED && data.status !== AppointmentStatus.SLOT_SELECTED && data.status !== AppointmentStatus.APPROVED) {
+                              setSelectedSlot(slot.slot_time);
+                            }
+                          }}>
+                            <Switch
+                              label=""
+                              color={isSelected ? "blue" : "gray"}
+                              checked={isSelected}
+                              onChange={(checked) => {
+                                if (checked && (data.status !== AppointmentStatus.CONFIRMED && data.status !== AppointmentStatus.COMPLETED && data.status !== AppointmentStatus.SLOT_SELECTED && data.status !== AppointmentStatus.APPROVED)) setSelectedSlot(slot.slot_time);
+                              }}
+                            />
+                          </div>
+                          <div className="flex flex-col text-[13px] leading-tight mt-0.5">
+                            <span className="text-gray-700 font-bold mb-1">{dateLine}</span>
+                            <span className="text-gray-500">{timeLine}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-center w-full mt-4">
+                    <button
+                      className="bg-[#2DA0FF] hover:bg-[#2890e6] text-white font-medium rounded-lg px-8 py-2.5 text-sm transition-colors shadow-sm w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!selectedSlot || selectSlotMutation.isPending}
+                      onClick={handleConfirmSlot}
+                    >
+                      {selectSlotMutation.isPending ? "Confirming..." : "Confirm This Slot"}
+                    </button>
+                  </div>
+                </>
+              )}
+              {(data.status === AppointmentStatus.CONFIRMED || data.status === AppointmentStatus.SLOT_SELECTED || data.status === AppointmentStatus.APPROVED || data.status === AppointmentStatus.COMPLETED) && data.sharedSlots?.filter(s => s.is_select).map((slot, index) => {
+                const { dateLine, timeLine } = formatSlotDate(slot.slot_time);
+                return (
+                  <div key={index} className="mt-6 bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4 flex items-start gap-3">
+                    <div className="mt-0.5 text-[#16a34a]">
+                      <CalendarIcon className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[#16a34a] font-semibold text-[13px]">Confirmed Appointment</span>
+                      <span className="text-[#16a34a] text-[13px] mt-0.5">{dateLine} · {timeLine}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       )}
     </div>
@@ -199,6 +374,9 @@ const AppointmentCard: React.FC<{
 };
 
 export default function Appointment() {
+  const { user } = useAuth();
+  const isTherapist = user?.role?.name === "Therapist";
+
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"List" | "Calendar">("List");
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -226,6 +404,85 @@ export default function Appointment() {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [statusAppointmentId, setStatusAppointmentId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("PENDING");
+
+  const [isShareSlotsModalOpen, setIsShareSlotsModalOpen] = useState(false);
+  const [shareSlotsAppointmentId, setShareSlotsAppointmentId] = useState<string | null>(null);
+  const [shareSlots, setShareSlots] = useState<{ date: string; startTime: string; endTime: string }[]>([
+    { date: "", startTime: "", endTime: "" }
+  ]);
+  const [shareSlotsErrors, setShareSlotsErrors] = useState<string>("");
+
+  const handleOpenShareSlots = (id: string) => {
+    setShareSlotsAppointmentId(id);
+    setShareSlots([{ date: "", startTime: "", endTime: "" }]);
+    setShareSlotsErrors("");
+    setIsShareSlotsModalOpen(true);
+  };
+
+  const shareSlotsMutation = useMutation({
+    mutationFn: async (payload: { appointmentId: string; shared_slots: { slot_time: string; is_select: boolean }[] }) => {
+      const res = await axiosClient.patch(`/appointment/${payload.appointmentId}/share-slots`, { shared_slots: payload.shared_slots });
+      await axiosClient.patch(`/appointment/${payload.appointmentId}`, { status: AppointmentStatus.SHARED_SLOT });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Slots shared successfully");
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      setIsShareSlotsModalOpen(false);
+      setShareSlotsAppointmentId(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to share slots");
+    }
+  });
+
+  const handleShareSlotsSubmit = () => {
+    let errorMsg = "";
+    const formattedSlots: { slot_time: string; is_select: boolean }[] = [];
+    const seen = new Set<string>();
+
+    for (let i = 0; i < shareSlots.length; i++) {
+      const s = shareSlots[i];
+      if (!s.date || !s.startTime || !s.endTime) {
+        errorMsg = `All fields are required in slot ${i + 1}`;
+        break;
+      }
+      
+      const startSlotStr = `${s.date}T${s.startTime}:00`;
+      const endSlotStr = `${s.date}T${s.endTime}:00`;
+
+      if (startSlotStr >= endSlotStr) {
+        errorMsg = `End time must be after start time in slot ${i + 1}`;
+        break;
+      }
+
+      if (seen.has(startSlotStr)) {
+        errorMsg = `Duplicate slot start time found: ${s.date} ${s.startTime}`;
+        break;
+      }
+      seen.add(startSlotStr);
+
+      try {
+        const isoStr = new Date(startSlotStr).toISOString();
+        formattedSlots.push({ slot_time: isoStr, is_select: false });
+      } catch (e) {
+        errorMsg = `Invalid date/time in slot ${i + 1}`;
+        break;
+      }
+    }
+
+    if (errorMsg) {
+      setShareSlotsErrors(errorMsg);
+      return;
+    }
+
+    if (shareSlotsAppointmentId) {
+      shareSlotsMutation.mutate({
+        appointmentId: shareSlotsAppointmentId,
+        shared_slots: formattedSlots
+      });
+    }
+  };
 
   // --- API Integrations ---
   const { data: childrenRaw = [] } = useQuery({
@@ -364,18 +621,25 @@ export default function Appointment() {
     setIsBookModalOpen(false);
   };
 
-  const formattedAppointments: AppointmentData[] = appointmentsRaw.map((apt: any) => ({
-    id: String(apt.id),
-    time: apt.scheduled_at ? new Date(apt.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A",
-    duration: "60 min",
-    title: apt.session_type,
-    patientName: apt.child?.full_name || "Unknown Child",
-    therapistName: apt.therapist?.name || apt.therapist?.firstName || "Unknown Therapist",
-    location: apt.location || "",
-    note: apt.reason || "",
-    status: apt.status || "PENDING",
-    scheduledAt: apt.scheduled_at,
-  }));
+  const formattedAppointments: AppointmentData[] = React.useMemo(() => {
+    return appointmentsRaw.map((apt: any) => {
+      let normalizedStatus = (apt.status || "PENDING").toUpperCase().trim().replace(/ /g, "_");
+      
+      return {
+        id: String(apt.id),
+        time: apt.scheduled_at ? new Date(apt.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A",
+        duration: "60 min",
+        title: apt.session_type,
+        patientName: apt.child?.full_name || "Unknown Child",
+        therapistName: apt.therapist?.name || apt.therapist?.firstName || "Unknown Therapist",
+        location: apt.location || "",
+        note: apt.reason || "",
+        status: normalizedStatus,
+        scheduledAt: apt.scheduled_at,
+        sharedSlots: apt.shared_slots || apt.sharedSlots || apt.SharedSlots || [],
+      };
+    });
+  }, [appointmentsRaw]);
 
   const todayDateStr = new Date().toDateString();
   const todayAppointments = formattedAppointments.filter((apt: any) => {
@@ -546,7 +810,7 @@ export default function Appointment() {
               </h2>
               <div className="space-y-4">
               {todayAppointments.map((apt: any) => (
-                <AppointmentCard key={apt.id} data={apt} onDelete={handleDelete} onEdit={handleEdit} onChangeStatus={handleOpenStatusModal} />
+                <AppointmentCard key={apt.id} data={apt} onDelete={handleDelete} onEdit={handleEdit} onChangeStatus={handleOpenStatusModal} isTherapist={isTherapist} onShareSlots={handleOpenShareSlots} />
               ))}
               {todayAppointments.length === 0 && <p className="text-sm text-gray-500">No appointments today.</p>}
             </div>
@@ -559,7 +823,7 @@ export default function Appointment() {
               </h2>
               <div className="space-y-4">
               {upcomingAppointments.map((apt: any) => (
-                <AppointmentCard key={apt.id} data={apt} onDelete={handleDelete} onEdit={handleEdit} onChangeStatus={handleOpenStatusModal} />
+                <AppointmentCard key={apt.id} data={apt} onDelete={handleDelete} onEdit={handleEdit} onChangeStatus={handleOpenStatusModal} isTherapist={isTherapist} onShareSlots={handleOpenShareSlots} />
               ))}
               {upcomingAppointments.length === 0 && <p className="text-sm text-gray-500">No upcoming appointments.</p>}
             </div>
@@ -720,9 +984,7 @@ export default function Appointment() {
                 {value: "PHYSIOTHERAPY", label: "Physiotherapy"},
                 {value: "PSYCHOLOGY", label: "Psychology"},
                 {value: "ASSESSMENT", label: "Assessment"},
-                {value: "FOLLOW_UP", label: "Follow-up"},
-                {value: "IEP Annual Review", label: "IEP Annual Review"},
-                {value: "OT Evaluation", label: "OT Evaluation"}
+                {value: "FOLLOW_UP", label: "Follow-up"}
               ]} 
               placeholder="Select"
               value={bookForm.sessionType}
@@ -779,6 +1041,127 @@ export default function Appointment() {
             onChange={(e) => handleBookFormChange("note", e.target.value)}
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all resize-none"
           />
+        </div>
+      </CustomModal>
+
+      {/* Share Slots Modal */}
+      <CustomModal
+        isOpen={isShareSlotsModalOpen}
+        onClose={() => setIsShareSlotsModalOpen(false)}
+        title="Share Available Slots"
+        subtitle="Add one or multiple time slots for the parent to select"
+        maxWidth="max-w-2xl"
+        footerAlign="center"
+        customFooter={
+          <div className="flex items-center justify-center gap-3 px-8 py-5 border-t border-gray-100 w-full">
+            <button
+              type="button"
+              className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer min-w-[120px]"
+              onClick={() => setIsShareSlotsModalOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={shareSlotsMutation.isPending}
+              className="px-6 py-2.5 rounded-lg bg-[#2DA0FF] text-white font-semibold hover:bg-[#2890e6] transition-colors text-sm cursor-pointer min-w-[120px] disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleShareSlotsSubmit}
+            >
+              {shareSlotsMutation.isPending ? "Sharing..." : "Share Slots"}
+            </button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4 mb-2">
+          {shareSlotsErrors && (
+            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100">
+              {shareSlotsErrors}
+            </div>
+          )}
+          {shareSlots.map((slot, index) => (
+            <div key={index} className="grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100 relative">
+              <div className="flex flex-col gap-1.5">
+                <label className="block text-xs font-bold text-black">
+                  Date <span className="text-black">*</span>
+                </label>
+                <input 
+                  type="date" 
+                  min={(() => {
+                    const d = new Date();
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                  })()}
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-theme-xs focus:outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10"
+                  value={slot.date}
+                  onChange={(e) => {
+                    const newSlots = [...shareSlots];
+                    newSlots[index].date = e.target.value;
+                    setShareSlots(newSlots);
+                    setShareSlotsErrors("");
+                  }}
+                  onClick={(e) => {
+                    try {
+                      if ('showPicker' in HTMLInputElement.prototype) {
+                        (e.currentTarget as HTMLInputElement).showPicker();
+                      }
+                    } catch (err) {}
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="block text-xs font-bold text-black">
+                  Start Time <span className="text-black">*</span>
+                </label>
+                <Select 
+                  options={timeOptions}
+                  placeholder="Select"
+                  value={slot.startTime}
+                  onChange={(val) => {
+                    const newSlots = [...shareSlots];
+                    newSlots[index].startTime = val;
+                    setShareSlots(newSlots);
+                    setShareSlotsErrors("");
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 pr-8">
+                <label className="block text-xs font-bold text-black">
+                  End Time <span className="text-black">*</span>
+                </label>
+                <Select 
+                  options={timeOptions}
+                  placeholder="Select"
+                  value={slot.endTime}
+                  onChange={(val) => {
+                    const newSlots = [...shareSlots];
+                    newSlots[index].endTime = val;
+                    setShareSlots(newSlots);
+                    setShareSlotsErrors("");
+                  }}
+                />
+              </div>
+              {shareSlots.length > 1 && (
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                  onClick={() => {
+                    const newSlots = shareSlots.filter((_, i) => i !== index);
+                    setShareSlots(newSlots);
+                  }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            className="flex items-center justify-center gap-2 text-[#2DA0FF] font-semibold text-sm hover:bg-blue-50 py-2 rounded-lg transition-colors border border-dashed border-[#2DA0FF]"
+            onClick={() => {
+              setShareSlots([...shareSlots, { date: "", startTime: "", endTime: "" }]);
+            }}
+          >
+            <PlusIcon className="w-4 h-4 fill-current" /> Add Another Slot
+          </button>
         </div>
       </CustomModal>
 
