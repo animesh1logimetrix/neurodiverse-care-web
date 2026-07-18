@@ -439,7 +439,7 @@ const AppSidebar: React.FC = () => {
           {isExpanded || isHovered || isMobileOpen ? (
             <div className="flex flex-col items-center gap-1 w-full">
               <img
-                src="/images/logo/theraverse-logo.jpeg"
+                src="/images/logo/theraverse-logo.jpg"
                 alt="Logo"
                 className="w-full max-w-[240px] h-36 object-contain mb-1 rounded-md"
               />
@@ -448,7 +448,7 @@ const AppSidebar: React.FC = () => {
             </div>
           ) : (
             <img
-              src="/images/logo/theraverse-logo.jpeg"
+              src="/images/logo/theraverse-logo.jpg"
               alt="Logo"
               className="w-10 h-10 rounded-md object-contain mx-auto block"
             />

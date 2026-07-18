@@ -219,7 +219,7 @@ export default function NeuroCareAuth() {
           <div className={`flex items-center gap-3 ${activeTab === "signin" ? "" : "mb-16"}`}>
             <img
               className="w-8 h-8 rounded-md"
-              src="/images/logo/theraverse-logo.jpeg"
+              src="/images/logo/theraverse-logo.jpg"
               alt="Logo"
             />
             <span className="text-xl font-semibold">NeuroCare</span>

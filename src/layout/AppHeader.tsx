@@ -86,7 +86,7 @@ const AppHeader: React.FC = () => {
           <Link to="/" className="lg:hidden flex items-center gap-2">
             <img
               className="w-8 h-8 rounded-md"
-              src="/images/logo/theraverse-logo.jpeg"
+              src="/images/logo/theraverse-logo.jpg"
               alt="Logo"
             />
             <span className="text-lg font-bold text-gray-900 dark:text-white">Theraverse</span>

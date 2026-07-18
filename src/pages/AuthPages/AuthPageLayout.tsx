@@ -20,7 +20,7 @@ export default function AuthLayout({
               <Link to="/" className="flex flex-col items-center gap-3 mb-4">
                 <img
                   className="w-20 h-auto rounded-xl shadow-lg"
-                  src="/images/logo/theraverse-logo.jpeg"
+                  src="/images/logo/theraverse-logo.jpg"
                   alt="Logo"
                 />
                 <h1 className="text-3xl font-bold text-white">Theraverse</h1>

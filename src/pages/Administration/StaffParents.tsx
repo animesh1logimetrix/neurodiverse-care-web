@@ -293,47 +293,41 @@ export default function StaffParents() {
 
 
   const getRoleBadge = (role: string) => {
+    const baseClass = "inline-flex items-center justify-center px-6 py-1.5 rounded text-xs font-bold w-[140px]";
     switch (role) {
       case "Super Admin":
-        return <Badge color="primary">{role}</Badge>;
+        return <span className={`${baseClass} bg-[#cceaff] text-[#0077cc]`}>{role}</span>;
       case "Clinic Admin":
-        return <Badge color="success">{role}</Badge>;
+        return <span className={`${baseClass} bg-[#ccffdd] text-[#009933]`}>{role}</span>;
       case "Therapist":
-        return <Badge color="warning">{role}</Badge>;
+        return <span className={`${baseClass} bg-[#ffff99] text-[#b38600]`}>{role}</span>;
       case "Psychologist":
-        return (
-          <Badge className="bg-[#f3e8ff] text-[#9333ea] dark:bg-[#9333ea]/15 dark:text-[#a855f7]" color="light">
-            {role}
-          </Badge>
-        );
+        return <span className={`${baseClass} bg-[#f3d9ff] text-[#9900cc]`}>{role}</span>;
       case "School Staff":
-        return (
-          <Badge className="bg-[#ffe4e6] text-[#e11d48] dark:bg-[#e11d48]/15 dark:text-[#f43f5e]" color="light">
-            {role}
-          </Badge>
-        );
+        return <span className={`${baseClass} bg-[#ffcccc] text-[#cc0000]`}>{role}</span>;
       default:
-        return <Badge color="light">{role}</Badge>;
+        return <span className={`${baseClass} bg-gray-100 text-gray-600`}>{role}</span>;
     }
   };
 
   const getStatusPill = (status: "Active" | "Pending" | "Inactive") => {
+    const baseClass = "inline-flex items-center justify-center px-4 py-1 rounded text-xs font-bold w-[70px]";
     switch (status) {
       case "Active":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400">
+          <span className={`${baseClass} bg-[#ccffdd] text-[#009933]`}>
             Active
           </span>
         );
       case "Pending":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-warning-50 text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">
+          <span className={`${baseClass} bg-[#ffddaa] text-[#cc6600]`}>
             Pending
           </span>
         );
       case "Inactive":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error-50 text-error-700 dark:bg-error-500/10 dark:text-error-400">
+          <span className={`${baseClass} bg-[#ffcccc] text-[#cc0000]`}>
             Inactive
           </span>
         );
@@ -427,50 +421,50 @@ export default function StaffParents() {
       </div>
 
       {/* Users Table Card */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
         <div className="max-w-full overflow-visible">
           <Table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
-            <TableHeader className="bg-gray-50 dark:bg-gray-900/50">
+            <TableHeader className="bg-[#EBEAEA] dark:bg-gray-900/50">
               <TableRow>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
                 >
                   User
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
                 >
                   Role
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
                 >
                   Status
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
                 >
                   Last Active
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
                 >
                   Created At
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-400"
                 >
                   Action
                 </TableCell>
               </TableRow>
             </TableHeader>
-            <TableBody className="bg-white divide-y divide-gray-100 dark:bg-transparent dark:divide-gray-800">
+            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
               {isInvitationsLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} className="p-0">
