@@ -49,13 +49,13 @@ export default function ManageModules() {
   }, []);
 
   const getModuleColor = (name: string) => {
-    if (!name) return "text-gray-900 dark:text-white font-semibold";
-    if (name.toLowerCase().includes("super admin")) return "text-[#10b981] font-semibold";
-    if (name.toLowerCase().includes("org admin")) return "text-[#f59e0b] font-semibold";
-    if (name.toLowerCase().includes("therapist") || name.toLowerCase().includes("clinician")) return "text-[#3b82f6] font-semibold";
-    if (name.toLowerCase().includes("psychologist")) return "text-[#8b5cf6] font-semibold";
-    if (name.toLowerCase().includes("school staff")) return "text-[#ef4444] font-semibold";
-    return "text-gray-900 dark:text-white font-semibold";
+    if (!name) return "text-gray-550 dark:text-white font-medium";
+    if (name.toLowerCase().includes("super admin")) return "text-[#10b981] font-medium";
+    if (name.toLowerCase().includes("org admin")) return "text-[#f59e0b] font-medium";
+    if (name.toLowerCase().includes("therapist") || name.toLowerCase().includes("clinician")) return "text-[#3b82f6] font-medium";
+    if (name.toLowerCase().includes("psychologist")) return "text-[#8b5cf6] font-medium";
+    if (name.toLowerCase().includes("school staff")) return "text-[#ef4444] font-medium";
+    return "text-gray-550 dark:text-white font-medium";
   };
 
   const handleOpenAddModal = () => {
@@ -155,7 +155,7 @@ export default function ManageModules() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="max-w-[70%]">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
+          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white ">
             Manage Modules
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -195,7 +195,7 @@ export default function ManageModules() {
       </div>
 
       {/* Modules Table Card */}
-      <div className="overflow-visible rounded-2xl border border-gray-200 bg-white shadow-premium-soft dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
         {isLoading ? (
           <div className="py-12 flex flex-col items-center justify-center text-gray-500">
             <svg className="animate-spin h-8 w-8 text-[#2DA0FF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -207,29 +207,29 @@ export default function ManageModules() {
         ) : (
           <div className="max-w-full overflow-visible">
             <Table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
-              <TableHeader className="bg-gray-50 dark:bg-gray-900/50">
+              <TableHeader className="bg-[#EBEAEA] dark:bg-gray-900/50">
                 <TableRow>
                   <TableCell
                     isHeader
-                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[25%]"
+                    className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400 w-[25%]"
                   >
                     Name
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[60%]"
+                    className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400 w-[60%]"
                   >
                     Description
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 w-[15%]"
+                    className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400 w-[15%]"
                   >
                     Actions
                   </TableCell>
                 </TableRow>
               </TableHeader>
-              <TableBody className="bg-white divide-y divide-gray-100 dark:bg-transparent dark:divide-gray-800">
+              <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filteredModules.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">

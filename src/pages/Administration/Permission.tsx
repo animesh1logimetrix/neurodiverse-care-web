@@ -251,7 +251,7 @@ export default function PermissionMatrix() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
+          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white ">
             Permission Matrix
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure granular module-level permissions per role</p>
@@ -286,7 +286,7 @@ export default function PermissionMatrix() {
         />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-visible mb-8">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden mb-8">
         {isLoading ? (
           <div className="py-12 flex flex-col items-center justify-center text-gray-500">
             <svg className="animate-spin h-8 w-8 text-[#2DA0FF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -300,40 +300,41 @@ export default function PermissionMatrix() {
             No permissions found.
           </div>
         ) : (
+          <div className="max-w-full overflow-visible">
           <table className="min-w-full">
-            <thead className="bg-[#f3f4f6]">
+            <thead className="bg-[#EBEAEA] dark:bg-gray-900/50">
               <tr>
-                <th scope="col" className="px-6 py-4 text-left text-[13px] font-semibold text-gray-600">
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">
                   Title
                 </th>
-                <th scope="col" className="px-6 py-4 text-center text-[13px] font-semibold text-gray-600">
+                <th scope="col" className="px-6 py-4 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">
                   Description
                 </th>
-                <th scope="col" className="px-6 py-4 text-center text-[13px] font-semibold text-gray-600">
+                <th scope="col" className="px-6 py-4 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">
                   Modules
                 </th>
-                <th scope="col" className="px-4 py-4 text-center text-[13px] font-semibold text-gray-600">
+                <th scope="col" className="px-4 py-4 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">
                   Create
                 </th>
-                <th scope="col" className="px-4 py-4 text-center text-[13px] font-semibold text-gray-600">
+                <th scope="col" className="px-4 py-4 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">
                   Read
                 </th>
-                <th scope="col" className="px-4 py-4 text-center text-[13px] font-semibold text-gray-600">
+                <th scope="col" className="px-4 py-4 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">
                   Update
                 </th>
-                <th scope="col" className="px-4 py-4 text-center text-[13px] font-semibold text-gray-600">
+                <th scope="col" className="px-4 py-4 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">
                   Delete
                 </th>
-                <th scope="col" className="px-6 py-4 text-center text-[13px] font-semibold text-gray-600">
+                <th scope="col" className="px-6 py-4 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {permissionsList.filter((p: any) => p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((permission: any) => (
                 <tr key={permission.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-5 whitespace-nowrap align-top">
-                    <div className="text-[13px] font-medium text-gray-900 mt-1">{permission.title}</div>
+                    <div className="text-sm font-medium text-gray-550 mt-1 dark:text-white">{permission.title}</div>
                   </td>
                   <td className="px-6 py-5 align-top">
                     <div className="text-[12px] text-gray-500 whitespace-pre-line text-center leading-snug">
@@ -403,6 +404,7 @@ export default function PermissionMatrix() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

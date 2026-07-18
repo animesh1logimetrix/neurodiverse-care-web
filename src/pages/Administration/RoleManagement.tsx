@@ -266,7 +266,7 @@ export default function RoleManagement() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="max-w-[70%]">
-          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white sm:text-3xl">
+          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white ">
             Role Management
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -307,10 +307,10 @@ export default function RoleManagement() {
       <div className="space-y-6">
 
         {/* Roles Table Card */}
-        <div className="overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:border-gray-850 dark:bg-white/[0.02]">
-          <div className="max-w-full overflow-x-auto">
-            <Table className="min-w-full divide-y divide-gray-150 dark:divide-gray-800">
-              <TableHeader className="bg-[#F2F4F7] dark:bg-gray-900/50">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+          <div className="max-w-full overflow-visible">
+            <Table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
+              <TableHeader className="bg-[#EBEAEA] dark:bg-gray-900/50">
                 <TableRow>
                   <TableCell
                     isHeader
@@ -362,7 +362,7 @@ export default function RoleManagement() {
                   </TableCell>
                 </TableRow>
               </TableHeader>
-              <TableBody className="bg-white divide-y divide-gray-100 dark:bg-transparent dark:divide-gray-800">
+              <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filteredRoles.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="px-6 py-8 text-center text-sm text-gray-550 dark:text-gray-400">
