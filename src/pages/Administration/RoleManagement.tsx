@@ -1,131 +1,124 @@
-import { useState } from "react";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import React, { useState } from "react";
 import PageMeta from "../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
-// import Badge from "../../components/ui/badge/Badge";
 import { Dropdown } from "../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
 import CustomModal from "../../components/ui/modal/CustomModal";
-import NotificationDropdown from "../../components/header/NotificationDropdown";
-import UserDropdown from "../../components/header/UserDropdown";
 import { PlusIcon } from "../../icons";
-// import { PlusIcon, HorizontaLDots, CheckLineIcon, CloseLineIcon } from "../../icons";
-
-
-interface Role {
-  id: number;
-  name: string;
-  description: string;
-  permissions: string[];
-  create: boolean;
-  read: boolean;
-  update: boolean;
-  delete: boolean;
-}
-
-const initialRoles: Role[] = [
-  {
-    id: 1,
-    name: "Super Admin",
-    description: "Full platform access across all organizations and modules",
-    permissions: ["Super Admin", "Upload File"],
-    create: true,
-    read: false,
-    update: true,
-    delete: true,
-  },
-  {
-    id: 2,
-    name: "Org Admin",
-    description: "Full clinical control within their organization; manages staff and compliance",
-    permissions: ["Super Admin", "Upload File"],
-    create: true,
-    read: false,
-    update: true,
-    delete: true,
-  },
-  {
-    id: 3,
-    name: "Therapist / Clinician",
-    description: "Manages caseload, conducts sessions, writes notes and reports",
-    permissions: ["Super Admin", "Upload File"],
-    create: true,
-    read: true,
-    update: true,
-    delete: false,
-  },
-  {
-    id: 4,
-    name: "Psychologist",
-    description: "Conducts psychometric assessments and confirms diagnoses",
-    permissions: ["Super Admin", "Upload File"],
-    create: true,
-    read: false,
-    update: true,
-    delete: true,
-  },
-  {
-    id: 5,
-    name: "School Staff",
-    description: "Tracks IEP goals for shared students; consent-scoped view only",
-    permissions: ["Super Admin", "Upload File"],
-    create: true,
-    read: true,
-    update: false,
-    delete: true,
-  },
-];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axiosClient from "../../api/axiosClient";
+import toast from "react-hot-toast";
 
 export default function RoleManagement() {
-  const [roles, setRoles] = useState<Role[]>(initialRoles);
+  const queryClient = useQueryClient();
+
+  const { data: apiRolesData, isLoading: rolesLoading } = useQuery({
+    queryKey: ["role"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/role");
+      return res.data;
+    },
+  });
+
+  const { data: apiPermissionsData } = useQuery({
+    queryKey: ["permission"],
+    queryFn: async () => {
+      const res = await axiosClient.get("/permission");
+      return res.data;
+    },
+  });
+
+  const roles = Array.isArray(apiRolesData) ? apiRolesData : (apiRolesData?.roles || apiRolesData?.data || []);
+  const permissionsList = Array.isArray(apiPermissionsData) ? apiPermissionsData : apiPermissionsData?.data || [];
+
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuRoleId, setOpenMenuRoleId] = useState<number | null>(null);
 
   // Invite/Edit Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [editingRole, setEditingRole] = useState<any | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedRole, setSelectedRole] = useState<any | null>(null);
 
-  // Custom Form state for redesigned Modal
+  // Form state
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
-  const [formPermissions, setFormPermissions] = useState<string[]>(["Super Admin", "Upload File"]);
-  const [formCreate, setFormCreate] = useState(false);
-  const [formRead, setFormRead] = useState(false);
-  const [formUpdate, setFormUpdate] = useState(false);
-  const [formDelete, setFormDelete] = useState(false);
-
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
   const [isPermissionsDropdownOpen, setIsPermissionsDropdownOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const createRoleMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await axiosClient.post("/role", payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Role created successfully");
+      queryClient.invalidateQueries({ queryKey: ["role"] });
+      setIsModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to create role");
+    }
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: number, payload: any }) => {
+      const res = await axiosClient.patch(`/role/${id}`, payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Role updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["role"] });
+      setIsModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update role");
+    }
+  });
+
+  const deleteRoleMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await axiosClient.delete(`/role/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Role deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["role"] });
+      setIsDeleteModalOpen(false);
+      setSelectedRole(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete role");
+    }
+  });
 
   const handleOpenAddModal = () => {
     setEditingRole(null);
     setFormName("");
     setFormDescription("");
-    setFormPermissions(["Super Admin", "Upload File"]);
-    setFormCreate(true);
-    setFormRead(false);
-    setFormUpdate(true);
-    setFormDelete(true);
+    setSelectedPermissionIds([]);
+    setFormErrors({});
     setIsModalOpen(true);
     setIsPermissionsDropdownOpen(false);
   };
 
-  const handleOpenEditModal = (role: Role) => {
+  const handleOpenEditModal = (role: any) => {
     setEditingRole(role);
-    setFormName(role.name);
-    setFormDescription(role.description);
-    setFormPermissions(role.permissions);
-    setFormCreate(role.create);
-    setFormRead(role.read);
-    setFormUpdate(role.update);
-    setFormDelete(role.delete);
+    setFormName(role.name || "");
+    setFormDescription(role.description || "");
+    
+    // Extract existing permission IDs
+    const existingPermIds = (role.permissions || []).map((p: any) => p.id || p);
+    setSelectedPermissionIds(existingPermIds);
+    setFormErrors({});
+
     setIsModalOpen(true);
     setOpenMenuRoleId(null);
     setIsPermissionsDropdownOpen(false);
   };
 
-  const handleOpenDeleteModal = (role: Role) => {
+  const handleOpenDeleteModal = (role: any) => {
     setSelectedRole(role);
     setIsDeleteModalOpen(true);
     setOpenMenuRoleId(null);
@@ -133,126 +126,80 @@ export default function RoleManagement() {
 
   const handleDeleteConfirm = () => {
     if (selectedRole) {
-      setRoles((prevRoles) => prevRoles.filter((r) => r.id !== selectedRole.id));
-      setIsDeleteModalOpen(false);
-      setSelectedRole(null);
+      deleteRoleMutation.mutate(selectedRole.id);
     }
   };
 
-  const handleAddOrEditSubmit = (formData: Record<string, any>) => {
-    if (editingRole) {
-      // Edit logic
-      setRoles((prevRoles) =>
-        prevRoles.map((r) =>
-          r.id === editingRole.id
-            ? {
-                ...r,
-                name: formData.name || r.name,
-                description: formData.description || r.description,
-                permissions: formData.permissions || r.permissions,
-                create: formData.create !== undefined ? formData.create : r.create,
-                read: formData.read !== undefined ? formData.read : r.read,
-                update: formData.update !== undefined ? formData.update : r.update,
-                delete: formData.delete !== undefined ? formData.delete : r.delete,
-              }
-            : r
-        )
-      );
-      setEditingRole(null);
-    } else {
-      // Add logic
-      const newRole: Role = {
-        id: Date.now(),
-        name: formData.name,
-        description: formData.description,
-        permissions: formData.permissions || ["Super Admin", "Upload File"], // default static permissions
-        create: !!formData.create,
-        read: !!formData.read,
-        update: !!formData.update,
-        delete: !!formData.delete,
-      };
-      setRoles((prevRoles) => [...prevRoles, newRole]);
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formName.trim()) {
+      errors.name = "Role Name is required.";
     }
-    setIsModalOpen(false);
+    if (!formDescription.trim()) {
+      errors.description = "Description is required.";
+    }
+    if (selectedPermissionIds.length === 0) {
+      errors.permissions = "Please select at least one permission.";
+    }
+    return errors;
   };
-
-  // Helper to filter roles list
-  const filteredRoles = roles.filter((role) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      role.name.toLowerCase().includes(query) ||
-      role.description.toLowerCase().includes(query)
-    );
-  });
 
   const handleCustomModalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleAddOrEditSubmit({
-      name: formName,
-      description: formDescription,
-      permissions: formPermissions,
-      create: formCreate,
-      read: formRead,
-      update: formUpdate,
-      delete: formDelete,
-    });
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    const payload = {
+      name: formName.trim(),
+      description: formDescription.trim(),
+      permissionIds: selectedPermissionIds,
+    };
+
+    if (editingRole) {
+      updateRoleMutation.mutate({ id: editingRole.id, payload });
+    } else {
+      createRoleMutation.mutate(payload);
+    }
   };
 
-  // Commented out to resolve unused declaration compilation errors
-  /*
-  const fieldsConfig: FieldConfig[] = [
-    {
-      name: "name",
-      label: "Role Name",
-      type: "text",
-      required: true,
-      placeholder: "Enter role name",
-      colSpan: 2,
-    },
-    {
-      name: "description",
-      label: "Description",
-      type: "text",
-      required: true,
-      placeholder: "Enter role description",
-      colSpan: 2,
-    },
-    {
-      name: "create",
-      label: "Create Permission",
-      type: "toggle",
-      colSpan: 1,
-    },
-    {
-      name: "read",
-      label: "Read Permission",
-      type: "toggle",
-      colSpan: 1,
-    },
-    {
-      name: "update",
-      label: "Update Permission",
-      type: "toggle",
-      colSpan: 1,
-    },
-    {
-      name: "delete",
-      label: "Delete Permission",
-      type: "toggle",
-      colSpan: 1,
-    },
-  ];
+  const filteredRoles = roles.filter((role: any) => {
+    const query = searchQuery.toLowerCase();
+    const roleName = role.name || "";
+    const roleDesc = role.description || "";
+    return roleName.toLowerCase().includes(query) || roleDesc.toLowerCase().includes(query);
+  });
 
-  const getModalFieldsConfig = () => {
-    if (!editingRole) return fieldsConfig;
-    return fieldsConfig.map((field) => {
-      if (field.name === "name") return { ...field, placeholder: editingRole.name };
-      if (field.name === "description") return { ...field, placeholder: editingRole.description };
-      return field;
+  // Calculate if a role has across its permissions the CRUD actions
+  const getRoleActions = (rolePermissions: any[]) => {
+    const permissions = rolePermissions || [];
+    let create = false;
+    let read = false;
+    let update = false;
+    let del = false;
+
+    permissions.forEach((perm: any) => {
+      const actions = perm.action || [];
+      if (actions.includes("create")) create = true;
+      if (actions.includes("read")) read = true;
+      if (actions.includes("update")) update = true;
+      if (actions.includes("delete")) del = true;
+      
+      // Also fallback if action array is not present but instead they have booleans (just in case)
+      if (perm.create) create = true;
+      if (perm.read) read = true;
+      if (perm.update) update = true;
+      if (perm.delete) del = true;
     });
-  };
-  */
 
+    return { create, read, update, delete: del };
+  };
+
+  const selectedPermissionsModels = selectedPermissionIds.map((id) => 
+    permissionsList.find((p: any) => p.id === id)
+  ).filter(Boolean);
 
   return (
     <>
@@ -260,9 +207,6 @@ export default function RoleManagement() {
         title="Role Management | Administration"
         description="Configure client roles, modules and permission controls"
       />
-
-      {/* Custom Figma Header Breadcrumb */}
-      {/* <PageBreadcrumb pageTitle="Role Management" hideTitle /> */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="max-w-[70%]">
@@ -282,16 +226,9 @@ export default function RoleManagement() {
         </button>
       </div>
 
-      {/* Search Input Wrapper */}
       <div className="relative mb-6">
         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <svg
-            className="size-5 text-gray-400 dark:text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
+          <svg className="size-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </span>
@@ -305,210 +242,141 @@ export default function RoleManagement() {
       </div>
 
       <div className="space-y-6">
-
-        {/* Roles Table Card */}
         <div className="rounded-2xl border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
-          <div className="max-w-full overflow-visible">
-            <Table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
-              <TableHeader className="bg-[#EBEAEA] dark:bg-gray-900/50">
-                <TableRow>
-                  <TableCell
-                    isHeader
-                    className="px-6 py-4.5 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
-                  >
-                    Role Name
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-6 py-4.5 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
-                  >
-                    Description
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-6 py-4.5 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
-                  >
-                    Permissions
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
-                  >
-                    Create
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
-                  >
-                    Read
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
-                  >
-                    Update
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
-                  >
-                    Delete
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-6 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400"
-                  >
-                    Actions
-                  </TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {filteredRoles.length === 0 ? (
+          {rolesLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center text-gray-500">
+              <svg className="animate-spin h-8 w-8 text-[#2DA0FF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="text-sm font-medium">Loading roles...</p>
+            </div>
+          ) : (
+            <div className="max-w-full overflow-visible">
+              <Table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
+                <TableHeader className="bg-[#EBEAEA] dark:bg-gray-900/50">
                   <TableRow>
-                    <TableCell colSpan={8} className="px-6 py-8 text-center text-sm text-gray-550 dark:text-gray-400">
-                      No roles found matching the search query.
-                    </TableCell>
+                    <TableCell isHeader className="px-6 py-4.5 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">Role Name</TableCell>
+                    <TableCell isHeader className="px-6 py-4.5 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">Description</TableCell>
+                    <TableCell isHeader className="px-6 py-4.5 text-left text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">Permissions</TableCell>
+                    <TableCell isHeader className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">Create</TableCell>
+                    <TableCell isHeader className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">Read</TableCell>
+                    <TableCell isHeader className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">Update</TableCell>
+                    <TableCell isHeader className="px-4 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">Delete</TableCell>
+                    <TableCell isHeader className="px-6 py-4.5 text-center text-xs font-medium uppercase tracking-wider text-gray-550 dark:text-gray-400">Actions</TableCell>
                   </TableRow>
-                ) : (
-                  filteredRoles.map((role) => (
-                    <TableRow key={role.id} className="hover:bg-gray-50/40 dark:hover:bg-white/[0.01] transition-colors duration-155">
-                      {/* Role Name */}
-                      <TableCell className="px-6 py-4.5 whitespace-nowrap text-sm font-medium text-gray-550 dark:text-white align-middle">
-                        {role.name}
-                      </TableCell>
-
-                      {/* Description */}
-                      <TableCell className="px-6 py-4.5 text-sm text-[#475467] dark:text-gray-400 max-w-xs md:max-w-md leading-relaxed align-middle font-normal">
-                        {role.description}
-                      </TableCell>
-
-                      {/* Permission Badges */}
-                      <TableCell className="px-6 py-4.5 whitespace-nowrap text-sm align-middle">
-                        <div className="flex flex-wrap gap-2">
-                          {role.permissions.map((perm, idx) => {
-                            const isGreen = perm.toLowerCase().includes("admin");
-                            return isGreen ? (
-                              <span key={idx} className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-[#ECFDF3] text-[#027A48] border border-[#D1FADF]/50">
-                                {perm}
-                              </span>
-                            ) : (
-                              <span key={idx} className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-[#FFFAEB] text-[#B54708] border border-[#FEF0C7]/50">
-                                {perm}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </TableCell>
-
-                      {/* Create */}
-                      <TableCell className="px-4 py-4.5 text-center whitespace-nowrap align-middle">
-                        {role.create ? (
-                          <span className="inline-flex items-center justify-center w-5 h-5 text-[#12B76A]">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center justify-center w-5 h-5 text-[#F04438]">
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                        )}
-                      </TableCell>
-
-                      {/* Read */}
-                      <TableCell className="px-4 py-4.5 text-center whitespace-nowrap align-middle">
-                        {role.read ? (
-                          <span className="inline-flex items-center justify-center w-5 h-5 text-[#12B76A]">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center justify-center w-5 h-5 text-[#F04438]">
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                        )}
-                      </TableCell>
-
-                      {/* Update */}
-                      <TableCell className="px-4 py-4.5 text-center whitespace-nowrap align-middle">
-                        {role.update ? (
-                          <span className="inline-flex items-center justify-center w-5 h-5 text-[#12B76A]">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center justify-center w-5 h-5 text-[#F04438]">
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                        )}
-                      </TableCell>
-
-                      {/* Delete */}
-                      <TableCell className="px-4 py-4.5 text-center whitespace-nowrap align-middle">
-                        {role.delete ? (
-                          <span className="inline-flex items-center justify-center w-5 h-5 text-[#12B76A]">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center justify-center w-5 h-5 text-[#F04438]">
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                        )}
-                      </TableCell>
-
-                      {/* Dropdown Actions */}
-                      <TableCell className="px-6 py-4.5 whitespace-nowrap text-center text-sm align-middle">
-                        <div className="relative inline-block text-left">
-                          <button
-                            onClick={() => setOpenMenuRoleId(openMenuRoleId === role.id ? null : role.id)}
-                            className="p-2 text-[#98A2B3] hover:text-[#475467] rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
-                          >
-                            <svg width="16" height="4" viewBox="0 0 16 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M2 2C2 2.55228 1.55228 3 1 3C0.447715 3 0 2.55228 0 2C0 1.44772 0.447715 1 1 1C1.55228 1 2 1.44772 2 2Z" fill="currentColor" />
-                              <path d="M9 2C9 2.55228 8.55228 3 8 3C7.44772 3 7 2.55228 7 2C7 1.44772 7.44772 1 8 1C8.55228 1 9 1.44772 9 2Z" fill="currentColor" />
-                              <path d="M16 2C16 2.55228 15.5523 3 15 3C14.4477 3 14 2.55228 14 2C14 1.44772 14.4477 1 15 1C15.5523 1 16 1.44772 16 2Z" fill="currentColor" />
-                            </svg>
-                          </button>
-                          <Dropdown
-                            isOpen={openMenuRoleId === role.id}
-                            onClose={() => setOpenMenuRoleId(null)}
-                            className="w-40 right-0 mt-1 shadow-lg border border-[#E4E7EC] dark:border-gray-800 rounded-xl"
-                          >
-                            <div className="py-1">
-                              <DropdownItem onClick={() => handleOpenEditModal(role)}>
-                                Edit Permissions
-                              </DropdownItem>
-                              <DropdownItem
-                                onClick={() => handleOpenDeleteModal(role)}
-                                className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20 font-medium"
-                              >
-                                Delete
-                              </DropdownItem>
-                            </div>
-                          </Dropdown>
-                        </div>
+                </TableHeader>
+                <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {filteredRoles.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="px-6 py-8 text-center text-sm text-gray-550 dark:text-gray-400">
+                        No roles found matching the search query.
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    filteredRoles.map((role: any) => {
+                      const { create, read, update, delete: del } = getRoleActions(role.permissions);
+                      return (
+                      <TableRow key={role.id} className="hover:bg-gray-50/40 dark:hover:bg-white/[0.01] transition-colors duration-155">
+                        <TableCell className="px-6 py-4.5 whitespace-nowrap text-sm font-medium text-gray-550 dark:text-white align-middle">
+                          {role.name}
+                        </TableCell>
+                        <TableCell className="px-6 py-4.5 text-sm text-[#475467] dark:text-gray-400 max-w-xs md:max-w-md leading-relaxed align-middle font-normal">
+                          {role.description}
+                        </TableCell>
+                        <TableCell className="px-6 py-4.5 text-sm align-middle">
+                          <div className="flex flex-wrap gap-2">
+                            {(role.permissions || []).map((perm: any, idx: number) => {
+                              const permName = perm.title || perm.name || `Perm ${perm.id}`;
+                              const isGreen = permName.toLowerCase().includes("admin");
+                              return (
+                                <span key={idx} className={`inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold ${isGreen ? 'bg-[#ECFDF3] text-[#027A48] border border-[#D1FADF]/50' : 'bg-[#FFFAEB] text-[#B54708] border border-[#FEF0C7]/50'}`}>
+                                  {permName}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-4 py-4.5 text-center whitespace-nowrap align-middle">
+                          {create ? (
+                            <span className="inline-flex items-center justify-center w-5 h-5 text-[#12B76A]">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center w-5 h-5 text-[#F04438]">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="px-4 py-4.5 text-center whitespace-nowrap align-middle">
+                          {read ? (
+                            <span className="inline-flex items-center justify-center w-5 h-5 text-[#12B76A]">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center w-5 h-5 text-[#F04438]">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="px-4 py-4.5 text-center whitespace-nowrap align-middle">
+                          {update ? (
+                            <span className="inline-flex items-center justify-center w-5 h-5 text-[#12B76A]">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center w-5 h-5 text-[#F04438]">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="px-4 py-4.5 text-center whitespace-nowrap align-middle">
+                          {del ? (
+                            <span className="inline-flex items-center justify-center w-5 h-5 text-[#12B76A]">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center w-5 h-5 text-[#F04438]">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="px-6 py-4.5 whitespace-nowrap text-center text-sm align-middle">
+                          <div className="relative inline-block text-left">
+                            <button
+                              onClick={() => setOpenMenuRoleId(openMenuRoleId === role.id ? null : role.id)}
+                              className="p-2 text-[#98A2B3] hover:text-[#475467] rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                            >
+                              <svg width="16" height="4" viewBox="0 0 16 4" fill="none"><path d="M2 2C2 2.55228 1.55228 3 1 3C0.447715 3 0 2.55228 0 2C0 1.44772 0.447715 1 1 1C1.55228 1 2 1.44772 2 2Z" fill="currentColor" /><path d="M9 2C9 2.55228 8.55228 3 8 3C7.44772 3 7 2.55228 7 2C7 1.44772 7.44772 1 8 1C8.55228 1 9 1.44772 9 2Z" fill="currentColor" /><path d="M16 2C16 2.55228 15.5523 3 15 3C14.4477 3 14 2.55228 14 2C14 1.44772 14.4477 1 15 1C15.5523 1 16 1.44772 16 2Z" fill="currentColor" /></svg>
+                            </button>
+                            <Dropdown
+                              isOpen={openMenuRoleId === role.id}
+                              onClose={() => setOpenMenuRoleId(null)}
+                              className="w-40 right-0 mt-1 shadow-lg border border-[#E4E7EC] dark:border-gray-800 rounded-xl"
+                            >
+                              <div className="py-1">
+                                <DropdownItem onClick={() => handleOpenEditModal(role)}>
+                                  Edit Role
+                                </DropdownItem>
+                                <DropdownItem
+                                  onClick={() => handleOpenDeleteModal(role)}
+                                  className="text-error-600 hover:bg-error-50 dark:hover:bg-error-950/20 font-medium"
+                                >
+                                  Delete
+                                </DropdownItem>
+                              </div>
+                            </Dropdown>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )})
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
 
-        {/* Tip Information Card */}
         <div className="rounded-2xl border border-[#B9E6FE] bg-[#F0F9FF] p-4.5 dark:border-blue-950/30 dark:bg-blue-950/20">
           <p className="text-xs sm:text-[13px] text-[#026AA2] dark:text-blue-300 font-medium leading-relaxed font-outfit">
             Tip: System roles cannot be deleted, but their permissions can be customized in the Permissions module. Custom roles inherit no permissions by default — configure them after creation.
@@ -516,31 +384,15 @@ export default function RoleManagement() {
         </div>
       </div>
 
-      {/* Commented out original modal to comply with replacement instructions */}
-      {/* 
-      <CustomModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingRole ? "Edit Role Permissions" : "Add New Role"}
-        submitText={editingRole ? "Save Changes" : "Create Role"}
-        fields={getModalFieldsConfig()}
-        onSubmit={handleAddOrEditSubmit}
-      />
-      */}
-
-      {/* Redesigned Custom Add / Edit Role Modal matching Figma */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-          {/* Backdrop (No blur) */}
           <div className="fixed inset-0 bg-transparent transition-opacity" onClick={() => setIsModalOpen(false)}></div>
           
-          {/* Modal Card */}
           <div className="relative w-full max-w-[650px] rounded-[12px] bg-white dark:bg-gray-900 shadow-xl border border-gray-100 dark:border-gray-800 overflow-visible z-10">
             <form onSubmit={handleCustomModalSubmit} className="flex flex-col">
-              {/* Header */}
               <div className="flex items-center justify-between px-8 py-5 border-b border-[#F2F4F7] dark:border-gray-800">
                 <h2 className="text-[16px] font-bold text-[#111928] dark:text-white">
-                  {editingRole ? "Edit Role Permissions" : "Create New Role"}
+                  {editingRole ? "Edit Role" : "Create New Role"}
                 </h2>
                 <button
                   type="button"
@@ -555,9 +407,7 @@ export default function RoleManagement() {
                 </button>
               </div>
 
-              {/* Body */}
               <div className="p-8 flex flex-col gap-6 overflow-visible">
-                {/* Role Name */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-bold text-[#111928] dark:text-gray-300">
                     Role Name *
@@ -566,78 +416,87 @@ export default function RoleManagement() {
                     type="text"
                     className="w-full px-4 py-2.5 rounded-lg border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-[#0c111d] text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2DA0FF]/50 focus:border-[#2DA0FF] transition-all"
                     value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                    required
+                    onChange={(e) => {
+                      setFormName(e.target.value);
+                      setFormErrors((prev) => ({ ...prev, name: "" }));
+                    }}
                   />
+                  {formErrors.name && <p className="text-xs text-red-500">{formErrors.name}</p>}
                 </div>
 
-                {/* Description */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-bold text-[#111928] dark:text-gray-300">
-                    Description*
+                    Description *
                   </label>
                   <input
                     type="text"
                     className="w-full px-4 py-2.5 rounded-lg border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-[#0c111d] text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2DA0FF]/50 focus:border-[#2DA0FF] transition-all"
                     value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                    required
+                    onChange={(e) => {
+                      setFormDescription(e.target.value);
+                      setFormErrors((prev) => ({ ...prev, description: "" }));
+                    }}
                   />
+                  {formErrors.description && <p className="text-xs text-red-500">{formErrors.description}</p>}
                 </div>
 
-                {/* Permissions Dropdown */}
                 <div className="flex flex-col gap-2 relative">
                   <label className="text-[13px] font-bold text-[#111928] dark:text-gray-300">
-                    Permissions*
+                    Permissions *
                   </label>
                   <button
                     type="button"
                     onClick={() => setIsPermissionsDropdownOpen(!isPermissionsDropdownOpen)}
                     className="w-full px-4 py-2.5 rounded-lg border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-[#0c111d] text-[14px] text-left text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2DA0FF]/50 focus:border-[#2DA0FF] flex items-center justify-between transition-all"
                   >
-                    <span className={formPermissions.length === 0 ? "text-[#6B7280]" : "truncate mr-2 text-gray-900 dark:text-white"}>
-                      {formPermissions.length === 0 ? "Select" : formPermissions.join(", ")}
+                    <span className={selectedPermissionsModels.length === 0 ? "text-[#6B7280]" : "truncate mr-2 text-gray-900 dark:text-white"}>
+                      {selectedPermissionsModels.length === 0 ? "Select" : selectedPermissionsModels.map(p => p.title || p.name).join(", ")}
                     </span>
                     <svg className={`size-5 text-[#6B7280] transition-transform duration-200 ${isPermissionsDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
+                  {formErrors.permissions && <p className="text-xs text-red-500">{formErrors.permissions}</p>}
                   
                   {isPermissionsDropdownOpen && (
                     <>
-                      {/* Clicking anywhere else closes dropdown */}
                       <div className="fixed inset-0 z-20" onClick={() => setIsPermissionsDropdownOpen(false)}></div>
-                      <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white dark:bg-gray-950 border border-[#E4E7EC] dark:border-gray-800 rounded-lg shadow-lg p-2 z-30 flex flex-col gap-1">
-                        {["Super Admin", "Upload File"].map((perm) => {
-                          const isChecked = formPermissions.includes(perm);
-                          return (
-                            <label
-                              key={perm}
-                              className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer text-sm text-[#344054] dark:text-gray-300 select-none"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                className="w-4 h-4 rounded border-[#D1D5DB] text-[#2DA0FF] focus:ring-[#2DA0FF]/30 focus:ring-offset-0"
-                                onChange={() => {
-                                  if (isChecked) {
-                                    setFormPermissions(formPermissions.filter(p => p !== perm));
-                                  } else {
-                                    setFormPermissions([...formPermissions, perm]);
-                                  }
-                                }}
-                              />
-                              {perm}
-                            </label>
-                          );
-                        })}
+                      <div className="absolute top-[calc(100%+4px)] left-0 w-full max-h-60 overflow-y-auto bg-white dark:bg-gray-950 border border-[#E4E7EC] dark:border-gray-800 rounded-lg shadow-lg p-2 z-30 flex flex-col gap-1">
+                        {permissionsList.length > 0 ? (
+                          permissionsList.map((perm: any) => {
+                            const isChecked = selectedPermissionIds.includes(perm.id);
+                            const permTitle = perm.title || perm.name || `Permission ${perm.id}`;
+                            return (
+                              <label
+                                key={perm.id}
+                                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer text-sm text-[#344054] dark:text-gray-300 select-none"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  className="w-4 h-4 rounded border-[#D1D5DB] text-[#2DA0FF] focus:ring-[#2DA0FF]/30 focus:ring-offset-0"
+                                  onChange={() => {
+                                    if (isChecked) {
+                                      setSelectedPermissionIds(selectedPermissionIds.filter(id => id !== perm.id));
+                                    } else {
+                                      setSelectedPermissionIds([...selectedPermissionIds, perm.id]);
+                                    }
+                                    setFormErrors((prev) => ({ ...prev, permissions: "" }));
+                                  }}
+                                />
+                                {permTitle}
+                              </label>
+                            );
+                          })
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500">No permissions found</div>
+                        )}
                       </div>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* Footer */}
               <div className="border-t border-[#F2F4F7] dark:border-gray-800 px-8 py-6 flex items-center justify-center gap-4">
                 <button
                   type="button"
@@ -648,9 +507,10 @@ export default function RoleManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-lg bg-[#2DA0FF] hover:bg-[#6AA8E7] text-white font-semibold text-[14px] transition-colors min-w-[120px]"
+                  disabled={createRoleMutation.isPending || updateRoleMutation.isPending}
+                  className="px-6 py-2.5 rounded-lg bg-[#2DA0FF] hover:bg-[#6AA8E7] text-white font-semibold text-[14px] transition-colors min-w-[120px] disabled:opacity-50"
                 >
-                  {editingRole ? "Save Changes" : "Create Role"}
+                  {createRoleMutation.isPending || updateRoleMutation.isPending ? "Saving..." : (editingRole ? "Save Changes" : "Create Role")}
                 </button>
               </div>
             </form>
@@ -666,8 +526,7 @@ export default function RoleManagement() {
         }}
         title="Delete Role"
         showOverlay
-        backdropBlur={false}
-        width="max-w-[480px]"
+        maxWidth="max-w-[480px]"
         padding="px-8 py-6"
         showCloseIcon
         customFooter={
@@ -685,9 +544,10 @@ export default function RoleManagement() {
             <button
               type="button"
               onClick={handleDeleteConfirm}
-              className="px-6 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors text-sm cursor-pointer"
+              disabled={deleteRoleMutation.isPending}
+              className="px-6 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors text-sm cursor-pointer disabled:opacity-50"
             >
-              Delete
+              {deleteRoleMutation.isPending ? "Deleting..." : "Delete"}
             </button>
           </div>
         }
