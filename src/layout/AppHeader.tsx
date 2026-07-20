@@ -6,6 +6,7 @@ import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import NotificationDropdown from "../components/header/NotificationDropdown";
 import UserDropdown from "../components/header/UserDropdown";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
+import { useQuery } from "@tanstack/react-query";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -65,7 +66,33 @@ const AppHeader: React.FC = () => {
     return lastPart.charAt(0).toUpperCase() + lastPart.slice(1).replace(/-/g, ' ');
   };
 
-  const pageTitle = getPageTitle(location.pathname);
+  let pageTitle = getPageTitle(location.pathname);
+
+  // If we're on a child route (/care/children/:id), subscribe to the child's name from the react-query cache
+  const parts = location.pathname.split('/').filter(Boolean);
+  const isChildRoute = parts[0] === 'care' && parts[1] === 'children' && parts[2];
+  const childId = isChildRoute ? parts[2] : null;
+
+  const { data: cachedChild } = useQuery({
+    queryKey: ["child", childId],
+    enabled: !!childId,
+    staleTime: Infinity, // Rely on ChildDetails to do the actual data fetching
+  }) as { data: any };
+
+  if (isChildRoute) {
+    if (cachedChild) {
+      if (cachedChild?.full_name) {
+        pageTitle = cachedChild.full_name;
+      } else if (cachedChild?.data?.full_name) {
+        pageTitle = cachedChild.data.full_name;
+      } else if (cachedChild?.name) {
+        pageTitle = cachedChild.name;
+      }
+    } else {
+      // While data is loading, show a better fallback instead of the raw ID
+      pageTitle = "Loading Profile...";
+    }
+  }
 
   return (
     <header className="sticky top-0 flex w-full bg-white z-99999 dark:bg-gray-900">

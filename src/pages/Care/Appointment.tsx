@@ -725,7 +725,7 @@ export default function Appointment() {
       scheduled_at: scheduled_at_iso,
       reason: bookForm.note,
       status: bookForm.status,
-      requestedBy_id: 1, // Fallback default
+      requestedBy_id: Number(user?.id),
     };
 
     if (editAppointmentId) {
