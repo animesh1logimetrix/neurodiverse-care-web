@@ -1,7 +1,28 @@
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 
-export default function LineChartOne() {
+interface LineChartOneProps {
+  data?: {
+    categories: string[];
+    series: { name: string; data: number[] }[];
+  };
+}
+
+export default function LineChartOne({ data }: LineChartOneProps) {
+  if (!data || !data.series || data.series.length === 0) {
+    return (
+      <div className="w-full h-[250px] flex flex-col items-center justify-center text-gray-500 text-sm">
+        <svg className="w-8 h-8 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <p>No session frequency data available</p>
+      </div>
+    );
+  }
+
+  const dynamicCategories = data.categories;
+  const dynamicSeries = data.series;
+
   const options: ApexOptions = {
     legend: {
       show: false, // Hide legend
@@ -59,10 +80,7 @@ export default function LineChartOne() {
     },
     xaxis: {
       type: "category", // Category-based x-axis
-      categories: [
-        "Mar 4", "Mar 5", "Mar 6", "Mar 7", "Mar 8", "Mar 9", 
-        "Mar 10", "Mar 11", "Mar 12", "Mar 13", "Mar 14", "Mar 15"
-      ],
+      categories: dynamicCategories,
       axisBorder: {
         show: false, // Hide x-axis border
       },
@@ -89,24 +107,10 @@ export default function LineChartOne() {
     },
   };
 
-  const series = [
-    {
-      name: "OT",
-      data: [12, 18, 15, 20, 25, 22, 18, 14, 28, 25, 20, 15],
-    },
-    {
-      name: "Speech",
-      data: [8, 12, 25, 18, 20, 15, 22, 18, 12, 15, 20, 22],
-    },
-    {
-      name: "ABA",
-      data: [5, 8, 10, 12, 15, 10, 8, 12, 15, 18, 12, 10],
-    },
-  ];
   return (
     <div className="w-full">
       <div id="chartEight" className="w-full">
-        <Chart options={options} series={series} type="area" height={250} />
+        <Chart options={options} series={dynamicSeries} type="area" height={250} />
       </div>
     </div>
   );

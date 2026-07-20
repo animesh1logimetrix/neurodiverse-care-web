@@ -460,7 +460,7 @@ const IEPGoalsTab = () => {
           id={`${prefix}_start_date`}
           key={`${prefix}-start-${formData.start_date}`}
           defaultDate={formData.start_date || undefined}
-          onChange={(dates) => setFormData((prev) => ({ ...prev, start_date: dates[0]?.toString() || "" }))}
+          onChange={(dates, dateStr) => setFormData((prev) => ({ ...prev, start_date: dateStr }))}
           placeholder="Select"
         />
       </div>
@@ -472,7 +472,7 @@ const IEPGoalsTab = () => {
           id={`${prefix}_target_date`}
           key={`${prefix}-target-${formData.target_date}`}
           defaultDate={formData.target_date || undefined}
-          onChange={(dates) => setFormData((prev) => ({ ...prev, target_date: dates[0]?.toString() || "" }))}
+          onChange={(dates, dateStr) => setFormData((prev) => ({ ...prev, target_date: dateStr }))}
           placeholder="Select"
         />
       </div>
