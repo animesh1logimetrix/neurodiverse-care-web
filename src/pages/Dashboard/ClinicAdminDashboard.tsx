@@ -1,6 +1,10 @@
 import React from "react";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import axiosClient from "../../api/axiosClient";
+import { useAuth } from "../../context/AuthContext";
 import PageMeta from "../../components/common/PageMeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
 
@@ -38,6 +42,34 @@ function TargetIcon({ className }: { className?: string }) {
 }
 
 export default function ClinicAdminDashboard() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: invitations } = useQuery({
+    queryKey: ['invitations', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      const res = await axiosClient.get("/invitation", {
+        params: { email: user.email, status: 'PENDING' }
+      });
+      return res.data;
+    },
+    enabled: !!user?.email
+  });
+
+  const acceptInviteMutation = useMutation({
+    mutationFn: async (token: string) => {
+      const response = await axiosClient.post("/invitation/accept", { token });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Invitation accepted successfully!");
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to process invitation.");
+    }
+  });
 
   // ── Chart 1: Sessions This Week (Area) ────────────────────────────────────
   const sessionsWeekOptions: ApexOptions = {
@@ -409,6 +441,37 @@ export default function ClinicAdminDashboard() {
           <p className="text-[12px] text-gray-500 mt-1">Bright Minds Developmental Clinic</p>
         </div>
 
+        {/* ── Pending Invitations ─────────────────────────────────────── */}
+        {invitations && invitations.length > 0 && (
+          <div className="mb-6 flex flex-col gap-4">
+            <div className="bg-white border border-[#2DA0FF] rounded-[16px] p-5 flex items-center justify-between shadow-[0_2px_12px_rgba(45,160,255,0.1)] relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-2 h-full bg-[#2DA0FF]"></div>
+              <div className="pl-2">
+                <h3 className="text-[16px] font-bold text-gray-900 mb-1 flex items-center gap-3">
+                  You've been invited to collaborate 👥
+                  {invitations.length > 1 && (
+                    <a href="#pending-invitations-table" className="text-[12px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium hover:bg-slate-200 transition-colors">
+                      View All ({invitations.length})
+                    </a>
+                  )}
+                </h3>
+                <p className="text-[14px] text-gray-600 mt-1">
+                  <span className="font-semibold text-gray-800">{invitations[0].invitedBy?.name || "A Parent"}</span> has invited you to view and manage the progress of their child <span className="font-semibold text-[#2DA0FF]">{invitations[0].child?.full_name || "their child"}</span>.
+                </p>
+              </div>
+              <div>
+                <button 
+                  onClick={() => acceptInviteMutation.mutate(invitations[0].token)}
+                  disabled={acceptInviteMutation.isPending}
+                  className="px-6 py-2.5 bg-[#2DA0FF] hover:bg-[#1a8ce8] text-white font-bold rounded-xl transition-colors text-[14px] shadow-sm disabled:opacity-70 whitespace-nowrap"
+                >
+                  {acceptInviteMutation.isPending && acceptInviteMutation.variables === invitations[0].token ? "Accepting..." : "Accept Invitation"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ══════════════════════════════════════════════════════════════════
             MAIN RESPONSIVE GRID (Page Shell with Left/Right columns + full-width bottom table)
         ══════════════════════════════════════════════════════════════════ */}
@@ -721,6 +784,51 @@ export default function ClinicAdminDashboard() {
               </div>
             </div>
           </div>
+
+          {/* ────────────────────────────────────────────────────────────────
+              PENDING INVITATIONS TABLE 
+          ──────────────────────────────────────────────────────────────── */}
+          {invitations && invitations.length > 1 && (
+            <div id="pending-invitations-table" className="col-span-12 scroll-mt-6">
+              <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-8 overflow-hidden">
+                <div className="mb-4">
+                  <h3 className="text-[18px] font-bold text-gray-800 leading-tight">All Pending Invitations</h3>
+                </div>
+                <div className="overflow-x-auto rounded-xl border border-slate-100 shadow-sm">
+                  <Table className="w-full border-collapse" style={{ minWidth: "500px" }}>
+                    <TableHeader>
+                      <TableRow className="bg-[#e0f2fe] border-b border-slate-200">
+                        <TableCell isHeader className="py-4 px-6 text-[14px] font-bold text-gray-800 text-left">Invited By</TableCell>
+                        <TableCell isHeader className="py-4 px-6 text-[14px] font-bold text-gray-800 text-center">Child</TableCell>
+                        <TableCell isHeader className="py-4 px-6 text-[14px] font-bold text-gray-800 text-center">Date</TableCell>
+                        <TableCell isHeader className="py-4 px-6 text-[14px] font-bold text-gray-800 text-right">Action</TableCell>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invitations.map((inv: any, idx: number) => (
+                        <TableRow key={inv.id} className="hover:bg-slate-50/70 border-b border-slate-100 last:border-b-0 transition-colors">
+                          <TableCell className="px-6 py-4 text-[14px] font-semibold text-slate-700 text-left">{inv.invitedBy?.name || "A Parent"}</TableCell>
+                          <TableCell className="px-6 py-4 text-[14px] text-slate-500 text-center font-medium">{inv.child?.full_name || "N/A"}</TableCell>
+                          <TableCell className="px-6 py-4 text-[14px] text-slate-500 text-center font-medium">
+                            {new Date(inv.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="px-6 py-4 text-right">
+                            <button 
+                              onClick={() => acceptInviteMutation.mutate(inv.token)}
+                              disabled={acceptInviteMutation.isPending}
+                              className="px-4 py-1.5 bg-[#2DA0FF] hover:bg-[#1a8ce8] text-white font-bold rounded-lg transition-colors text-[13px] shadow-sm disabled:opacity-70"
+                            >
+                              {acceptInviteMutation.isPending && acceptInviteMutation.variables === inv.token ? "Accepting..." : "Accept"}
+                            </button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
 
