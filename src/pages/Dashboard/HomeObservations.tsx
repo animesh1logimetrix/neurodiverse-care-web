@@ -631,10 +631,10 @@ export default function HomeObservations() {
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-[32px] gap-4">
           <div>
-            <h1 className="text-[32px] font-bold text-gray-900 leading-tight">
+            <h1 className="text-2xl font-semibold text-gray-550 dark:text-white leading-tight">
               Home Observations
             </h1>
-            <p className="text-[16px] text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Record and share what you notice at home with your child's care team.
             </p>
           </div>

@@ -293,7 +293,7 @@ export default function Children() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Children</h1>
+          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white">Children</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {filteredChildren.length} children · {needAttention} need attention
           </p>

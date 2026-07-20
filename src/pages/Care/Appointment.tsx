@@ -132,20 +132,20 @@ const AppointmentCard: React.FC<{
       >
         {/* Left: Time */}
         <div className="flex flex-col text-gray-500 w-full md:w-32 shrink-0 border-b md:border-b-0 border-gray-100 pb-3 md:pb-0">
-          <span className="font-bold text-gray-800 text-sm">{data.time}</span>
+          <span className="font-bold text-gray-550 dark:text-white text-sm">{data.time}</span>
           <span className="text-xs">{data.duration}</span>
         </div>
 
         {/* Middle: Details */}
         <div className="flex-1 min-w-0 flex flex-col gap-1 w-full">
-          <h3 className="font-bold text-gray-800 text-sm mb-1">{data.title}</h3>
+          <h3 className="font-bold text-gray-550 dark:text-white text-sm mb-1">{data.title}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div className="flex flex-col">
-              <span className="text-gray-700 font-semibold">{data.patientName}</span>
+              <span className="text-gray-550 dark:text-white font-semibold">{data.patientName}</span>
               <span className="text-gray-500 mt-0.5">{data.location}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-gray-700 font-semibold">{data.therapistName}</span>
+              <span className="text-gray-550 dark:text-white font-semibold">{data.therapistName}</span>
               <span className="text-gray-500 mt-0.5">{data.note}</span>
             </div>
           </div>
@@ -761,7 +761,7 @@ export default function Appointment() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Appointments</h1>
+          <h1 className="text-2xl font-semibold text-gray-550 dark:text-white">Appointments</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {todayAppointments.length} today – {upcomingAppointments.length} upcoming
           </p>
@@ -808,7 +808,7 @@ export default function Appointment() {
           <div>
             {/* Today Section */}
             <section className="mb-8">
-              <h2 className="text-[20px] font-semibold text-gray-800 mb-[16px]">
+              <h2 className="text-[20px] font-semibold text-gray-550 dark:text-white mb-[16px]">
                 Today, {new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
               </h2>
               <div className="space-y-4">
@@ -821,7 +821,7 @@ export default function Appointment() {
 
             {/* Upcoming Section */}
             <section>
-              <h2 className="text-[20px] font-semibold text-gray-800 mb-[16px]">
+              <h2 className="text-[20px] font-semibold text-gray-550 dark:text-white mb-[16px]">
                 Upcoming appointments
               </h2>
               <div className="space-y-4">
@@ -837,7 +837,7 @@ export default function Appointment() {
           {/* Calendar Grid */}
           <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-6 sm:p-8 shadow-[0_8px_30px_rgba(15,23,42,0.08)]">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-medium text-gray-800">
+              <h2 className="text-xl font-medium text-gray-550 dark:text-white">
                 {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
               </h2>
               <div className="flex items-center gap-2">
@@ -901,7 +901,7 @@ export default function Appointment() {
                 selectedDateAppointments.map((apt: any) => (
                   <div key={apt.id} className="flex flex-col gap-1 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-800">{apt.time} - {apt.title}</span>
+                      <span className="text-sm font-medium text-gray-550 dark:text-white">{apt.time} - {apt.title}</span>
                     </div>
                     <span className="text-sm text-gray-500">{apt.patientName}</span>
                     <span className="text-xs text-gray-400">{apt.therapistName}</span>
