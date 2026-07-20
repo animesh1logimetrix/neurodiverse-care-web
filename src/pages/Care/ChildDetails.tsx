@@ -351,7 +351,7 @@ export default function ChildDetails() {
         {/* Title Area */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+            <h1 className="text-3xl font-bold text-[#575757] leading-tight">
               Children
             </h1>
             {/* <p className="text-sm text-gray-500 mt-1">
@@ -397,7 +397,7 @@ export default function ChildDetails() {
             {/* Details */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-2xl font-bold text-gray-800 leading-none">{child?.full_name || "Loading..."}</h2>
+                <h2 className="text-2xl font-bold text-[#575757] leading-none">{child?.full_name || "Loading..."}</h2>
                 <span className="bg-[#e5f5e8] text-[#16a34a] px-3 py-1 rounded-md text-xs font-bold tracking-wide capitalize leading-none">
                   Active
                 </span>
@@ -406,45 +406,45 @@ export default function ChildDetails() {
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-3 gap-x-4">
                 <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Child Code</p>
-                  <p className="font-bold text-gray-800 text-sm truncate">
+                  <p className="font-bold text-[#575757] text-sm truncate">
                     {child?.id ? `NC-2025-${String(child.id).padStart(5, '0')}` : "N/A"}
                   </p>
                 </div>
                 <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">DOB</p>
-                  <p className="font-bold text-gray-800 text-sm truncate">
+                  <p className="font-bold text-[#575757] text-sm truncate">
                     {child?.dob ? new Date(child.dob).toLocaleDateString() : "N/A"}
                   </p>
                 </div>
                 <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Gender</p>
-                  <p className="font-bold text-gray-800 text-sm capitalize truncate">{child?.gender?.toLowerCase() || "N/A"}</p>
+                  <p className="font-bold text-[#575757] text-sm capitalize truncate">{child?.gender?.toLowerCase() || "N/A"}</p>
                 </div>
                 <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Blood Group</p>
-                  <p className="font-bold text-gray-800 text-sm truncate">{child?.blood_group?.replace("_", " ") || "N/A"}</p>
+                  <p className="font-bold text-[#575757] text-sm truncate">{child?.blood_group?.replace("_", " ") || "N/A"}</p>
                 </div>
                 
                 <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Primary Diagnosis</p>
-                  <p className="font-bold text-gray-800 text-sm truncate">{child?.diagnosis || "N/A"}</p>
+                  <p className="font-bold text-[#575757] text-sm truncate">{child?.diagnosis || "N/A"}</p>
                 </div>
                 <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Referred By</p>
-                  <p className="font-bold text-gray-800 text-sm truncate">{child?.referred_by || "N/A"}</p>
+                  <p className="font-bold text-[#575757] text-sm truncate">{child?.referred_by || "N/A"}</p>
                 </div>
                 <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Address</p>
-                  <p className="font-bold text-gray-800 text-sm break-words line-clamp-2">{child?.address || "N/A"}</p>
+                  <p className="font-bold text-[#575757] text-sm break-words line-clamp-2">{child?.address || "N/A"}</p>
                 </div>
                 <div className="flex flex-col">
                   <p className="text-sm text-gray-500 mb-0.5">Allergies</p>
-                  <p className="font-bold text-gray-800 text-sm truncate">{child?.allergies || "N/A"}</p>
+                  <p className="font-bold text-[#575757] text-sm truncate">{child?.allergies || "N/A"}</p>
                 </div>
                 
                 <div className="flex flex-col col-span-2 lg:col-span-4">
                   <p className="text-sm text-gray-500 mb-0.5">Parents</p>
-                  <p className="font-bold text-gray-800 text-sm truncate">
+                  <p className="font-bold text-[#575757] text-sm truncate">
                     {child?.childUsers?.filter((cu: any) => cu.relation === "PARENT").map((cu: any) => cu.user?.name).join(", ") || "N/A"}
                   </p>
                 </div>
@@ -489,7 +489,7 @@ export default function ChildDetails() {
               type="text" 
               readOnly
               value={child?.notes || ""}
-              className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800"
+              className="flex-1 bg-transparent text-sm focus:outline-none text-[#575757]"
             />
           </div>
         </div>

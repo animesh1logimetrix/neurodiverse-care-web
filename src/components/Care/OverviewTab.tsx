@@ -35,7 +35,7 @@ export default function OverviewTab() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 min-w-0 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-bold text-gray-900 text-lg">Session Frequency</h3>
+              <h3 className="font-bold text-[#575757] text-lg">Session Frequency</h3>
               <p className="text-xs text-gray-500">Weekly sessions across all therapies</p>
             </div>
             <span className="text-xs font-medium text-[#ea580c] bg-[#fff7ed] px-2 py-1 rounded">Last 8 Weeks</span>
@@ -49,7 +49,7 @@ export default function OverviewTab() {
       {/* IEP Goal Progress Chart */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
         <div>
-          <h3 className="font-bold text-gray-900 text-lg">IEP Goal Progress by Domain</h3>
+          <h3 className="font-bold text-[#575757] text-lg">IEP Goal Progress by Domain</h3>
           <p className="text-xs text-gray-500 mb-4">% of goals on track per domain</p>
         </div>
         <div className="h-[250px]">
@@ -62,7 +62,7 @@ export default function OverviewTab() {
         
         {/* Upcoming Appointments */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <h3 className="font-bold text-gray-900 text-lg mb-4">Upcoming Appointments</h3>
+          <h3 className="font-bold text-[#575757] text-lg mb-4">Upcoming Appointments</h3>
           <div className="space-y-3">
             {[
               { time: "10:30 AM", title: "Arjun Krishnamurthy", subtitle: "OT Session Dr. Priya Lal" },
@@ -73,7 +73,7 @@ export default function OverviewTab() {
                 <div className="w-20 text-xs font-semibold text-gray-500 border-r border-gray-100 pr-3">{apt.time}</div>
                 <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 leading-tight">{apt.title}</p>
+                  <p className="text-sm font-bold text-[#575757] leading-tight">{apt.title}</p>
                   <p className="text-xs text-gray-500">{apt.subtitle}</p>
                 </div>
               </div>
@@ -83,13 +83,13 @@ export default function OverviewTab() {
 
         {/* Consent Requests */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <h3 className="font-bold text-gray-900 text-lg mb-4">Consent Requests</h3>
+          <h3 className="font-bold text-[#575757] text-lg mb-4">Consent Requests</h3>
           <div className="space-y-3">
             {[1, 2, 3].map((_, i) => (
               <div key={i} className="flex items-center gap-4 border border-gray-100 rounded-lg p-3">
                 <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0"></div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 leading-tight">Arjun Krishnamurthy</p>
+                  <p className="text-sm font-bold text-[#575757] leading-tight">Arjun Krishnamurthy</p>
                   <p className="text-xs text-gray-500">Requested on May 18, 2026</p>
                 </div>
               </div>
@@ -101,7 +101,7 @@ export default function OverviewTab() {
 
       {/* Recent Activity */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <h3 className="font-bold text-gray-900 text-lg mb-4">Recent Activity</h3>
+        <h3 className="font-bold text-[#575757] text-lg mb-4">Recent Activity</h3>
         <div className="space-y-0">
           {[
             { title: "Session note submitted for Communication goal C-04", subtitle: "Nandita Kumar Speech Therapist", time: "2h ago" },
@@ -113,7 +113,7 @@ export default function OverviewTab() {
           ].map((activity, i) => (
             <div key={i} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
               <div>
-                <p className="text-sm font-semibold text-gray-900 leading-tight">{activity.title}</p>
+                <p className="text-sm font-semibold text-[#575757] leading-tight">{activity.title}</p>
                 <p className="text-xs text-gray-500">{activity.subtitle}</p>
               </div>
               <span className="text-xs text-gray-400 whitespace-nowrap">{activity.time}</span>

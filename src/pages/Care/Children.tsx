@@ -445,7 +445,7 @@ export default function Children() {
               {/* Bottom Metrics */}
               <div className="mt-5 flex items-center justify-between px-2">
                 <div className="flex flex-col items-center">
-                  <span className="text-gray-800 font-bold text-sm">
+                  <span className="text-[#575757] font-bold text-sm">
                     {child.metrics.activeGoals}
                   </span>
                   <span className="text-gray-500 text-[11px] font-medium uppercase tracking-wider">
@@ -453,7 +453,7 @@ export default function Children() {
                   </span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-gray-800 font-bold text-sm">
+                  <span className="text-[#575757] font-bold text-sm">
                     {child.metrics.achieved}
                   </span>
                   <span className="text-gray-500 text-[11px] font-medium uppercase tracking-wider">
@@ -461,7 +461,7 @@ export default function Children() {
                   </span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-gray-800 font-bold text-sm">
+                  <span className="text-[#575757] font-bold text-sm">
                     {child.metrics.providers}
                   </span>
                   <span className="text-gray-500 text-[11px] font-medium uppercase tracking-wider">
