@@ -1018,15 +1018,16 @@ export default function HomeObservations() {
           size="md"
           padding="p-0"
           customFooter={
-            <div className="flex items-center justify-end px-8 py-4 border-t border-gray-100 w-full bg-gray-50/50">
-              <button 
-                type="button" 
-                onClick={() => setDetail(null)} 
-                className="px-5 py-2 rounded-lg text-gray-700 bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors"
-              >
-                Close
-              </button>
-            </div>
+            <></>
+            // <div className="flex items-center justify-end px-8 py-4 border-t border-gray-100 w-full bg-gray-50/50">
+            //   <button 
+            //     type="button" 
+            //     onClick={() => setDetail(null)} 
+            //     className="px-5 py-2 rounded-lg text-gray-700 bg-white border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors"
+            //   >
+            //     Close
+            //   </button>
+            // </div>
           }
         >
           <div className="px-6 py-5">
