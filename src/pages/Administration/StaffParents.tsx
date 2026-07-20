@@ -13,6 +13,7 @@ import { HorizontaLDots, PlusIcon } from "../../icons";
 import InputField from "../../components/form/input/InputField";
 import Select from "../../components/form/Select";
 import Label from "../../components/form/Label";
+import { useAuth } from "../../context/AuthContext";
 
 interface User {
   id: number;
@@ -170,14 +171,20 @@ const initialUsers: User[] = [
 
 export default function StaffParents() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Fetch invitations
   const { data: invitationsData, isLoading: isInvitationsLoading } = useQuery({
-    queryKey: ["invitations"],
+    queryKey: ["invitations", user?.id],
     queryFn: async () => {
-      const res = await axiosClient.get("/invitation");
+      const res = await axiosClient.get("/invitation", {
+        params: {
+          invitedById: user?.id
+        }
+      });
       return res.data;
     },
+    enabled: !!user?.id,
   });
 
   const users: User[] = Array.isArray(invitationsData) 

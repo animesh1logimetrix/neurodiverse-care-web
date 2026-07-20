@@ -13,6 +13,7 @@ import { Dropdown } from "../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
 import DatePicker from "../../components/form/date-picker";
 import { useAuth } from "../../context/AuthContext";
+import { isParentGuardian, isTherapist as checkIsTherapist } from "../../utils/roles";
 
 interface SharedSlot {
   slot_time: string;
@@ -379,7 +380,8 @@ const AppointmentCard: React.FC<{
 
 export default function Appointment() {
   const { user } = useAuth();
-  const isTherapist = user?.role?.name === "Therapist";
+  const isTherapist = checkIsTherapist(user?.role?.name);
+  const isParent = isParentGuardian(user?.role?.name);
 
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"List" | "Calendar">("List");
@@ -514,11 +516,19 @@ export default function Appointment() {
   }));
 
   const { data: appointmentsRaw = [], isLoading: isAppointmentsLoading } = useQuery({
-    queryKey: ["appointments"],
+    queryKey: ["appointments", user?.id],
     queryFn: async () => {
-      const res = await axiosClient.get("/appointment");
+      const params: any = {};
+      if (isParent && user?.id) {
+        params.requestedById = user.id;
+      } else if (isTherapist && user?.id) {
+        params.therapistId = user.id;
+      }
+      
+      const res = await axiosClient.get("/appointment", { params });
       return res.data;
     },
+    enabled: !!user?.id,
   });
 
   const createAppointmentMutation = useMutation({

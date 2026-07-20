@@ -7,6 +7,8 @@ import CustomModal from "../../components/ui/modal/CustomModal";
 import InputField from "../../components/form/input/InputField";
 import DatePicker from "../../components/form/date-picker";
 import Select from "../../components/form/Select";
+import { useAuth } from "../../context/AuthContext";
+import { isParentGuardian, isTherapist as checkIsTherapist } from "../../utils/roles";
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
 
 function PlusIcon() {
@@ -294,6 +296,10 @@ const getStatusTheme = (status: string) => {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function HomeObservations() {
+  const { user } = useAuth();
+  const isParent = isParentGuardian(user?.role?.name);
+  const isTherapist = checkIsTherapist(user?.role?.name);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [childId, setChildId] = useState("");
@@ -407,11 +413,19 @@ export default function HomeObservations() {
   });
 
   const { data: homeObservationsData, isLoading: isObservationsLoading } = useQuery({
-    queryKey: ["home-observation"],
+    queryKey: ["home-observation", user?.id],
     queryFn: async () => {
-      const res = await axiosClient.get("/home-observation");
+      const params: any = {};
+      if (isParent && user?.id) {
+        params.parentId = user.id;
+      } else if (isTherapist && user?.id) {
+        params.reviewedById = user.id;
+      }
+
+      const res = await axiosClient.get("/home-observation", { params });
       return res.data;
     },
+    enabled: !!user?.id,
   });
 
   const { data: allFilesData } = useQuery({
@@ -638,14 +652,16 @@ export default function HomeObservations() {
               Record and share what you notice at home with your child's care team.
             </p>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-[#2DA0FF] px-5 py-2.5 rounded-lg text-white text-[15px] font-semibold transition-all duration-150 hover:opacity-90 active:scale-[0.98] shadow-sm"
-            // style={{ backgroundColor: "#2DA0FF" }}
-          >
-            <PlusIcon />
-            New Observation
-          </button>
+          {!isTherapist && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center justify-center gap-2 bg-[#2DA0FF] px-5 py-2.5 rounded-lg text-white text-[15px] font-semibold transition-all duration-150 hover:opacity-90 active:scale-[0.98] shadow-sm"
+              // style={{ backgroundColor: "#2DA0FF" }}
+            >
+              <PlusIcon />
+              New Observation
+            </button>
+          )}
         </div>
 
         {/* ── Stat Cards ──────────────────────────────────────────── */}
@@ -763,20 +779,24 @@ export default function HomeObservations() {
                         {obs.status}
                       </span>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); openEditModal(obs); }}
-                          className="p-1.5 text-gray-400 hover:text-[#2DA0FF] hover:bg-blue-50 rounded-md transition-colors"
-                          title="Edit"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); openDeleteModal(obs.id); }}
-                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                          title="Delete"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                        </button>
+                        {!isTherapist && (
+                          <>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); openEditModal(obs); }}
+                              className="p-1.5 text-gray-400 hover:text-[#2DA0FF] hover:bg-blue-50 rounded-md transition-colors"
+                              title="Edit"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); openDeleteModal(obs.id); }}
+                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                              title="Delete"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                            </button>
+                          </>
+                        )}
                       </div>
                       <div className="text-gray-300 group-hover:text-gray-400 transition-colors hidden sm:block">
                         <ChevronRightIcon />
