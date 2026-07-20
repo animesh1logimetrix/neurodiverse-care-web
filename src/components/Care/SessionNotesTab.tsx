@@ -314,7 +314,7 @@ const SessionNotesTab = () => {
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Session Notes</h2>
+          <h2 className="text-xl font-bold text-[#575757]">Session Notes</h2>
           <p className="text-sm text-gray-500 mt-1">
             {sessionNotesList.length} notes available
           </p>
@@ -371,7 +371,7 @@ const SessionNotesTab = () => {
               
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-sm font-bold text-gray-900">
+                  <h3 className="text-sm font-bold text-[#575757]">
                     {note.therapist} <span className="font-normal text-gray-600">{note.role} {note.displayType} - {note.duration}</span>
                   </h3>
                   <div className="flex items-center gap-2">
@@ -443,7 +443,7 @@ const SessionNotesTab = () => {
         }
       >
         <div>
-          <h3 className="text-gray-800 font-semibold mb-6">Session Information</h3>
+          <h3 className="text-[#575757] font-semibold mb-6">Session Information</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-6">
             <div>
@@ -616,7 +616,7 @@ const SessionNotesTab = () => {
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Are you sure?</h3>
+              <h3 className="text-lg font-semibold text-[#575757] mb-1">Are you sure?</h3>
               <p className="text-sm text-gray-500 leading-relaxed">
                 This action cannot be undone. This will permanently delete the session note.
               </p>
@@ -686,7 +686,7 @@ const SessionNotesTab = () => {
                 <div className="flex gap-4">
                   <div className="text-orange-400 font-bold text-xl mt-1">{initials}</div>
                   <div>
-                    <div className="font-bold text-gray-800 text-sm">{therapistName}</div>
+                    <div className="font-bold text-[#575757] text-sm">{therapistName}</div>
                     <div className="font-bold text-gray-600 text-[13px] mt-1">{role}</div>
                     <div className="font-bold text-gray-600 text-[13px] mt-0.5">{type} {duration}</div>
                   </div>
@@ -695,13 +695,13 @@ const SessionNotesTab = () => {
                 {/* Middle Column */}
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-bold text-gray-800 text-sm mb-2">Pre-Session Notes</h4>
+                    <h4 className="font-bold text-[#575757] text-sm mb-2">Pre-Session Notes</h4>
                     <p className="text-[13px] text-gray-500 leading-relaxed">
                       {session?.pre_session_notes || "N/A"}
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-800 text-sm mb-2">Post-Session Notes</h4>
+                    <h4 className="font-bold text-[#575757] text-sm mb-2">Post-Session Notes</h4>
                     <p className="text-[13px] text-gray-500 leading-relaxed">
                       {session?.post_session_notes || "N/A"}
                     </p>
@@ -711,7 +711,7 @@ const SessionNotesTab = () => {
                 {/* Right Column */}
                 <div className="space-y-5">
                   <div>
-                    <h4 className="font-bold text-gray-800 text-sm mb-3">Data Summary</h4>
+                    <h4 className="font-bold text-[#575757] text-sm mb-3">Data Summary</h4>
                     <div className="grid grid-cols-[2fr_1fr_1fr] gap-2 text-[13px] text-gray-700 font-bold mb-2">
                       <div>Goal</div>
                       <div className="text-center">Metric</div>
@@ -730,14 +730,14 @@ const SessionNotesTab = () => {
                   </div>
 
                   <div>
-                    <h4 className="font-bold text-gray-800 text-sm mb-2">Next Steps</h4>
+                    <h4 className="font-bold text-[#575757] text-sm mb-2">Next Steps</h4>
                     <p className="text-[13px] text-gray-500 leading-relaxed">
                       Introduce "worried" and "frustrated" cards next session. Increase name response trials to 8/session.
                     </p>
                   </div>
 
                   <div className="border border-orange-200/60 rounded-lg p-3 bg-white shadow-sm">
-                    <h4 className="font-bold text-gray-800 text-[13px] mb-1">Parent Report</h4>
+                    <h4 className="font-bold text-[#575757] text-[13px] mb-1">Parent Report</h4>
                     <p className="text-[13px] text-gray-500">
                       Parent reported improved sleep this week, No meltdowns in 4 days.
                     </p>
@@ -747,7 +747,7 @@ const SessionNotesTab = () => {
 
               {/* Bottom: Timeline */}
               <div>
-                <h4 className="font-bold text-gray-800 text-sm mb-5">Session Timeline</h4>
+                <h4 className="font-bold text-[#575757] text-sm mb-5">Session Timeline</h4>
                 <div className="space-y-4">
                   <div className="flex items-center gap-12 text-[13px]">
                     <div className="flex items-center gap-3 w-48">

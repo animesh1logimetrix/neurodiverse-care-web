@@ -632,25 +632,20 @@ const MedicationsTab = () => {
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Action Bar */}
-        <div className="flex justify-end">
-        <button 
-          onClick={handleOpenAddMedicationModal}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2DA0FF] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#2DA0FF] transition-colors"
-        >
-          + Add Medication
-        </button>
-      </div>
-
-      {/* Main Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-800">Medications</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {medications.length} Active Medications on Record
-          </p>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-[#575757]">Medications</h2>
+          <button 
+            onClick={handleOpenAddMedicationModal}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7eb6f7] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#68a6f0] transition-colors"
+          >
+            + Add Medication
+          </button>
         </div>
+
+        {/* Main Card */}
+        <div className="bg-white rounded-[14px] border border-gray-200 overflow-hidden">
 
         {/* Loading State */}
         {isLoadingMedications ? (
@@ -676,7 +671,7 @@ const MedicationsTab = () => {
             {/* Desktop & Tablet Table */}
             <table className="hidden md:table w-full min-w-[900px] table-fixed border-collapse">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
+                <tr className="border-b border-gray-200 bg-[#eeeeee]">
                   {[
                     { label: "Medication", width: "w-[22%]" },
                     { label: "Category", width: "w-[12%]" },
@@ -690,7 +685,7 @@ const MedicationsTab = () => {
                   ].map((col) => (
                     <th
                       key={col.label}
-                      className={`px-3 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 ${col.width}`}
+                      className={`px-4 py-4 text-left text-[12px] font-bold uppercase tracking-wider text-[#575757] ${col.width}`}
                     >
                       {col.label}
                     </th>
@@ -707,34 +702,34 @@ const MedicationsTab = () => {
                     : med.prescribedBy?.name ?? "";
 
                   return (
-                    <tr key={medicationMenuKey} className="border-b border-gray-50 last:border-b-0 transition-colors hover:bg-gray-50/50">
-                      <td className="px-3 py-4 text-sm font-semibold leading-snug text-gray-800 whitespace-normal break-words">
+                    <tr key={medicationMenuKey} className="border-b border-gray-100 last:border-b-0 transition-colors hover:bg-gray-50/50">
+                      <td className="px-4 py-4 text-[13px] font-semibold leading-snug text-[#575757] whitespace-normal break-words">
                         {med.medication_name}
                       </td>
-                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">
+                      <td className="px-4 py-4 text-[13px] leading-snug text-[#575757] whitespace-normal break-words">
                         {categoryLabel}
                       </td>
-                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">
+                      <td className="px-4 py-4 text-[13px] leading-snug text-[#575757] whitespace-normal break-words">
                         {doseLabel}
                       </td>
-                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">
+                      <td className="px-4 py-4 text-[13px] leading-snug text-[#575757] whitespace-normal break-words">
                         {getFrequencyLabel(med.frequency ?? "")}
                       </td>
-                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">
+                      <td className="px-4 py-4 text-[13px] leading-snug text-[#575757] whitespace-normal break-words">
                         {prescribedByLabel}
                       </td>
-                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">
+                      <td className="px-4 py-4 text-[13px] leading-snug text-[#575757] whitespace-normal break-words">
                         {formatDateValue(med.start_date)}
                       </td>
-                      <td className="px-3 py-4 text-sm leading-snug text-gray-600 whitespace-normal break-words">
+                      <td className="px-4 py-4 text-[13px] leading-snug text-[#575757] whitespace-normal break-words">
                         {formatDateValue(med.review_due_date)}
                       </td>
-                      <td className="px-3 py-4">
-                        <span className={`inline-block rounded-md px-3 py-1 text-xs font-bold whitespace-nowrap ${med.status === "ACTIVE" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-600"}`}>
+                      <td className="px-4 py-4">
+                        <span className={`inline-block rounded px-3 py-1 text-[11px] font-bold whitespace-nowrap ${med.status === "ACTIVE" ? "bg-[#bbf7d0] text-green-800" : "bg-gray-100 text-gray-600"}`}>
                           {getMedicationStatusLabel(med.status ?? "")}
                         </span>
                       </td>
-                      <td className="px-3 py-4">
+                      <td className="px-4 py-4">
                         <div className="relative inline-flex">
                           <button
                             type="button"
@@ -780,7 +775,7 @@ const MedicationsTab = () => {
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Medication</p>
-                        <h3 className="text-sm font-bold text-gray-900 break-words leading-tight">{med.medication_name}</h3>
+                        <h3 className="text-sm font-bold text-[#575757] break-words leading-tight">{med.medication_name}</h3>
                       </div>
                       <div className="flex items-start gap-2 shrink-0">
                         <span className={`inline-block rounded-md px-2 py-1 text-[10px] font-bold whitespace-nowrap mt-0.5 ${med.status === "ACTIVE" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-600"}`}>
@@ -875,7 +870,7 @@ const MedicationsTab = () => {
 
             <div className="px-8 pb-6">
               {/* ── Header ── */}
-              <h2 className="text-[17px] font-bold text-gray-900 mb-2">{selectedMedication?.medication_name ?? "Medication Details"}</h2>
+              <h2 className="text-[17px] font-bold text-[#575757] mb-2">{selectedMedication?.medication_name ?? "Medication Details"}</h2>
               
               <div className="flex flex-col gap-1 mb-6">
                 <p className="text-[13px] text-gray-500">{getCategoryLabel(selectedMedication.category)} / {getMedicationStatusLabel(selectedMedication.status ?? "")}</p>
@@ -890,7 +885,7 @@ const MedicationsTab = () => {
               <div className="flex flex-col md:flex-row gap-0 mb-8">
                 {/* Left Column: Details */}
                 <div className="flex-1 pr-8">
-                  <p className="text-[13px] font-bold text-gray-800 mb-4">Medication Details</p>
+                  <p className="text-[13px] font-bold text-[#575757] mb-4">Medication Details</p>
                   
                   <table className="w-full text-[13px] border-separate" style={{ borderSpacing: '0 8px' }}>
                     <tbody>
@@ -918,7 +913,7 @@ const MedicationsTab = () => {
 
                 {/* Right Column: Instructions */}
                 <div className="flex-1 md:pl-8 pt-4 md:pt-0">
-                  <p className="text-[13px] font-bold text-gray-800 mb-4">Instructions for Care Team/Parents</p>
+                  <p className="text-[13px] font-bold text-[#575757] mb-4">Instructions for Care Team/Parents</p>
                   
                   <div className="text-[13px] text-gray-600 leading-relaxed pl-4">
                     {selectedMedication.instructions?.text ? (
@@ -937,7 +932,7 @@ const MedicationsTab = () => {
 
               {/* Reports & Documents */}
               <div className="mb-8">
-                <h3 className="text-[13px] font-bold text-gray-800 mb-4">Reports & Documents</h3>
+                <h3 className="text-[13px] font-bold text-[#575757] mb-4">Reports & Documents</h3>
                 <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                   {documents.length > 0 ? (
                     documents.map((doc) => (
@@ -949,7 +944,7 @@ const MedicationsTab = () => {
                         className="w-48 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col h-40 hover:bg-orange-50 transition-colors"
                       >
                         <div className="mt-auto">
-                          <p className="font-bold text-gray-800 text-[13px] mb-1 line-clamp-2" title={doc.name}>{doc.name}</p>
+                          <p className="font-bold text-[#575757] text-[13px] mb-1 line-clamp-2" title={doc.name}>{doc.name}</p>
                           <p className="text-[12px] text-gray-500 mb-0.5">{doc.date}</p>
                           <p className="text-[12px] text-gray-500">{doc.size}</p>
                         </div>
@@ -994,7 +989,7 @@ const MedicationsTab = () => {
 
               {/* Medication History */}
               <div>
-                <h3 className="text-[13px] font-bold text-gray-800 mb-6">Medication History</h3>
+                <h3 className="text-[13px] font-bold text-[#575757] mb-6">Medication History</h3>
                 <div className="relative pt-2 pl-2">
                   <div className="absolute left-[12px] top-4 bottom-4 w-px bg-gray-200" />
                   <div className="absolute left-[176px] top-4 bottom-4 w-px bg-gray-200" />
@@ -1042,7 +1037,7 @@ const MedicationsTab = () => {
         }
       >
         <div>
-          <h3 className="text-gray-800 font-semibold mb-6">Medication Information</h3>
+          <h3 className="text-[#575757] font-semibold mb-6">Medication Information</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-6">
             <div>
@@ -1197,7 +1192,7 @@ const MedicationsTab = () => {
           </div>
 
           <div className="mb-8">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Reports & Documents</h3>
+            <h3 className="text-sm font-bold text-[#575757] mb-3">Reports & Documents</h3>
             <div 
               onClick={() => fileInputRef.current?.click()}
               className="border border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors"
@@ -1312,7 +1307,7 @@ const MedicationsTab = () => {
           Are you sure you want to delete this medication? This action cannot be undone.
         </p>
         {selectedMedication && (
-          <p className="mt-3 text-sm font-semibold text-gray-800">
+          <p className="mt-3 text-sm font-semibold text-[#575757]">
             Medication: {selectedMedication.medication_name}
           </p>
         )}

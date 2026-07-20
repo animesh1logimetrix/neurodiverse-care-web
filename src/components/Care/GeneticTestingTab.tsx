@@ -106,7 +106,7 @@ const ClinicalReviewAlert = ({ tests }: { tests: GeneticTest[] }) => {
                   </p>
                   <p className="text-sm text-gray-600">No provider has acknowledged this result yet.</p>
                 </div>
-                <button className="text-sm text-gray-600 font-medium hover:text-gray-900 mt-1 flex items-center gap-1">
+                <button className="text-sm text-gray-600 font-medium hover:text-[#575757] mt-1 flex items-center gap-1">
                   Acknowledge &amp; mark as reviewed &rarr;
                 </button>
               </div>
@@ -141,7 +141,7 @@ const GeneticTestCard = ({ test, isExpanded, onToggle, onViewReport, onAddClinic
         <LabIcon className="w-5 h-5 text-orange-500 shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <p className="text-sm font-semibold text-gray-900">{test.title}</p>
+            <p className="text-sm font-semibold text-[#575757]">{test.title}</p>
             {test.status === "NEEDS_REVIEW" && <WarningIcon className="w-4 h-4 text-orange-500" />}
           </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 mt-1.5">
@@ -177,14 +177,14 @@ const GeneticTestCard = ({ test, isExpanded, onToggle, onViewReport, onAddClinic
           {test.result && (
             <div className="mb-4">
               <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Result</p>
-              <p className="text-sm text-gray-800">{test.result}</p>
+              <p className="text-sm text-[#575757]">{test.result}</p>
             </div>
           )}
           {test.interpretation && test.interpretation.length > 0 && (
             <div className="mb-4">
               <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Clinical Interpretation</p>
               {test.interpretation.map((para, idx) => (
-                <p key={idx} className="text-sm text-gray-800 mb-2">{para}</p>
+                <p key={idx} className="text-sm text-[#575757] mb-2">{para}</p>
               ))}
             </div>
           )}
@@ -676,7 +676,7 @@ export default function GeneticTestingTab() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Genetic Testing</h1>
+        <h1 className="text-2xl font-bold text-[#575757]">Genetic Testing</h1>
         <button
           onClick={() => { setModalMode('add'); setIsUploadModalOpen(true); }}
           className="bg-[#2DA0FF] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-2"
@@ -762,7 +762,7 @@ export default function GeneticTestingTab() {
           
           {/* Test Information */}
           <div>
-            <h3 className="text-gray-800 font-semibold mb-6">Test Information</h3>
+            <h3 className="text-[#575757] font-semibold mb-6">Test Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-6">
               
               <div>
@@ -859,7 +859,7 @@ export default function GeneticTestingTab() {
 
           {/* Sample Information */}
           <div>
-            <h3 className="text-gray-800 font-semibold mb-6">Sample Information</h3>
+            <h3 className="text-[#575757] font-semibold mb-6">Sample Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-6">
               
               <div>
@@ -913,7 +913,7 @@ export default function GeneticTestingTab() {
 
           {/* Report & Documents */}
           <div>
-            <h3 className="text-gray-800 font-semibold mb-6">Report &amp; Documents</h3>
+            <h3 className="text-[#575757] font-semibold mb-6">Report &amp; Documents</h3>
 
             {/* Upload Report */}
             <div className="mb-5">
@@ -989,7 +989,7 @@ export default function GeneticTestingTab() {
           {/* Clinical Details */}
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-gray-800">Clinical Summary (optional)</p>
+              <p className="text-sm font-medium text-[#575757]">Clinical Summary (optional)</p>
               <p className="text-xs text-gray-500 mb-1.5">Key Findings/Result Summary</p>
               <TextArea
                 value={formData.clinicalSummary}
@@ -1000,7 +1000,7 @@ export default function GeneticTestingTab() {
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-800 mb-1.5">Clinical interpretation (optional)</p>
+              <p className="text-sm font-medium text-[#575757] mb-1.5">Clinical interpretation (optional)</p>
               <TextArea
                 value={formData.clinicalInterpretation}
                 onChange={(val) => updateFormField("clinicalInterpretation", val)}
@@ -1010,7 +1010,7 @@ export default function GeneticTestingTab() {
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-800 mb-1.5">Recommendations (optional)</p>
+              <p className="text-sm font-medium text-[#575757] mb-1.5">Recommendations (optional)</p>
               <TextArea
                 value={formData.recommendations}
                 onChange={(val) => updateFormField("recommendations", val)}
@@ -1059,7 +1059,7 @@ export default function GeneticTestingTab() {
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Confirm Deletion</h3>
+              <h3 className="text-lg font-bold text-[#575757] mb-1">Confirm Deletion</h3>
               <p className="text-sm text-gray-600">
                 Are you sure you want to delete this genetic test record? This action cannot be undone.
               </p>
@@ -1096,11 +1096,11 @@ export default function GeneticTestingTab() {
             </div>
 
             {/* ── Header ── */}
-            <h2 className="text-[17px] font-bold text-gray-900 mb-1">{selectedTest.title}</h2>
+            <h2 className="text-[17px] font-bold text-[#575757] mb-1">{selectedTest.title}</h2>
 
             {/* Subtitle row: name left, action buttons right */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1.5">
-              <p className="text-[13px] font-semibold text-gray-800">{selectedTest.subtitle || `${selectedTest.title} A`}</p>
+              <p className="text-[13px] font-semibold text-[#575757]">{selectedTest.subtitle || `${selectedTest.title} A`}</p>
               <div className="flex items-center gap-2 flex-wrap">
                 <button className="border border-gray-200 text-gray-600 text-[12px] font-medium px-3.5 py-1 rounded-full hover:bg-gray-50 transition-colors whitespace-nowrap">
                   Download Report
@@ -1145,7 +1145,7 @@ export default function GeneticTestingTab() {
 
               {/* LEFT: Test Details + Clinical Interpretation + Recommendations */}
               <div className="flex-1 pr-6 pt-4 pb-6 min-w-0">
-                <p className="text-[13px] font-bold text-gray-800 mb-3">Test Details</p>
+                <p className="text-[13px] font-bold text-[#575757] mb-3">Test Details</p>
 
                 {/* Details table */}
                 <table className="w-full text-[13px] mb-6 border-separate" style={{ borderSpacing: '0 6px' }}>
@@ -1168,7 +1168,7 @@ export default function GeneticTestingTab() {
                 </table>
 
                 {/* Clinical Interpretation */}
-                <p className="text-[13px] font-bold text-gray-800 mb-2">Clinical Interpretation</p>
+                <p className="text-[13px] font-bold text-[#575757] mb-2">Clinical Interpretation</p>
                 {selectedTest.interpretation && selectedTest.interpretation.length > 0 ? (
                   selectedTest.interpretation.map((para, idx) => (
                     <p key={idx} className="text-[13px] text-gray-600 leading-relaxed mb-2 pr-4">{para}</p>
@@ -1178,7 +1178,7 @@ export default function GeneticTestingTab() {
                 )}
 
                 {/* Recommendations */}
-                <p className="text-[13px] font-bold text-gray-800 mb-2 mt-4">Recommendations</p>
+                <p className="text-[13px] font-bold text-[#575757] mb-2 mt-4">Recommendations</p>
                 <p className="text-[13px] text-gray-600 whitespace-pre-line leading-relaxed pr-4">
                   {selectedTest.recommendations || "No recommendations provided."}
                 </p>
@@ -1189,7 +1189,7 @@ export default function GeneticTestingTab() {
 
               {/* RIGHT: Result + Documents */}
               <div className="w-[45%] pl-6 pt-4 pb-6 shrink-0">
-                <p className="text-[13px] font-bold text-gray-800 mb-3">Result</p>
+                <p className="text-[13px] font-bold text-[#575757] mb-3">Result</p>
 
                 <p className="text-[13px] text-gray-600 mb-3 leading-relaxed">
                   {selectedTest.result || "Variant of Uncertain Significance (VUS)\n16p11.2 microdeletion detected (0.6 Mb)"}
@@ -1228,7 +1228,7 @@ export default function GeneticTestingTab() {
                 )}
 
                 {/* Report Documents */}
-                <p className="text-[13px] font-bold text-gray-800 mb-3">Report Documents</p>
+                <p className="text-[13px] font-bold text-[#575757] mb-3">Report Documents</p>
                 <div className="flex flex-col gap-4 mb-4">
                   {selectedTest.reports && selectedTest.reports.length > 0 ? (
                     selectedTest.reports.map((doc: any, idx: number) => {
@@ -1246,7 +1246,7 @@ export default function GeneticTestingTab() {
                             </svg>
                           </div>
                           <div>
-                            <p className="font-bold text-gray-800 text-sm">
+                            <p className="font-bold text-[#575757] text-sm">
                               {doc.original_file_name || doc.file_name || `Document ${idx+1}`}
                             </p>
                             <p className="text-xs text-gray-500 uppercase mt-0.5">
@@ -1276,7 +1276,7 @@ export default function GeneticTestingTab() {
 
             {/* ── Activity Timeline ── */}
             <div className="border-t border-gray-200 pt-5 -mx-8 px-8">
-              <p className="text-[13px] font-bold text-gray-800 mb-4">Activity</p>
+              <p className="text-[13px] font-bold text-[#575757] mb-4">Activity</p>
               <div className="relative pl-6">
                 {/* Vertical connector */}
                 <div className="absolute left-[7px] top-1.5 bottom-3 w-px bg-gray-200" />

@@ -299,7 +299,7 @@ export default function AssessmentsTab() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Assessments</h2>
+          <h2 className="text-xl font-bold text-[#575757]">Assessments</h2>
           <p className="text-sm text-gray-500 mt-1">
             {fetchedAssessments.length} assessments on record
           </p>
@@ -353,7 +353,7 @@ export default function AssessmentsTab() {
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className="font-bold text-sm text-gray-900">
+                        <h3 className="font-bold text-sm text-[#575757]">
                           {assessment.assesment_name} {assessment.module ? `(${assessment.module})` : ''}
                         </h3>
                         {assessment.status && (
@@ -402,7 +402,7 @@ export default function AssessmentsTab() {
                         {assessment.score.map((scoreObj: any, idx: number) => (
                           <div key={idx} className="border border-orange-100 rounded-md p-3">
                             <p className="text-xs text-gray-600 mb-1">{scoreObj.domain}</p>
-                            <p className="text-lg font-bold text-gray-900 mb-1">{scoreObj.score}</p>
+                            <p className="text-lg font-bold text-[#575757] mb-1">{scoreObj.score}</p>
                             <p className="text-xs text-gray-500">{scoreObj.interpretation}</p>
                             {scoreObj.percentile && <p className="text-xs text-gray-400 mt-1">{scoreObj.percentile}</p>}
                           </div>
@@ -412,14 +412,14 @@ export default function AssessmentsTab() {
 
                     {assessment.clinical_summary && (
                       <div className="bg-orange-50/50 rounded-md p-4 border border-orange-100">
-                        <p className="text-xs font-bold text-gray-800 mb-1">Clinical Summary</p>
+                        <p className="text-xs font-bold text-[#575757] mb-1">Clinical Summary</p>
                         <p className="text-xs text-gray-600 leading-relaxed mb-4">
                           {assessment.clinical_summary}
                         </p>
                         
                         <div className="flex items-center gap-4 text-xs font-semibold">
                           <button 
-                            className="text-gray-600 hover:text-gray-900"
+                            className="text-gray-600 hover:text-[#575757]"
                             onClick={(e) => { e.stopPropagation(); openViewModal(index); }}
                           >
                             View linked IEP goals
@@ -430,7 +430,7 @@ export default function AssessmentsTab() {
 
                     {assessment.reports && assessment.reports.length > 0 && (
                       <div className="mt-4 pt-4 border-t border-dashed border-gray-100">
-                        <p className="text-xs font-bold text-gray-800 mb-3">Uploaded Documents</p>
+                        <p className="text-xs font-bold text-[#575757] mb-3">Uploaded Documents</p>
                         <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                           {assessment.reports.map((report: any) => (
                             <a 
@@ -440,7 +440,7 @@ export default function AssessmentsTab() {
                               rel="noopener noreferrer"
                               className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-32 hover:bg-orange-50 transition-colors"
                             >
-                              <p className="font-bold text-gray-800 text-sm mb-1 line-clamp-2" title={report.original_file_name}>
+                              <p className="font-bold text-[#575757] text-sm mb-1 line-clamp-2" title={report.original_file_name}>
                                 {report.original_file_name || "Document"}
                               </p>
                               <p className="text-xs text-gray-500 capitalize">{report.file_type || "File"}</p>
@@ -481,7 +481,7 @@ export default function AssessmentsTab() {
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-sm text-gray-900">
+                      <h3 className="font-bold text-sm text-[#575757]">
                         {item.assesment_name} {item.module ? `(${item.module})` : ''}
                       </h3>
                       <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
@@ -501,7 +501,7 @@ export default function AssessmentsTab() {
                       item.score.map((scoreObj: any, idx: number) => (
                         <div key={idx} className="border border-gray-200 rounded-md p-4 bg-white">
                           <p className="text-sm text-gray-600 mb-1">{scoreObj.domain}</p>
-                          <p className="text-xl font-bold text-gray-900 mb-1">{scoreObj.score}</p>
+                          <p className="text-xl font-bold text-[#575757] mb-1">{scoreObj.score}</p>
                           <p className="text-sm text-gray-500">{scoreObj.interpretation}</p>
                         </div>
                       ))
@@ -515,7 +515,7 @@ export default function AssessmentsTab() {
                     <div className="grid grid-cols-2 gap-8">
                       {/* Clinical Summary */}
                       <div>
-                        <h4 className="font-bold text-sm text-gray-900 mb-2">Clinical Summary</h4>
+                        <h4 className="font-bold text-sm text-[#575757] mb-2">Clinical Summary</h4>
                         <p className="text-sm text-gray-600 leading-relaxed">
                           {item.clinical_summary || "No summary provided."}
                         </p>
@@ -523,27 +523,27 @@ export default function AssessmentsTab() {
 
                       {/* Assessment Information */}
                       <div>
-                        <h4 className="font-bold text-sm text-gray-900 mb-2">Assessment Information</h4>
+                        <h4 className="font-bold text-sm text-[#575757] mb-2">Assessment Information</h4>
                         <div className="grid grid-cols-[140px_1fr] gap-y-2 text-sm">
                           <span className="text-gray-500">Type</span>
-                          <span className="text-gray-900">{item.assesment_type?.replace("_", " ")}</span>
+                          <span className="text-[#575757]">{item.assesment_type?.replace("_", " ")}</span>
                           <span className="text-gray-500">Module/Subte</span>
-                          <span className="text-gray-900">{item.module || "-"}</span>
+                          <span className="text-[#575757]">{item.module || "-"}</span>
                           <span className="text-gray-500">Assigned Psychologist</span>
-                          <span className="text-gray-900">{item.psychologist?.name}</span>
+                          <span className="text-[#575757]">{item.psychologist?.name}</span>
                           <span className="text-gray-500">Location</span>
-                          <span className="text-gray-900">{item.location || "-"}</span>
+                          <span className="text-[#575757]">{item.location || "-"}</span>
                           <span className="text-gray-500">Status</span>
-                          <span className="text-gray-900">{item.status?.replace("_", " ")}</span>
+                          <span className="text-[#575757]">{item.status?.replace("_", " ")}</span>
                           <span className="text-gray-500">Last Updated</span>
-                          <span className="text-gray-900">{item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : "-"}</span>
+                          <span className="text-[#575757]">{item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : "-"}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Linked IEP Goals */}
                     <div className="mt-8">
-                      <h4 className="font-bold text-sm text-gray-900 mb-3">Linked IEP Goals ({item.linkedGoals?.length || 0})</h4>
+                      <h4 className="font-bold text-sm text-[#575757] mb-3">Linked IEP Goals ({item.linkedGoals?.length || 0})</h4>
                       <div className="flex flex-wrap gap-3">
                         {item.linkedGoals?.map((link: any, idx: number) => (
                           <div key={idx} className="bg-[#e5fcf0] text-[#16a34a] border border-[#bbf7d0] px-3 py-1.5 rounded-full text-xs font-semibold flex items-center">
@@ -573,7 +573,7 @@ export default function AssessmentsTab() {
                           </svg>
                         </div>
                         <div>
-                          <p className="font-bold text-gray-800 text-sm">{report.original_file_name || "Document"}</p>
+                          <p className="font-bold text-[#575757] text-sm">{report.original_file_name || "Document"}</p>
                           <p className="text-xs text-gray-500 uppercase mt-0.5">
                             {report.file_size ? `${(report.file_size / 1024).toFixed(0)} KB` : ''} {report.file_type || "FILE"}
                           </p>
@@ -690,7 +690,7 @@ export default function AssessmentsTab() {
         }
       >
         <div>
-          <h3 className="text-gray-800 font-semibold mb-6">Assessment Information</h3>
+          <h3 className="text-[#575757] font-semibold mb-6">Assessment Information</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-6">
             <div>
@@ -988,7 +988,7 @@ export default function AssessmentsTab() {
               </svg>
             </div>
             <div>
-              <h4 className="text-gray-900 font-semibold mb-1">Are you sure?</h4>
+              <h4 className="text-[#575757] font-semibold mb-1">Are you sure?</h4>
               <p className="text-sm text-gray-500">
                 Are you sure you want to delete this assessment? This action cannot be undone and will permanently remove this record.
               </p>

@@ -635,7 +635,7 @@ const IEPGoalsTab = () => {
       {/* Action Bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">IEP Goals</h2>
+          <h2 className="text-xl font-bold text-[#575757]">IEP Goals</h2>
           <p className="text-sm text-gray-500 mt-1">
             {allIepGoals.filter((g) => g.status === "COMPLETED").length} mastered -{" "}
             {allIepGoals.filter((g) => g.status === "ACTIVE").length} active{" "}
@@ -689,12 +689,12 @@ const IEPGoalsTab = () => {
                   <div className="text-green-600 shrink-0">
                     <TargetIcon className="w-5 h-5" />
                   </div>
-                  <span className="text-sm font-bold text-gray-800 break-words">
+                  <span className="text-sm font-bold text-[#575757] break-words">
                     {goal.code || `G-${goal.id}`}
                   </span>
                 </div>
-                <h3 className="font-bold text-gray-800 text-sm break-words">{goal.domainName}</h3>
-                <span className="text-sm font-semibold text-gray-800 w-fit inline-block px-2 py-0.5 bg-gray-100 rounded-md md:bg-transparent md:px-0 md:py-0">{goal.status}</span>
+                <h3 className="font-bold text-[#575757] text-sm break-words">{goal.domainName}</h3>
+                <span className="text-sm font-semibold text-[#575757] w-fit inline-block px-2 py-0.5 bg-gray-100 rounded-md md:bg-transparent md:px-0 md:py-0">{goal.status}</span>
               </div>
               <div className="relative shrink-0">
                 <button
@@ -734,7 +734,7 @@ const IEPGoalsTab = () => {
               </div>
             </div>
 
-            <p className="text-sm font-medium text-gray-800 mb-6 max-w-4xl break-words">
+            <p className="text-sm font-medium text-[#575757] mb-6 max-w-4xl break-words">
               {goal.goal_description}
             </p>
 
@@ -760,7 +760,7 @@ const IEPGoalsTab = () => {
               </div>
               <div className="flex items-center gap-1.5 break-words">
                 <span className="uppercase tracking-wider text-[10px] md:normal-case md:text-xs font-bold md:font-medium">Target Date:</span>{" "}
-                <span className="font-bold text-gray-800">{formatDate(goal.target_date)}</span>
+                <span className="font-bold text-[#575757]">{formatDate(goal.target_date)}</span>
               </div>
             </div>
           </div>
@@ -808,7 +808,7 @@ const IEPGoalsTab = () => {
         }
       >
         <div>
-          <h3 className="text-gray-800 font-semibold mb-6">Goal Information</h3>
+          <h3 className="text-[#575757] font-semibold mb-6">Goal Information</h3>
           {renderFormFields("add")}
         </div>
       </CustomModal>
@@ -850,7 +850,7 @@ const IEPGoalsTab = () => {
         }
       >
         <div>
-          <h3 className="text-gray-800 font-semibold mb-6">Goal Information</h3>
+          <h3 className="text-[#575757] font-semibold mb-6">Goal Information</h3>
           {renderFormFields("edit")}
         </div>
       </CustomModal>
@@ -898,7 +898,7 @@ const IEPGoalsTab = () => {
               </svg>
             </div>
             <div>
-              <h4 className="text-gray-900 font-semibold mb-1">Are you sure?</h4>
+              <h4 className="text-[#575757] font-semibold mb-1">Are you sure?</h4>
               <p className="text-sm text-gray-500">
                 Are you sure you want to delete this IEP Goal? This action cannot be undone and will permanently remove this record.
               </p>
@@ -949,7 +949,7 @@ const IEPGoalsTab = () => {
                     <circle cx="12" cy="12" r="2" strokeWidth="2" fill="currentColor" />
                   </svg>
                 </div>
-                <span className="font-bold text-[13px] text-gray-800">
+                <span className="font-bold text-[13px] text-[#575757]">
                   {selectedViewGoal.code || `G-${selectedViewGoal.id}`}
                 </span>
                 <span className="text-[13px] font-bold text-gray-600">
@@ -959,7 +959,7 @@ const IEPGoalsTab = () => {
                   {selectedViewGoal.status}
                 </span>
               </div>
-              <p className="text-[13px] font-bold text-gray-800 mb-4">
+              <p className="text-[13px] font-bold text-[#575757] mb-4">
                 {selectedViewGoal.goal_description}
               </p>
               <div className="flex flex-wrap items-center gap-8 text-[12px] text-gray-500">

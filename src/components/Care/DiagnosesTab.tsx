@@ -291,7 +291,7 @@ export default function DiagnosesTab() {
       {/* Main Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-800">Diagnoses</h2>
+          <h2 className="text-xl font-bold text-[#575757]">Diagnoses</h2>
           <p className="text-sm text-gray-500 mt-1">
             {diagnoses.length} Confirm Diagnoses on Record
           </p>
@@ -328,7 +328,7 @@ export default function DiagnosesTab() {
                 >
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-gray-800 text-sm">
+                      <h3 className="font-bold text-[#575757] text-sm">
                         {item.category?.full_category_name || "Unknown Diagnosis"}{" "}
                         <span className="font-normal">{item.category?.short_name ? `(${item.category.short_name})` : ""}</span>
                       </h3>
@@ -456,18 +456,18 @@ export default function DiagnosesTab() {
                 {/* Row 1: Details and IEP Goals */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                   <div className="grid grid-cols-[140px_1fr] gap-y-3 text-sm">
-                    <span className="text-gray-500">ICD-10 Code</span> <span className="text-gray-800">{item.category?.icd_code || "N/A"}</span>
-                    <span className="text-gray-500">Diagnosis Date</span> <span className="text-gray-800">{item.diagnosisDate ? new Date(item.diagnosisDate).toLocaleDateString() : 'N/A'}</span>
-                    <span className="text-gray-500">Diagnosed By</span> <span className="text-gray-800">{item.diagnosedBy?.name || "N/A"}</span>
-                    <span className="text-gray-500">Severity</span> <span className="text-gray-800">{item.severityLevel || "N/A"}</span>
+                    <span className="text-gray-500">ICD-10 Code</span> <span className="text-[#575757]">{item.category?.icd_code || "N/A"}</span>
+                    <span className="text-gray-500">Diagnosis Date</span> <span className="text-[#575757]">{item.diagnosisDate ? new Date(item.diagnosisDate).toLocaleDateString() : 'N/A'}</span>
+                    <span className="text-gray-500">Diagnosed By</span> <span className="text-[#575757]">{item.diagnosedBy?.name || "N/A"}</span>
+                    <span className="text-gray-500">Severity</span> <span className="text-[#575757]">{item.severityLevel || "N/A"}</span>
                     <span className="text-gray-500">Status</span> 
                     <div>
                       <span className="bg-[#e5f5e8] text-[#16a34a] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
                         {item.status || "N/A"}
                       </span>
                     </div>
-                    <span className="text-gray-500">Review Date</span> <span className="text-gray-800">{item.reviewDate ? new Date(item.reviewDate).toLocaleDateString() : 'N/A'}</span>
-                    <span className="text-gray-500">Last Updated</span> <span className="text-gray-800">{item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : 'N/A'}</span>
+                    <span className="text-gray-500">Review Date</span> <span className="text-[#575757]">{item.reviewDate ? new Date(item.reviewDate).toLocaleDateString() : 'N/A'}</span>
+                    <span className="text-gray-500">Last Updated</span> <span className="text-[#575757]">{item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : 'N/A'}</span>
                   </div>
 
                   <div className="border-l border-gray-100 pl-8">
@@ -496,7 +496,7 @@ export default function DiagnosesTab() {
                           rel="noopener noreferrer"
                           className="w-40 shrink-0 border border-orange-200 rounded-xl p-4 flex flex-col justify-end h-40 hover:bg-orange-50 transition-colors"
                         >
-                          <p className="font-bold text-gray-800 text-sm mb-1 line-clamp-2" title={report.original_file_name}>
+                          <p className="font-bold text-[#575757] text-sm mb-1 line-clamp-2" title={report.original_file_name}>
                             {report.original_file_name || "Document"}
                           </p>
                           <p className="text-xs text-gray-500 mb-0.5">
@@ -639,7 +639,7 @@ export default function DiagnosesTab() {
         }
       >
         <div>
-          <h3 className="text-gray-800 font-semibold mb-6">Diagnosis Information</h3>
+          <h3 className="text-[#575757] font-semibold mb-6">Diagnosis Information</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-6">
             <div>
@@ -773,7 +773,7 @@ export default function DiagnosesTab() {
           </div>
 
           <div className="mb-8">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Reports & Documents</h3>
+            <h3 className="text-sm font-bold text-[#575757] mb-3">Reports & Documents</h3>
             <div 
               onClick={() => fileInputRef.current?.click()}
               className="border border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors"
