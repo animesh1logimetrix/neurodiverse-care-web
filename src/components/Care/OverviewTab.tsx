@@ -151,15 +151,9 @@ export default function OverviewTab() {
                 ));
               }
 
-              // Fallback to show if empty and dump the keys to help debug
+              // Fallback to show if empty
               return (
-                <div className="text-sm text-gray-500">
-                  <p>No upcoming appointments found.</p>
-                  {/* Debug info to see what we actually received */}
-                  <pre className="text-[10px] mt-2 bg-gray-50 p-2 rounded max-h-32 overflow-auto">
-                    {JSON.stringify(dashboard.upcomingAppointments || dashboard.appointments || "null", null, 2)}
-                  </pre>
-                </div>
+                <p className="text-sm text-gray-500">No upcoming appointments.</p>
               );
             })()}
           </div>
